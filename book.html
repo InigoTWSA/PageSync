@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading… · PageSync</title>
+    <link rel="stylesheet" href="../css/pagesync.css">
+    <style>
+        /* ── Layout ─────────────────────────────────────────────────── */
+        body.dashboard { padding: 0; }
+        .book-shell { max-width: 960px; margin: 0 auto; padding-bottom: 80px; }
+
+        /* ── Top bar ─────────────────────────────────────────────────── */
+        .book-topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 28px;
+            position: sticky; top: 0; z-index: 20;
+            background: rgba(9,11,15,0.9);
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .brand {
+            display: inline-flex; align-items: center; gap: 10px;
+            font-size: 20px; font-weight: 700; text-decoration: none; color: #e6e7e8;
+        }
+        .brand-mark {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #3b7df3, #7d5cff);
+            color: #fff; font-weight: 700; font-size: 14px;
+        }
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 14px; color: #8f97a5;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px; padding: 8px 14px; cursor: pointer;
+            text-decoration: none; transition: color 0.15s, background 0.15s;
+        }
+        .back-btn:hover { color: #e6e7e8; background: rgba(255,255,255,0.09); }
+
+        /* ── Hero banner (blurred cover backdrop) ─────────────────── */
+        .book-hero {
+            position: relative; overflow: hidden;
+            min-height: 340px; display: flex; align-items: flex-end;
+        }
+        .hero-backdrop {
+            position: absolute; inset: -20px;
+            background-size: cover; background-position: center;
+            filter: blur(28px) brightness(0.28) saturate(1.4);
+            transform: scale(1.08);
+        }
+        .hero-content {
+            position: relative; z-index: 1;
+            display: flex; gap: 36px; align-items: flex-end;
+            padding: 48px 36px 36px;
+            width: 100%;
+        }
+
+        /* ── Cover art ────────────────────────────────────────────── */
+        .book-poster {
+            width: 160px; min-width: 160px; height: 240px;
+            border-radius: 16px; overflow: hidden;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+            background: #1a1d24;
+            background-size: cover; background-position: center;
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .poster-initials {
+            font-size: 48px; font-weight: 800; color: rgba(255,255,255,0.15);
+            user-select: none;
+        }
+
+        /* ── Hero text ────────────────────────────────────────────── */
+        .hero-text { flex: 1; min-width: 0; }
+        .hero-source-badge {
+            display: inline-block; font-size: 11px; font-weight: 700;
+            padding: 3px 10px; border-radius: 999px; margin-bottom: 12px;
+            letter-spacing: 0.04em; text-transform: uppercase;
+        }
+        .source-open-library { background: rgba(59,125,243,0.2);  color: #7aabff; }
+        .source-manga-eden   { background: rgba(255,100,80,0.2);   color: #ff9080; }
+        .source-gutenberg    { background: rgba(100,200,130,0.2);  color: #80e0a0; }
+
+        .hero-title {
+            font-size: clamp(22px, 4vw, 36px); font-weight: 800;
+            color: #f2f4f8; line-height: 1.15; margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+        .hero-native {
+            font-size: 16px; color: #707888; margin-bottom: 8px;
+        }
+        .hero-author {
+            font-size: 16px; color: #a0a8b8; margin-bottom: 14px;
+        }
+        .hero-author span { color: #d0d5de; font-weight: 600; }
+
+        .hero-meta {
+            display: flex; flex-wrap: wrap; gap: 18px;
+            margin-bottom: 20px;
+        }
+        .meta-item { display: flex; flex-direction: column; gap: 2px; }
+        .meta-label { font-size: 10px; color: #505870; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+        .meta-value { font-size: 15px; color: #d0d5de; font-weight: 600; }
+        .meta-value.star { color: #e8c060; }
+
+        /* ── Action buttons ───────────────────────────────────────── */
+        .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+
+        .btn-primary {
+            padding: 12px 24px; border-radius: 12px; border: none;
+            background: #3b7df3; color: #fff;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary:hover { background: #5a93f7; }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-primary.saved { background: rgba(50,170,90,0.7); }
+        .btn-primary.saved:hover { background: rgba(50,170,90,0.9); }
+
+        .btn-secondary {
+            padding: 12px 20px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.05); color: #c0c8d8;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+            display: inline-flex; align-items: center; gap: 8px;
+            text-decoration: none;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.2); }
+
+        /* Status selector dropdown */
+        .status-select {
+            padding: 12px 16px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.05); color: #c0c8d8;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            appearance: none; -webkit-appearance: none;
+            outline: none;
+        }
+        .status-select:focus { border-color: rgba(59,125,243,0.5); }
+
+        /* ── Body content ─────────────────────────────────────────── */
+        .book-body { padding: 40px 36px 0; }
+
+        .section-title {
+            font-size: 13px; font-weight: 700; color: #505870;
+            text-transform: uppercase; letter-spacing: 0.07em;
+            margin-bottom: 14px;
+        }
+
+       .desc-text { 
+            display: -webkit-box; 
+            -webkit-box-orient: vertical; 
+            -webkit-line-clamp: 5;
+            line-clamp: 5;
+            overflow: hidden; 
+       
+        }
+        
+        .desc-text.collapsed { 
+            -webkit-line-clamp: 5;
+            line-clamp: 5;
+        }
+
+        /* Genres / tags */
+        .genre-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 36px; }
+        .genre-pill {
+            font-size: 12px; padding: 5px 13px; border-radius: 999px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #8090a8; font-weight: 500;
+            transition: background 0.15s, color 0.15s;
+        }
+        .genre-pill:hover { background: rgba(59,125,243,0.1); color: #a0b8e0; cursor: default; }
+
+        /* Stats row */
+        .stats-row {
+            display: flex; gap: 24px; flex-wrap: wrap;
+            margin-bottom: 36px;
+        }
+        .stat-box {
+            flex: 1; min-width: 120px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px; padding: 18px 20px;
+        }
+        .stat-label { font-size: 11px; color: #505870; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+        .stat-value { font-size: 22px; font-weight: 700; color: #d8dde8; }
+        .stat-sub   { font-size: 11px; color: #606880; margin-top: 2px; }
+
+        /* Divider */
+        hr.divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 0 0 32px; }
+
+        /* ── Skeleton ─────────────────────────────────────────────── */
+        @keyframes shimmer {
+            0%   { background-position: -600px 0; }
+            100% { background-position:  600px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 75%);
+            background-size: 600px 100%; animation: shimmer 1.4s infinite linear; border-radius: 10px;
+        }
+
+        /* ── Toast ────────────────────────────────────────────────── */
+        .toast {
+            position: fixed; bottom: 28px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #1f2430; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 12px 22px; font-size: 14px; color: #d0d5de;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0;
+            transition: opacity 0.22s, transform 0.22s;
+            pointer-events: none; white-space: nowrap; z-index: 99;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── Responsive ───────────────────────────────────────────── */
+        @media (max-width: 600px) {
+            .hero-content { flex-direction: column; align-items: flex-start; padding: 28px 20px 24px; gap: 20px; }
+            .book-poster  { width: 120px; min-width: 120px; height: 180px; }
+            .book-body    { padding: 28px 20px 0; }
+            .book-topbar  { padding: 14px 20px; }
+        }
+    </style>
+</head>
+<body class="dashboard">
+
+    <!-- Top bar -->
+    <header class="book-topbar">
+        <a class="brand" href="home.html">
+            <span class="brand-mark">PS</span><span>PageSync</span>
+        </a>
+        <a class="back-btn" id="back-btn" href="home.html">← Back</a>
+    </header>
+
+    <div class="book-shell">
+
+        <!-- Hero -->
+        <div class="book-hero" id="book-hero">
+            <div class="hero-backdrop" id="hero-backdrop"></div>
+            <div class="hero-content">
+                <!-- Cover -->
+                <div class="book-poster" id="book-poster">
+                    <span class="poster-initials" id="poster-initials"></span>
+                </div>
+                <!-- Text -->
+                <div class="hero-text">
+                    <span class="hero-source-badge" id="source-badge">Book</span>
+                    <h1 class="hero-title" id="book-title">Loading…</h1>
+                    <p class="hero-native" id="book-native" style="display:none"></p>
+                    <p class="hero-author" id="book-author"></p>
+                    <div class="hero-meta" id="hero-meta"></div>
+                    <div class="hero-actions" id="hero-actions">
+                        <button class="btn-primary" id="btn-add-lib" disabled>＋ Add to Library</button>
+                        <select class="status-select" id="status-select" style="display:none">
+                            <option value="planned">Plan to Read</option>
+                            <option value="reading">Currently Reading</option>
+                            <option value="completed">Completed</option>
+                            <option value="dropped">Dropped</option>
+                            <option value="paused">On Hold</option>
+                        </select>
+                        <a class="btn-secondary" id="btn-external" href="#" target="_blank" rel="noopener" style="display:none">
+                            View Source ↗
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="book-body">
+
+            <!-- Description -->
+            <div id="desc-section" style="display:none">
+                <p class="section-title">Synopsis</p>
+                <div class="book-description">
+                    <p class="desc-text collapsed" id="desc-text"></p>
+                    <button class="desc-toggle" id="desc-toggle">Show more</button>
+                </div>
+                <hr class="divider">
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-row" id="stats-row"></div>
+
+            <!-- Genres / Subjects -->
+            <div id="genres-section" style="display:none">
+                <hr class="divider">
+                <p class="section-title">Genres &amp; Themes</p>
+                <div class="genre-list" id="genre-list"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module">
+        import { onAuthStateChange, auth, addBook, getBooks, updateBook } from './firebase.js';
+        import { getBookDetail } from './search-client.js';
+
+        const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+        let toastTimer;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+        }
+
+        // ── Read URL params ──────────────────────────────────────────
+        const params = new URLSearchParams(location.search);
+        const rawId  = params.get('id')     || '';
+        const source = params.get('source') || 'open-library';
+
+        // Immediately render from URL params (instant paint)
+        const quickTitle  = params.get('title')  || 'Loading…';
+        const quickAuthor = params.get('author') || '';
+        const quickCover  = params.get('cover')  || '';
+        const quickRating = params.get('rating') || '';
+        const quickYear   = params.get('year')   || '';
+
+        document.title = `${quickTitle} · PageSync`;
+        document.getElementById('book-title').textContent  = quickTitle;
+        document.getElementById('book-author').innerHTML   = quickAuthor ? `by <span>${esc(quickAuthor)}</span>` : '';
+        document.getElementById('poster-initials').textContent = quickTitle.slice(0,2).toUpperCase();
+
+        const sourceLabelMap = {
+            'open-library': 'Book',
+            'manga-eden':   'Manga',
+            'gutenberg':    'Classic',
+        };
+        const badge = document.getElementById('source-badge');
+        badge.textContent = sourceLabelMap[source] || 'Book';
+        badge.className   = `hero-source-badge source-${source}`;
+
+        if (quickCover) {
+            const poster = document.getElementById('book-poster');
+            poster.style.backgroundImage = `url('${quickCover}')`;
+            document.getElementById('poster-initials').style.display = 'none';
+            document.getElementById('hero-backdrop').style.backgroundImage = `url('${quickCover}')`;
+        }
+
+        // Quick meta from URL
+        const metaEl = document.getElementById('hero-meta');
+        const metaItems = [];
+        if (quickRating) metaItems.push({ label: 'Rating', value: `★ ${Number(quickRating).toFixed(1)}`, cls: 'star' });
+        if (quickYear)   metaItems.push({ label: 'Year',   value: quickYear });
+        metaEl.innerHTML = metaItems.map(m => `
+            <div class="meta-item">
+                <span class="meta-label">${m.label}</span>
+                <span class="meta-value ${m.cls||''}">${esc(String(m.value))}</span>
+            </div>`).join('');
+
+        // ── Back button smarts ────────────────────────────────────────
+        document.getElementById('back-btn').addEventListener('click', e => {
+            if (history.length > 1) { e.preventDefault(); history.back(); }
+        });
+
+        // ── Auth + library state ──────────────────────────────────────
+        let currentUser  = null;
+        let userBooks    = [];
+        let existingBook = null;
+
+        onAuthStateChange(async user => {
+            currentUser = user;
+            if (!user) return;
+            try {
+                userBooks    = await getBooks(user.uid);
+                existingBook = userBooks.find(b => b.externalId === rawId || b.title === quickTitle) || null;
+            } catch {}
+            updateActionButtons();
+        });
+
+        function updateActionButtons() {
+            const btn    = document.getElementById('btn-add-lib');
+            const select = document.getElementById('status-select');
+            btn.disabled = false;
+
+            if (existingBook) {
+                btn.textContent = '✓ In Library';
+                btn.classList.add('saved');
+                select.style.display = 'inline-block';
+                select.value = existingBook.status || 'planned';
+            } else {
+                btn.textContent = '＋ Add to Library';
+                btn.classList.remove('saved');
+                select.style.display = 'none';
+            }
+        }
+
+        document.getElementById('btn-add-lib').addEventListener('click', async () => {
+            if (!currentUser) { showToast('Sign in to save books'); return; }
+            if (existingBook) { showToast('Already in your library'); return; }
+            const btn = document.getElementById('btn-add-lib');
+            btn.textContent = '…'; btn.disabled = true;
+            try {
+                await addBook(currentUser.uid, {
+                    title:      quickTitle,
+                    author:     quickAuthor,
+                    status:     'planned',
+                    externalId: rawId,
+                    source,
+                    coverUrl:   quickCover,
+                });
+                userBooks    = await getBooks(currentUser.uid);
+                existingBook = userBooks.find(b => b.externalId === rawId) || null;
+                updateActionButtons();
+                showToast(`"${quickTitle}" added to library ✓`);
+            } catch {
+                btn.textContent = '＋ Add to Library'; btn.disabled = false;
+                showToast('Could not add — try again');
+            }
+        });
+
+        document.getElementById('status-select').addEventListener('change', async e => {
+            if (!currentUser || !existingBook) return;
+            try {
+                await updateBook(currentUser.uid, existingBook.id, { status: e.target.value });
+                existingBook.status = e.target.value;
+                showToast(`Status updated to "${e.target.value}"`);
+            } catch { showToast('Could not update status'); }
+        });
+
+        // ── Fetch full detail ─────────────────────────────────────────
+        async function loadDetail() {
+            let book;
+            try {
+                book = await getBookDetail(rawId, source);
+            } catch (err) {
+                console.error('Detail fetch failed:', err);
+                return; // keep URL-param data visible
+            }
+            if (!book) return;
+
+            // Update title in browser tab + heading
+            document.title = `${book.title} · PageSync`;
+            document.getElementById('book-title').textContent = book.title;
+
+            // Native title (manga)
+            if (book.titleNative) {
+                const native = document.getElementById('book-native');
+                native.textContent = book.titleNative;
+                native.style.display = '';
+            }
+
+            // Authors
+            const allAuthors = book.authors?.length ? book.authors.join(', ') : book.author;
+            document.getElementById('book-author').innerHTML = allAuthors ? `by <span>${esc(allAuthors)}</span>` : '';
+
+            // Cover
+            if (book.cover) {
+                const poster = document.getElementById('book-poster');
+                poster.style.backgroundImage = `url('${book.cover}')`;
+                document.getElementById('poster-initials').style.display = 'none';
+                document.getElementById('hero-backdrop').style.backgroundImage = `url('${book.cover}')`;
+            }
+
+            // Source badge
+            const badge2 = document.getElementById('source-badge');
+            badge2.textContent = book.sourceLabel || 'Book';
+            badge2.className   = `hero-source-badge source-${book.source}`;
+
+            // Meta row
+            const metas = [];
+            if (book.rating)      metas.push({ label: 'Rating',    value: `★ ${Number(book.rating).toFixed(1)}`, cls: 'star' });
+            if (book.ratingCount) metas.push({ label: 'Votes',     value: Number(book.ratingCount).toLocaleString() });
+            if (book.year)        metas.push({ label: 'Year',      value: book.year });
+            if (book.status)      metas.push({ label: 'Status',    value: book.status });
+            if (book.chapters)    metas.push({ label: 'Chapters',  value: book.chapters });
+            if (book.volumes)     metas.push({ label: 'Volumes',   value: book.volumes });
+            if (book.rank)        metas.push({ label: 'MAL Rank',  value: `#${book.rank}` });
+            document.getElementById('hero-meta').innerHTML = metas.map(m => `
+                <div class="meta-item">
+                    <span class="meta-label">${m.label}</span>
+                    <span class="meta-value ${m.cls||''}">${esc(String(m.value))}</span>
+                </div>`).join('');
+
+            // External link
+            if (book.url) {
+                const ext = document.getElementById('btn-external');
+                ext.href = book.url;
+                ext.style.display = 'inline-flex';
+            }
+
+            // Read link (Gutenberg)
+            if (book.readUrl) {
+                const actionsEl = document.getElementById('hero-actions');
+                const readBtn = document.createElement('a');
+                readBtn.className = 'btn-secondary';
+                readBtn.href = book.readUrl;
+                readBtn.target = '_blank';
+                readBtn.rel = 'noopener';
+                readBtn.textContent = '📖 Read Free';
+                actionsEl.appendChild(readBtn);
+            }
+
+            // Description
+            if (book.description) {
+                const descSection = document.getElementById('desc-section');
+                const descText    = document.getElementById('desc-text');
+                const descToggle  = document.getElementById('desc-toggle');
+                descSection.style.display = '';
+                descText.textContent = book.description;
+
+                // Only show toggle if text is long enough to clip
+                let expanded = false;
+                const checkClip = () => descText.scrollHeight > descText.clientHeight + 2;
+                setTimeout(() => {
+                    if (!checkClip()) descToggle.style.display = 'none';
+                }, 100);
+                descToggle.addEventListener('click', () => {
+                    expanded = !expanded;
+                    descText.classList.toggle('collapsed', !expanded);
+                    descToggle.textContent = expanded ? 'Show less' : 'Show more';
+                });
+            }
+
+            // Stats boxes
+            const stats = [];
+            if (book.rating)        stats.push({ label: 'Score',      value: Number(book.rating).toFixed(2), sub: `${Number(book.ratingCount||0).toLocaleString()} votes` });
+            if (book.chapters)      stats.push({ label: 'Chapters',   value: book.chapters });
+            if (book.volumes)       stats.push({ label: 'Volumes',    value: book.volumes });
+            if (book.downloadCount) stats.push({ label: 'Downloads',  value: Number(book.downloadCount).toLocaleString(), sub: 'Project Gutenberg' });
+            if (book.rank)          stats.push({ label: 'MAL Rank',   value: `#${book.rank}` });
+            if (book.popularity)    stats.push({ label: 'Popularity', value: `#${book.popularity}` });
+            document.getElementById('stats-row').innerHTML = stats.map(s => `
+                <div class="stat-box">
+                    <div class="stat-label">${esc(s.label)}</div>
+                    <div class="stat-value">${esc(String(s.value))}</div>
+                    ${s.sub ? `<div class="stat-sub">${esc(s.sub)}</div>` : ''}
+                </div>`).join('');
+
+            // Genres
+            const allGenres = book.genres || book.subjects || [];
+            if (allGenres.length) {
+                document.getElementById('genres-section').style.display = '';
+                document.getElementById('genre-list').innerHTML =
+                    allGenres.map(g => `<span class="genre-pill">${esc(g)}</span>`).join('');
+            }
+        }
+
+        loadDetail();
+    </script>
+</body>
+</html>

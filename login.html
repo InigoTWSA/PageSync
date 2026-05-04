@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Login · PageSync</title>
+        <link rel="stylesheet" href="../css/pagesync.css">
+        <style>
+            /* ── Inline OTP ──────────────────────────────────────── */
+            .otp-inline {
+                overflow: hidden;
+                max-height: 0;
+                opacity: 0;
+                transition: max-height 0.4s ease, opacity 0.3s ease;
+                margin-bottom: 0;
+            }
+            .otp-inline.visible {
+                max-height: 160px;
+                opacity: 1;
+                margin-bottom: 4px;
+            }
+            .otp-inline .field { margin-bottom: 8px; }
+
+            .otp-hint { font-size: 12px; color: #606880; margin: 4px 0 0 4px; }
+
+            .resend-link {
+                font-size: 12px; color: #3b7df3;
+                background: none; border: none; cursor: pointer;
+                padding: 0; margin-top: 6px; margin-left: 4px;
+                display: inline-block; transition: color 0.15s;
+            }
+            .resend-link:hover { color: #7aabff; }
+            .resend-link:disabled { color: #404860; cursor: default; }
+
+            #otp-code {
+                letter-spacing: 0.35em; font-size: 20px;
+                font-weight: 700; text-align: center;
+            }
+
+            /* ── Error ───────────────────────────────────────────── */
+            .error-msg {
+                font-size: 13px; color: #e05555;
+                min-height: 18px; margin: 2px 0 8px 4px;
+            }
+
+            /* ── T&C Modal ───────────────────────────────────────── */
+            .terms-layer {
+                position: fixed; inset: 0;
+                background: rgba(0,0,0,0.7);
+                backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+                display: none; align-items: center; justify-content: center;
+                z-index: 50; padding: 20px;
+            }
+            .terms-layer.open { display: flex; }
+            .terms-card {
+                width: min(480px, 100%); background: #1c1f24;
+                border: 1px solid rgba(255,255,255,0.1); border-radius: 24px;
+                padding: 32px 28px; position: relative; max-height: 85vh; overflow-y: auto;
+            }
+            .terms-card h2 { font-size: 20px; font-weight: 600; margin-bottom: 18px; color: #f0f2f5; }
+            .terms-content p  { font-size: 14px; color: #8f97a5; margin-bottom: 14px; line-height: 1.7; text-align: left; }
+            .terms-content ol { padding-left: 20px; }
+            .terms-content ol li { font-size: 14px; color: #8f97a5; margin-bottom: 10px; line-height: 1.7; }
+            .overlay-close {
+                position: absolute; top: 18px; right: 18px;
+                background: rgba(255,255,255,0.06); border: none; color: #9aa0ad;
+                font-size: 16px; width: 32px; height: 32px; border-radius: 50%;
+                cursor: pointer; display: flex; align-items: center; justify-content: center;
+                transition: background 0.15s;
+            }
+            .overlay-close:hover { background: rgba(255,255,255,0.12); color: #e6e7e8; }
+            .terms-footer { margin-top: 22px; text-align: center; }
+            .terms-trigger-row { margin-top: 16px; text-align: center; }
+            .terms-trigger-btn {
+                font-size: 13px; color: #606880; background: none; border: none;
+                cursor: pointer; padding: 0; text-decoration: underline;
+                text-underline-offset: 3px; transition: color 0.15s;
+            }
+            .terms-trigger-btn:hover { color: #a0a8b8; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="logo">↻</div>
+            <h1>Sign in</h1>
+            <form id="login-form" action="#" method="post" novalidate>
+
+                <div class="field">
+                    <input type="email" id="email" name="email"
+                        placeholder="Email address" required autocomplete="email">
+                </div>
+
+                <!-- OTP slides in below email after step 1 -->
+                <div class="otp-inline" id="otp-inline">
+                    <div class="field">
+                        <input type="text" id="otp-code" maxlength="6"
+                            placeholder="000000" inputmode="numeric"
+                            autocomplete="one-time-code">
+                    </div>
+                    <p class="otp-hint">A 6-digit code was sent to your email.</p>
+                    <button type="button" class="resend-link" id="resend-otp">
+                        Didn't receive it? Resend code
+                    </button>
+                </div>
+
+                <div class="field password-wrapper">
+                    <input type="password" id="password" name="password"
+                        placeholder="Password" required autocomplete="current-password">
+                    <button type="button" class="password-toggle" id="password-toggle">👁️</button>
+                </div>
+
+                <div class="error-msg" id="login-error"></div>
+
+                <div class="submit-row">
+                    <button type="submit" class="button primary" id="submit-btn">Sign in</button>
+                </div>
+
+                <a class="google-button" id="google-signin" href="#">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+                    Sign in with Google
+                </a>
+
+                <a class="secondary-link" href="forgotpass.html">Forgot Password?</a>
+                <a class="secondary-link" href="signup.html">Don't have an account? <b>Sign Up</b></a>
+
+                <div class="terms-trigger-row">
+                    <button type="button" class="terms-trigger-btn" id="terms-trigger">
+                        Terms &amp; Conditions
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- T&C Modal -->
+        <div class="terms-layer" id="terms-layer">
+            <div class="terms-card">
+                <button class="overlay-close" id="terms-close" aria-label="Close">✕</button>
+                <h2>Terms &amp; Conditions</h2>
+                <div class="terms-content">
+                    <p>Welcome to PageSync. By using this website, you agree to the following terms:</p>
+                    <ol>
+                        <li>All content on PageSync is for personal use only.</li>
+                        <li>You must not share login credentials with others.</li>
+                        <li>PageSync is not responsible for third-party content linked from our pages.</li>
+                        <li>We may update these terms at any time, and continued use means acceptance.</li>
+                        <li>Respect copyright, privacy, and community guidelines while using the site.</li>
+                    </ol>
+                </div>
+                <div class="terms-footer">
+                    <button class="button primary" id="terms-accept" style="max-width:160px;margin:0 auto;display:block;">Got it</button>
+                </div>
+            </div>
+        </div>
+
+        <script type="module">
+            import { loginWithEmail, signInWithGoogle, signOutUser, onAuthStateChange } from './firebase.js';
+            import config from './config.js';
+
+            // ── EmailJS config (set values in config.js) ───────────
+            const EMAILJS_SERVICE_ID  = config.emailjs.serviceId;
+            const EMAILJS_TEMPLATE_ID = config.emailjs.templateId;
+            const EMAILJS_PUBLIC_KEY  = config.emailjs.publicKey;
+
+            const OTP_ENABLED = EMAILJS_SERVICE_ID !== 'YOUR_EMAILJS_SERVICE_ID';
+
+            // ── DOM ────────────────────────────────────────────────
+            const form           = document.getElementById('login-form');
+            const emailInput     = document.getElementById('email');
+            const passwordInput  = document.getElementById('password');
+            const passwordToggle = document.getElementById('password-toggle');
+            const submitBtn      = document.getElementById('submit-btn');
+            const otpInline      = document.getElementById('otp-inline');
+            const otpCodeInput   = document.getElementById('otp-code');
+            const resendBtn      = document.getElementById('resend-otp');
+            const errorEl        = document.getElementById('login-error');
+            const googleBtn      = document.getElementById('google-signin');
+
+            // ── State ──────────────────────────────────────────────
+            let otpStep        = false;
+            let pendingEmail    = '';
+            let pendingPassword = '';
+            let resendTimer    = null;
+
+            // ── Utility ────────────────────────────────────────────
+            const showError  = msg => { errorEl.textContent = msg; };
+            const clearError = ()  => { errorEl.textContent = ''; };
+
+            async function sha256(str) {
+                const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+                return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+            }
+
+            function genOTP() {
+                return String(Math.floor(100000 + Math.random() * 900000));
+            }
+
+            // ── Send OTP ───────────────────────────────────────────
+            async function sendOTP(email) {
+                const code   = genOTP();
+                const hashed = await sha256(code);
+
+                // Store hash + 10-min expiry in sessionStorage
+                sessionStorage.setItem('ps_otp_hash',   hashed);
+                sessionStorage.setItem('ps_otp_expiry', String(Date.now() + 10 * 60 * 1000));
+                sessionStorage.setItem('ps_otp_email',  email);
+
+                if (!OTP_ENABLED) {
+                    // Dev fallback: show code in console
+                    console.info(`[PageSync DEV] OTP code for ${email}: ${code}`);
+                    return;
+                }
+
+                const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        service_id:  EMAILJS_SERVICE_ID,
+                        template_id: EMAILJS_TEMPLATE_ID,
+                        user_id:     EMAILJS_PUBLIC_KEY,
+                        template_params: {
+                            to_email: email,
+                            otp_code: code,
+                            app_name: 'PageSync',
+                        },
+                    }),
+                });
+                if (!res.ok) throw new Error(`EmailJS error ${res.status}`);
+            }
+
+            // ── Verify OTP ─────────────────────────────────────────
+            async function verifyOTP(input) {
+                const hash   = sessionStorage.getItem('ps_otp_hash');
+                const expiry = Number(sessionStorage.getItem('ps_otp_expiry'));
+                const email  = sessionStorage.getItem('ps_otp_email');
+
+                if (!hash)                   return { ok: false, msg: 'No OTP found. Request a new one.' };
+                if (Date.now() > expiry)     return { ok: false, msg: 'Code expired. Request a new one.' };
+                if (email !== pendingEmail)  return { ok: false, msg: 'Email mismatch. Please restart.' };
+
+                const inputHash = await sha256(input.trim());
+                if (inputHash !== hash)      return { ok: false, msg: 'Incorrect code. Try again.' };
+
+                sessionStorage.removeItem('ps_otp_hash');
+                sessionStorage.removeItem('ps_otp_expiry');
+                sessionStorage.removeItem('ps_otp_email');
+                return { ok: true };
+            }
+
+            // ── OTP section show / hide ────────────────────────────
+            function enterOTPStep(email) {
+                pendingEmail = email;
+                otpStep      = true;
+                otpInline.classList.add('visible');
+                emailInput.disabled    = true;
+                passwordInput.disabled = true;
+                submitBtn.textContent  = 'Verify & Sign in';
+                clearError();
+                setTimeout(() => otpCodeInput.focus(), 380);
+                startCooldown();
+            }
+
+            function exitOTPStep() {
+                otpStep        = false;
+                pendingEmail   = '';
+                pendingPassword = '';
+                otpInline.classList.remove('visible');
+                emailInput.disabled    = false;
+                passwordInput.disabled = false;
+                submitBtn.textContent  = 'Sign in';
+                otpCodeInput.value     = '';
+                stopCooldown();
+            }
+
+            // ── Resend cooldown ────────────────────────────────────
+            function startCooldown() {
+                let s = 30;
+                resendBtn.disabled    = true;
+                resendBtn.textContent = `Resend in ${s}s`;
+                resendTimer = setInterval(() => {
+                    s--;
+                    if (s <= 0) { stopCooldown(); }
+                    else { resendBtn.textContent = `Resend in ${s}s`; }
+                }, 1000);
+            }
+
+            function stopCooldown() {
+                clearInterval(resendTimer);
+                resendTimer = null;
+                resendBtn.disabled    = false;
+                resendBtn.textContent = "Didn't receive it? Resend code";
+            }
+
+            // ── Password toggle ────────────────────────────────────
+            passwordToggle.addEventListener('click', e => {
+                e.preventDefault();
+                const show = passwordInput.type === 'password';
+                passwordInput.type     = show ? 'text' : 'password';
+                passwordToggle.textContent = show ? '👁️‍🗨️' : '👁️';
+            });
+
+            // ── Main form submit ───────────────────────────────────
+            form.addEventListener('submit', async e => {
+                e.preventDefault();
+                clearError();
+
+                // ── STEP 2: verify OTP → sign in ──────────────────
+                if (otpStep) {
+                    const code = otpCodeInput.value.trim();
+                    if (code.length < 6) { showError('Enter the full 6-digit code.'); otpCodeInput.focus(); return; }
+
+                    submitBtn.disabled    = true;
+                    submitBtn.textContent = 'Verifying…';
+
+                    const { ok, msg } = await verifyOTP(code);
+                    if (!ok) {
+                        showError(msg);
+                        submitBtn.disabled    = false;
+                        submitBtn.textContent = 'Verify & Sign in';
+                        return;
+                    }
+
+                    // OTP correct — sign in with Firebase
+                    try {
+                        await loginWithEmail(pendingEmail, pendingPassword);
+                        window.location.href = 'home.html';
+                    } catch (err) {
+                        exitOTPStep();
+                        showError('Sign-in failed: ' + err.message);
+                        submitBtn.disabled    = false;
+                        submitBtn.textContent = 'Sign in';
+                    }
+                    return;
+                }
+
+                // ── STEP 1: validate creds → send OTP ─────────────
+                const email    = emailInput.value.trim();
+                const password = passwordInput.value;
+                if (!email || !password) { showError('Enter your email and password.'); return; }
+
+                submitBtn.disabled    = true;
+                submitBtn.textContent = OTP_ENABLED ? 'Sending code…' : 'Signing in…';
+
+                // Verify credentials with Firebase first
+                try {
+                    await loginWithEmail(email, password);
+                    // Creds correct — if OTP is not configured, just stay signed in
+                    if (!OTP_ENABLED) {
+                        window.location.href = 'home.html';
+                        return;
+                    }
+                    // Sign back out to gate behind OTP
+                    await signOutUser();
+                } catch (err) {
+                    submitBtn.disabled    = false;
+                    submitBtn.textContent = 'Sign in';
+                    const code = err.code || '';
+                    showError(
+                        code === 'auth/wrong-password'    ? 'Incorrect password.' :
+                        code === 'auth/user-not-found'    ? 'No account found with that email.' :
+                        code === 'auth/invalid-email'     ? 'Invalid email address.' :
+                        code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.' :
+                        code === 'auth/invalid-credential'? 'Incorrect email or password.' :
+                        err.message
+                    );
+                    return;
+                }
+
+                // Creds verified — send OTP
+                pendingPassword = password;
+                try {
+                    await sendOTP(email);
+                    enterOTPStep(email);
+                    submitBtn.disabled = false;
+                    if (!OTP_ENABLED) showError('Dev mode: OTP code printed in browser console (F12).');
+                } catch (err) {
+                    showError('Could not send OTP. Check EmailJS config or try again.');
+                    submitBtn.disabled    = false;
+                    submitBtn.textContent = 'Sign in';
+                }
+            });
+
+            // ── Resend button ──────────────────────────────────────
+            resendBtn.addEventListener('click', async () => {
+                if (resendBtn.disabled) return;
+                clearError();
+                try {
+                    await sendOTP(pendingEmail);
+                    otpCodeInput.value = '';
+                    otpCodeInput.focus();
+                    startCooldown();
+                    if (!OTP_ENABLED) showError('Dev mode: new OTP code printed in browser console (F12).');
+                } catch {
+                    showError('Could not resend. Check your connection.');
+                }
+            });
+
+            // ── Google sign-in ─────────────────────────────────────
+            googleBtn.addEventListener('click', async e => {
+                e.preventDefault();
+                clearError();
+                try {
+                    await signInWithGoogle();
+                    window.location.href = 'home.html';
+                } catch (err) {
+                    showError('Google sign-in failed: ' + err.message);
+                }
+            });
+
+            // ── T&C ────────────────────────────────────────────────
+            const termsLayer   = document.getElementById('terms-layer');
+            const termsTrigger = document.getElementById('terms-trigger');
+            const termsClose   = document.getElementById('terms-close');
+            const termsAccept  = document.getElementById('terms-accept');
+
+            termsTrigger.addEventListener('click', () => termsLayer.classList.add('open'));
+            termsClose.addEventListener('click',   () => termsLayer.classList.remove('open'));
+            termsAccept.addEventListener('click',  () => termsLayer.classList.remove('open'));
+            termsLayer.addEventListener('click',   e => { if (e.target === termsLayer) termsLayer.classList.remove('open'); });
+            document.addEventListener('keydown',   e => { if (e.key === 'Escape') termsLayer.classList.remove('open'); });
+
+            // ── Already signed in ──────────────────────────────────
+            onAuthStateChange(user => {
+                if (user) window.location.href = 'home.html';
+            });
+        </script>
+    </body>
+</html>

@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmarks · PageSync</title>
+    <link rel="stylesheet" href="pagesync.css">
+    <style>
+        body.dashboard { padding: 0; }
+
+        /* ── Top bar ─────────────────────────────────────────────── */
+        .bookmarks-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(9,11,15,0.92);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            text-decoration: none;
+            color: #e6e7e8;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-mark {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #3b7df3, #7d5cff);
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #8f97a5;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 8px 14px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.15s, background 0.15s;
+        }
+
+        .back-btn:hover { color: #e6e7e8; background: rgba(255,255,255,0.09); }
+
+        .menu-button {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: #101318;
+            color: #e6e7e8;
+            font-size: 16px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: #16191f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f3f5f9;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.18s, transform 0.18s, box-shadow 0.18s;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .avatar:hover { opacity: 0.85; transform: scale(1.06); box-shadow: 0 0 0 2px #3b7df3; }
+
+        /* ── Page shell ──────────────────────────────────────────── */
+        .bookmarks-shell {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 36px 32px 80px;
+        }
+
+        /* ── Page header ─────────────────────────────────────────── */
+        .page-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        .page-title-group h1 {
+            font-size: 30px;
+            font-weight: 800;
+            color: #f0f2f5;
+            letter-spacing: -0.03em;
+            margin-bottom: 4px;
+        }
+
+        .page-title-group p {
+            font-size: 14px;
+            color: #606880;
+        }
+
+        .count-badge {
+            display: inline-block;
+            background: rgba(59,125,243,0.15);
+            color: #7aabff;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        /* ── Sort control ────────────────────────────────────────── */
+        .sort-select {
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: #101318;
+            color: #c0c8d8;
+            font-size: 13px;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
+            min-width: 140px;
+        }
+
+        .sort-select:focus { border-color: rgba(59,125,243,0.4); }
+
+        /* ── Status filter tabs ──────────────────────────────────── */
+        .filter-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 28px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 2px;
+        }
+
+        .filter-tabs::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.07);
+            background: rgba(255,255,255,0.03);
+            color: #8f97a5;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            flex-shrink: 0;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.06);
+            color: #d0d5de;
+        }
+
+        .tab-btn.active {
+            background: rgba(59,125,243,0.15);
+            border-color: rgba(59,125,243,0.35);
+            color: #7aabff;
+        }
+
+        .tab-count {
+            background: rgba(255,255,255,0.08);
+            color: #606880;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 999px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .tab-btn.active .tab-count {
+            background: rgba(59,125,243,0.2);
+            color: #7aabff;
+        }
+
+        /* ── Stats strip ─────────────────────────────────────────── */
+        .stats-strip {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .stat-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            font-size: 13px;
+            color: #8090a8;
+        }
+
+        .stat-pill strong {
+            color: #d0d5de;
+            font-weight: 700;
+        }
+
+        .stat-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .dot-reading   { background: #3b7df3; }
+        .dot-planned   { background: #8060d0; }
+        .dot-completed { background: #40c070; }
+        .dot-paused    { background: #d0a040; }
+        .dot-dropped   { background: #d05050; }
+
+        /* ── Books grid ──────────────────────────────────────────── */
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        /* ── Book card ───────────────────────────────────────────── */
+        .bm-card {
+            border-radius: 20px;
+            overflow: hidden;
+            background: #14171d;
+            border: 1px solid rgba(255,255,255,0.07);
+            transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bm-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            border-color: rgba(255,255,255,0.12);
+        }
+
+        /* Cover */
+        .bm-cover {
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .bm-cover::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 55%);
+            pointer-events: none;
+        }
+
+        .bm-cover.no-cover {
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cover-initials {
+            font-size: 40px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.12);
+            user-select: none;
+            z-index: 0;
+        }
+
+        .cover-title {
+            position: relative;
+            z-index: 1;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.25;
+            text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+            word-break: break-word;
+        }
+
+        /* Status indicator stripe */
+        .status-stripe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            z-index: 2;
+        }
+
+        .stripe-reading   { background: #3b7df3; }
+        .stripe-planned   { background: #8060d0; }
+        .stripe-completed { background: #40c070; }
+        .stripe-paused    { background: #d0a040; }
+        .stripe-dropped   { background: #d05050; }
+
+        /* Delete button */
+        .bm-delete {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 3;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(10,12,18,0.8);
+            color: #8f97a5;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.15s, background 0.15s, color 0.15s;
+            backdrop-filter: blur(4px);
+        }
+
+        .bm-card:hover .bm-delete { opacity: 1; }
+        .bm-delete:hover { background: rgba(200,50,50,0.7); color: #fff; border-color: rgba(200,50,50,0.4); }
+
+        /* Info section */
+        .bm-info {
+            padding: 14px 14px 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .bm-source-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            display: inline-block;
+            align-self: flex-start;
+        }
+
+        .source-open-library { background: rgba(59,125,243,0.15);  color: #7aabff; }
+        .source-manga-eden   { background: rgba(255,100,80,0.15);   color: #ff9080; }
+        .source-gutenberg    { background: rgba(100,200,130,0.15);  color: #80e0a0; }
+        .source-hardcover    { background: rgba(59,125,243,0.15);   color: #7aabff; }
+
+        .bm-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #e8ecf2;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;        
+            overflow: hidden;
+            cursor: pointer;
+}
+
+        .bm-author {
+            font-size: 12px;
+            color: #606880;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Status select */
+        .bm-status-select {
+            margin-top: auto;
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.07);
+            background: rgba(255,255,255,0.03);
+            color: #9aa0ad;
+            font-size: 12px;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            outline: none;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .bm-status-select:hover { border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); }
+        .bm-status-select:focus { border-color: rgba(59,125,243,0.4); }
+
+        /* ── Skeleton ────────────────────────────────────────────── */
+        @keyframes shimmer {
+            0%   { background-position: -600px 0; }
+            100% { background-position:  600px 0; }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+            background-size: 600px 100%;
+            animation: shimmer 1.4s infinite linear;
+            border-radius: 10px;
+        }
+
+        .skel-card {
+            border-radius: 20px;
+            overflow: hidden;
+            background: #14171d;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .skel-cover { height: 200px; }
+
+        .skel-info {
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .skel-line { height: 11px; }
+        .skel-line.short { width: 50%; }
+        .skel-line.long  { width: 80%; }
+        .skel-line.full  { width: 100%; height: 30px; border-radius: 8px; }
+
+        /* ── Empty state ─────────────────────────────────────────── */
+        .empty-state {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            text-align: center;
+            gap: 14px;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            opacity: 0.25;
+            line-height: 1;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #4a5060;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            color: #383e4e;
+            max-width: 280px;
+            line-height: 1.6;
+        }
+
+        .empty-cta {
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 22px;
+            border-radius: 12px;
+            border: none;
+            background: #3b7df3;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+
+        .empty-cta:hover { background: #5a93f7; }
+
+        /* ── Delete confirm overlay ───────────────────────────────── */
+        .confirm-layer {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 60;
+            padding: 20px;
+        }
+
+        .confirm-layer.open { display: flex; }
+
+        .confirm-card {
+            width: min(380px, 100%);
+            background: #1c1f26;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 28px 24px;
+            text-align: center;
+        }
+
+        .confirm-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f0f2f5;
+            margin-bottom: 10px;
+        }
+
+        .confirm-card p {
+            font-size: 14px;
+            color: #8f97a5;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-confirm-delete {
+            padding: 11px 24px;
+            border-radius: 12px;
+            border: none;
+            background: #c03030;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-confirm-delete:hover { background: #d04040; }
+
+        .btn-confirm-cancel {
+            padding: 11px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: #9aa0ad;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-confirm-cancel:hover { background: rgba(255,255,255,0.08); }
+
+        /* ── Side menu (same as home.html) ───────────────────────── */
+        .menu-layer {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            padding: 20px;
+        }
+
+        .menu-layer.open { display: flex; }
+
+        .menu-card {
+            width: min(460px, 100%);
+            background: rgba(16,18,24,0.98);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.35);
+            overflow: hidden;
+        }
+
+        .menu-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 22px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .menu-profile { display: flex; align-items: center; gap: 14px; }
+
+        .menu-avatar {
+            width: 50px; height: 50px; border-radius: 18px;
+            background: #16191f;
+            display: flex; align-items: center; justify-content: center;
+            color: #f3f5f9; font-weight: 700;
+            background-size: cover; background-position: center;
+        }
+
+        .menu-name { margin: 0; font-size: 16px; font-weight: 700; }
+        .menu-sub  { margin: 4px 0 0; color: #8f97a5; font-size: 13px; }
+
+        .menu-close {
+            border: none; background: none;
+            color: #e6e7e8; font-size: 20px; cursor: pointer;
+        }
+
+        .menu-list {
+            display: grid; gap: 1px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .menu-item, .menu-signout {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 24px; text-decoration: none;
+            color: #e6e7e8; background: #101318;
+            border: none; cursor: pointer; font-size: 15px;
+        }
+
+        .menu-item:hover, .menu-signout:hover { background: rgba(59,125,243,0.12); }
+        .menu-item.active { background: rgba(59,125,243,0.18); color: #fff; }
+
+        .menu-signout {
+            justify-content: center; gap: 10px;
+            font-weight: 700; color: #f5f7fa;
+        }
+
+        /* ── Toast ───────────────────────────────────────────────── */
+        .toast {
+            position: fixed; bottom: 28px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #1f2430; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 12px 22px; font-size: 14px; color: #d0d5de;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0;
+            transition: opacity 0.22s, transform 0.22s;
+            pointer-events: none; white-space: nowrap; z-index: 99;
+        }
+
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── Responsive ──────────────────────────────────────────── */
+        @media (max-width: 720px) {
+            .bookmarks-shell { padding: 24px 16px 60px; }
+            .bookmarks-topbar { padding: 14px 16px; }
+            .books-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+            .bm-cover { height: 170px; }
+            .stats-strip { display: none; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+        }
+
+        @media (max-width: 480px) {
+            .books-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body class="dashboard">
+
+    <!-- Top bar -->
+    <header class="bookmarks-topbar">
+        <a class="brand" href="home.html">
+            <span class="brand-mark">PS</span>
+            <span>PageSync</span>
+        </a>
+        <div class="topbar-right">
+            <button class="menu-button" id="menu-btn" aria-label="Open menu">☰</button>
+            <a class="avatar" id="user-avatar" href="profile.html" title="View profile">PS</a>
+        </div>
+    </header>
+
+    <!-- Side menu -->
+    <div class="menu-layer" id="menu-panel">
+        <div class="menu-card">
+            <div class="menu-header">
+                <div class="menu-profile">
+                    <div class="menu-avatar" id="menu-avatar-display">PS</div>
+                    <div>
+                        <p class="menu-name" id="menu-display-name">PageSync</p>
+                        <p class="menu-sub"  id="menu-email">Personal dashboard</p>
+                    </div>
+                </div>
+                <button class="menu-close" id="menu-close">✕</button>
+            </div>
+            <div class="menu-list">
+                <a class="menu-item" href="home.html">Home</a>
+                <a class="menu-item" href="profile.html">Profile</a>
+                <a class="menu-item" href="#">Popular</a>
+                <a class="menu-item" href="#">Top rated</a>
+                <a class="menu-item active" href="bookmarks.html">Bookmarks</a>
+                <a class="menu-item" href="#">Settings</a>
+                <button class="menu-signout" id="menu-signout">Sign Out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="bookmarks-shell">
+
+        <!-- Page header -->
+        <div class="page-header">
+            <div class="page-title-group">
+                <h1>Bookmarks <span class="count-badge" id="total-count">0</span></h1>
+                <p id="page-subtitle">Your saved books, manga, and comics</p>
+            </div>
+            <select class="sort-select" id="sort-select">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="title">Title A–Z</option>
+                <option value="author">Author A–Z</option>
+            </select>
+        </div>
+
+        <!-- Status filter tabs -->
+        <div class="filter-tabs" id="filter-tabs">
+            <button class="tab-btn active" data-status="all">
+                All <span class="tab-count" id="count-all">0</span>
+            </button>
+            <button class="tab-btn" data-status="reading">
+                Reading <span class="tab-count" id="count-reading">0</span>
+            </button>
+            <button class="tab-btn" data-status="planned">
+                Planned <span class="tab-count" id="count-planned">0</span>
+            </button>
+            <button class="tab-btn" data-status="completed">
+                Completed <span class="tab-count" id="count-completed">0</span>
+            </button>
+            <button class="tab-btn" data-status="paused">
+                On Hold <span class="tab-count" id="count-paused">0</span>
+            </button>
+            <button class="tab-btn" data-status="dropped">
+                Dropped <span class="tab-count" id="count-dropped">0</span>
+            </button>
+        </div>
+
+        <!-- Stats strip -->
+        <div class="stats-strip" id="stats-strip" style="display:none">
+            <div class="stat-pill"><span class="stat-dot dot-reading"></span>Reading <strong id="stat-reading">0</strong></div>
+            <div class="stat-pill"><span class="stat-dot dot-planned"></span>Planned <strong id="stat-planned">0</strong></div>
+            <div class="stat-pill"><span class="stat-dot dot-completed"></span>Completed <strong id="stat-completed">0</strong></div>
+            <div class="stat-pill"><span class="stat-dot dot-paused"></span>On Hold <strong id="stat-paused">0</strong></div>
+            <div class="stat-pill"><span class="stat-dot dot-dropped"></span>Dropped <strong id="stat-dropped">0</strong></div>
+        </div>
+
+        <!-- Books grid -->
+        <div class="books-grid" id="books-grid"></div>
+
+    </div>
+
+    <!-- Delete confirm modal -->
+    <div class="confirm-layer" id="confirm-layer">
+        <div class="confirm-card">
+            <h3>Remove from library?</h3>
+            <p id="confirm-msg">This will remove the book from your bookmarks. You can always add it again.</p>
+            <div class="confirm-actions">
+                <button class="btn-confirm-cancel" id="confirm-cancel">Cancel</button>
+                <button class="btn-confirm-delete" id="confirm-delete">Remove</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script type="module">
+        import { onAuthStateChange, signOutUser, auth, getBooks, updateBook, deleteBook } from './firebase.js';
+
+        const esc     = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        const escAttr = s => (s||'').replace(/'/g,'&#39;');
+        const BG      = i => `bg-${(i % 14) + 1}`;
+
+        // ── State ──────────────────────────────────────────────────
+        let allBooks      = [];
+        let activeStatus  = 'all';
+        let activeSort    = 'newest';
+        let pendingDelete = null; // { uid, bookId, title }
+        let currentUser   = null;
+
+        // ── Toast ──────────────────────────────────────────────────
+        let toastTimer;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+        }
+
+        // ── Book detail URL ────────────────────────────────────────
+        function bookUrl(book) {
+            const params = new URLSearchParams({
+                id:     book.externalId || '',
+                source: book.source     || 'open-library',
+                title:  book.title      || '',
+                author: book.author     || '',
+                cover:  book.coverUrl   || book.cover || '',
+                rating: book.rating     || '',
+                year:   book.year       || '',
+            });
+            return `book.html?${params.toString()}`;
+        }
+
+        // ── Counts ─────────────────────────────────────────────────
+        function updateCounts(books) {
+            const counts = { all: books.length, reading: 0, planned: 0, completed: 0, paused: 0, dropped: 0 };
+            books.forEach(b => { if (counts[b.status] !== undefined) counts[b.status]++; });
+
+            document.getElementById('total-count').textContent  = counts.all;
+            document.getElementById('count-all').textContent       = counts.all;
+            document.getElementById('count-reading').textContent   = counts.reading;
+            document.getElementById('count-planned').textContent   = counts.planned;
+            document.getElementById('count-completed').textContent = counts.completed;
+            document.getElementById('count-paused').textContent    = counts.paused;
+            document.getElementById('count-dropped').textContent   = counts.dropped;
+
+            document.getElementById('stat-reading').textContent   = counts.reading;
+            document.getElementById('stat-planned').textContent   = counts.planned;
+            document.getElementById('stat-completed').textContent = counts.completed;
+            document.getElementById('stat-paused').textContent    = counts.paused;
+            document.getElementById('stat-dropped').textContent   = counts.dropped;
+
+            const statsStrip = document.getElementById('stats-strip');
+            statsStrip.style.display = counts.all > 0 ? 'flex' : 'none';
+
+            const subtitle = document.getElementById('page-subtitle');
+            subtitle.textContent = counts.all === 0
+                ? 'Start adding books from the home page'
+                : `${counts.all} title${counts.all !== 1 ? 's' : ''} in your library`;
+        }
+
+        // ── Sort ───────────────────────────────────────────────────
+        function sortBooks(books) {
+            const sorted = [...books];
+            if (activeSort === 'newest') {
+                sorted.sort((a, b) => {
+                    const ta = a.addedAt?.toDate?.() || new Date(a.addedAt || 0);
+                    const tb = b.addedAt?.toDate?.() || new Date(b.addedAt || 0);
+                    return tb - ta;
+                });
+            } else if (activeSort === 'oldest') {
+                sorted.sort((a, b) => {
+                    const ta = a.addedAt?.toDate?.() || new Date(a.addedAt || 0);
+                    const tb = b.addedAt?.toDate?.() || new Date(b.addedAt || 0);
+                    return ta - tb;
+                });
+            } else if (activeSort === 'title') {
+                sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+            } else if (activeSort === 'author') {
+                sorted.sort((a, b) => (a.author || '').localeCompare(b.author || ''));
+            }
+            return sorted;
+        }
+
+        // ── Filter ─────────────────────────────────────────────────
+        function filterBooks(books) {
+            if (activeStatus === 'all') return books;
+            return books.filter(b => b.status === activeStatus);
+        }
+
+        // ── Render grid ────────────────────────────────────────────
+        function renderGrid() {
+            const grid = document.getElementById('books-grid');
+            const filtered = filterBooks(sortBooks(allBooks));
+
+            if (allBooks.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📚</div>
+                        <h3>No books saved yet</h3>
+                        <p>Find books, manga, or comics on the home page and hit + to save them here.</p>
+                        <a class="empty-cta" href="home.html">Browse books</a>
+                    </div>`;
+                return;
+            }
+
+            if (filtered.length === 0) {
+                const labels = { reading: 'Reading', planned: 'Planned', completed: 'Completed', paused: 'On Hold', dropped: 'Dropped' };
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        <h3>Nothing here yet</h3>
+                        <p>You haven't marked anything as "${labels[activeStatus] || activeStatus}" yet.</p>
+                    </div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map((book, i) => {
+                const cover      = book.coverUrl || book.cover || '';
+                const hasCover   = !!cover;
+                const coverStyle = hasCover ? `background-image:url('${esc(cover)}');` : '';
+                const coverCls   = `bm-cover${hasCover ? '' : ' no-cover ' + BG(i)}`;
+                const status     = book.status || 'planned';
+                const sourceCls  = `source-${esc(book.source || 'open-library')}`;
+
+                const sourceLabels = {
+                    'open-library': 'Book',
+                    'manga-eden':   'Manga',
+                    'gutenberg':    'Classic',
+                    'hardcover':    'Book',
+                };
+                const sourceLabel = book.sourceLabel || sourceLabels[book.source] || 'Book';
+
+                const statusLabels = {
+                    reading: 'Currently Reading', planned: 'Plan to Read',
+                    completed: 'Completed', paused: 'On Hold', dropped: 'Dropped',
+                };
+
+                return `
+                <div class="bm-card" data-id="${esc(book.id)}" data-title="${escAttr(book.title||'')}">
+                    <div class="${coverCls}" style="${coverStyle}" data-href="${escAttr(bookUrl(book))}">
+                        <div class="status-stripe stripe-${esc(status)}"></div>
+                        ${!hasCover ? `<span class="cover-initials">${esc((book.title||'?').slice(0,2).toUpperCase())}</span>` : ''}
+                        ${hasCover  ? `<span class="cover-title">${esc(book.title)}</span>` : ''}
+                        <button class="bm-delete" title="Remove from library" data-id="${esc(book.id)}" data-title="${escAttr(book.title||'')}">✕</button>
+                    </div>
+                    <div class="bm-info">
+                        <span class="bm-source-badge ${sourceCls}">${esc(sourceLabel)}</span>
+                        <div class="bm-title" data-href="${escAttr(bookUrl(book))}">${esc(book.title||'Unknown')}</div>
+                        <div class="bm-author">${esc(book.author||'Unknown Author')}</div>
+                        <select class="bm-status-select" data-id="${esc(book.id)}" title="Change status">
+                            <option value="planned"   ${status==='planned'   ? 'selected' : ''}>Plan to Read</option>
+                            <option value="reading"   ${status==='reading'   ? 'selected' : ''}>Currently Reading</option>
+                            <option value="completed" ${status==='completed' ? 'selected' : ''}>Completed</option>
+                            <option value="paused"    ${status==='paused'    ? 'selected' : ''}>On Hold</option>
+                            <option value="dropped"   ${status==='dropped'   ? 'selected' : ''}>Dropped</option>
+                        </select>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Cover / title click → navigate
+            grid.querySelectorAll('[data-href]').forEach(el => {
+                el.style.cursor = 'pointer';
+                el.addEventListener('click', e => {
+                    // Don't navigate if they clicked the delete button inside
+                    if (e.target.closest('.bm-delete')) return;
+                    window.location.href = el.dataset.href;
+                });
+            });
+
+            // Delete buttons
+            grid.querySelectorAll('.bm-delete').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    pendingDelete = { uid: currentUser.uid, bookId: btn.dataset.id, title: btn.dataset.title };
+                    document.getElementById('confirm-msg').textContent =
+                        `Remove "${btn.dataset.title || 'this book'}" from your library?`;
+                    document.getElementById('confirm-layer').classList.add('open');
+                });
+            });
+
+            // Status selects
+            grid.querySelectorAll('.bm-status-select').forEach(sel => {
+                sel.addEventListener('change', async e => {
+                    e.stopPropagation();
+                    const bookId    = sel.dataset.id;
+                    const newStatus = sel.value;
+                    try {
+                        await updateBook(currentUser.uid, bookId, { status: newStatus });
+                        const book = allBooks.find(b => b.id === bookId);
+                        if (book) book.status = newStatus;
+                        updateCounts(allBooks);
+                        // Update stripe colour without full re-render
+                        const stripe = sel.closest('.bm-card')?.querySelector('.status-stripe');
+                        if (stripe) {
+                            stripe.className = `status-stripe stripe-${newStatus}`;
+                        }
+                        const labels = { reading: 'Reading', planned: 'Planned', completed: 'Completed', paused: 'On Hold', dropped: 'Dropped' };
+                        showToast(`Moved to "${labels[newStatus] || newStatus}"`);
+                    } catch {
+                        showToast('Could not update status — try again');
+                        sel.value = allBooks.find(b => b.id === bookId)?.status || 'planned';
+                    }
+                });
+            });
+        }
+
+        // ── Skeletons ──────────────────────────────────────────────
+        function showSkeletons(n = 8) {
+            const grid = document.getElementById('books-grid');
+            grid.innerHTML = Array.from({length: n}, () => `
+                <div class="skel-card">
+                    <div class="skeleton skel-cover"></div>
+                    <div class="skel-info">
+                        <div class="skeleton skel-line short"></div>
+                        <div class="skeleton skel-line long"></div>
+                        <div class="skeleton skel-line short"></div>
+                        <div class="skeleton skel-line full" style="margin-top:4px"></div>
+                    </div>
+                </div>`).join('');
+        }
+
+        // ── Load books ─────────────────────────────────────────────
+        async function loadBooks(uid) {
+            showSkeletons();
+            try {
+                allBooks = await getBooks(uid);
+            } catch (err) {
+                console.error('Failed to load books:', err);
+                allBooks = [];
+            }
+            updateCounts(allBooks);
+            renderGrid();
+        }
+
+        // ── Filter tabs ────────────────────────────────────────────
+        document.getElementById('filter-tabs').addEventListener('click', e => {
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeStatus = btn.dataset.status;
+            renderGrid();
+        });
+
+        // ── Sort ───────────────────────────────────────────────────
+        document.getElementById('sort-select').addEventListener('change', e => {
+            activeSort = e.target.value;
+            renderGrid();
+        });
+
+        // ── Delete confirm ─────────────────────────────────────────
+        document.getElementById('confirm-cancel').addEventListener('click', () => {
+            document.getElementById('confirm-layer').classList.remove('open');
+            pendingDelete = null;
+        });
+
+        document.getElementById('confirm-delete').addEventListener('click', async () => {
+            if (!pendingDelete) return;
+            const { uid, bookId, title } = pendingDelete;
+            document.getElementById('confirm-layer').classList.remove('open');
+            try {
+                await deleteBook(uid, bookId);
+                allBooks = allBooks.filter(b => b.id !== bookId);
+                updateCounts(allBooks);
+                renderGrid();
+                showToast(`"${title}" removed from library`);
+            } catch {
+                showToast('Could not remove — try again');
+            }
+            pendingDelete = null;
+        });
+
+        document.getElementById('confirm-layer').addEventListener('click', e => {
+            if (e.target === document.getElementById('confirm-layer')) {
+                document.getElementById('confirm-layer').classList.remove('open');
+                pendingDelete = null;
+            }
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                document.getElementById('confirm-layer').classList.remove('open');
+                pendingDelete = null;
+            }
+        });
+
+        // ── Side menu ──────────────────────────────────────────────
+        const menuBtn     = document.getElementById('menu-btn');
+        const menuPanel   = document.getElementById('menu-panel');
+        const menuClose   = document.getElementById('menu-close');
+        const menuSignout = document.getElementById('menu-signout');
+
+        menuBtn.addEventListener('click',   () => menuPanel.classList.add('open'));
+        menuClose.addEventListener('click', () => menuPanel.classList.remove('open'));
+        menuPanel.addEventListener('click', e => { if (e.target === menuPanel) menuPanel.classList.remove('open'); });
+
+        menuSignout.addEventListener('click', async () => {
+            try { await signOutUser(); window.location.href = 'login.html'; } catch (err) { showToast(err.message); }
+        });
+
+        // ── Auth ───────────────────────────────────────────────────
+        onAuthStateChange(user => {
+            if (!user) { window.location.href = 'login.html'; return; }
+            currentUser = user;
+
+            // Avatar
+            const avatarEl     = document.getElementById('user-avatar');
+            const menuAvatarEl = document.getElementById('menu-avatar-display');
+            const photo        = localStorage.getItem(`ps_avatar_${user.uid}`);
+
+            if (photo) {
+                avatarEl.style.backgroundImage = `url('${photo}')`;
+                avatarEl.textContent = '';
+                menuAvatarEl.style.cssText = `background-image:url('${photo}');background-size:cover;background-position:center;`;
+                menuAvatarEl.textContent = '';
+            } else {
+                const initials = (user.displayName || user.email || 'PS').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                avatarEl.textContent     = initials;
+                menuAvatarEl.textContent = initials;
+            }
+
+            document.getElementById('menu-display-name').textContent =
+                localStorage.getItem(`ps_username_${user.uid}`) || user.displayName || 'Reader';
+            document.getElementById('menu-email').textContent = user.email || '';
+
+            loadBooks(user.uid);
+        });
+    </script>
+</body>
+</html>

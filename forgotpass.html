@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Reset Password · PageSync</title>
+        <link rel="stylesheet" href="../css/pagesync.css">
+        <style>
+            .error-msg {
+                font-size: 13px; color: #e05555;
+                min-height: 18px; margin: 2px 0 8px 4px;
+            }
+            .success-msg {
+                font-size: 13px; color: #50c878;
+                min-height: 18px; margin: 2px 0 8px 4px;
+            }
+            /* back link matches existing style */
+            .back-link {
+                display: block; text-align: center;
+                margin-top: 16px; font-size: 13px;
+                color: #606880; text-decoration: none;
+                transition: color 0.15s;
+            }
+            .back-link:hover { color: #a0a8b8; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="logo">↻</div>
+            <h1>Reset password</h1>
+            <p class="description">Enter your email address or username</p>
+
+            <form id="forgot-form" action="#" method="post" novalidate>
+                <div class="field">
+                    <input type="text" id="identifier" name="identifier"
+                        placeholder="Username or email" required autocomplete="email">
+                </div>
+
+                <div class="error-msg"   id="forgot-error"></div>
+                <div class="success-msg" id="forgot-success" style="display:none"></div>
+
+                <div class="submit-row">
+                    <button type="submit" class="button primary" id="reset-btn">Send reset email</button>
+                </div>
+
+                <a class="back-link" href="login.html">← Back to login</a>
+            </form>
+        </div>
+
+        <script type="module">
+            import { db, resetPassword } from './firebase.js';
+            import {
+                collection, query, where, getDocs
+            } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+            const form       = document.getElementById('forgot-form');
+            const inputEl    = document.getElementById('identifier');
+            const errorEl    = document.getElementById('forgot-error');
+            const successEl  = document.getElementById('forgot-success');
+            const resetBtn   = document.getElementById('reset-btn');
+
+            const showError   = msg => { errorEl.textContent = msg; successEl.style.display = 'none'; };
+            const showSuccess = msg => { successEl.textContent = msg; successEl.style.display = ''; errorEl.textContent = ''; };
+            const clearAll    = ()  => { errorEl.textContent = ''; successEl.style.display = 'none'; };
+
+            // Given a username, find the matching email in Firestore
+            async function emailFromUsername(username) {
+                const q   = query(collection(db, 'users'), where('username', '==', username.toLowerCase()));
+                const snap = await getDocs(q);
+                if (snap.empty) return null;
+                return snap.docs[0].data().email || null;
+            }
+
+            form.addEventListener('submit', async e => {
+                e.preventDefault();
+                clearAll();
+
+                const raw = inputEl.value.trim();
+                if (!raw) { showError('Please enter your email or username.'); return; }
+
+                resetBtn.disabled    = true;
+                resetBtn.textContent = 'Sending…';
+
+                try {
+                    let email = raw;
+
+                    // If the input doesn't look like an email, treat it as a username
+                    if (!raw.includes('@')) {
+                        email = await emailFromUsername(raw);
+                        if (!email) {
+                            // Don't reveal whether a username exists — show generic message
+                            showSuccess('If an account with that username exists, a reset email has been sent.');
+                            resetBtn.disabled    = false;
+                            resetBtn.textContent = 'Send reset email';
+                            return;
+                        }
+                    }
+
+                    await resetPassword(email);
+
+                    // Always show the same message to avoid email enumeration
+                    showSuccess('If an account with that email exists, a password reset link has been sent. Check your inbox (and spam folder).');
+                    inputEl.value = '';
+
+                } catch (err) {
+                    // Firebase throws for invalid email format — surface that one
+                    if (err.code === 'auth/invalid-email') {
+                        showError('That doesn\'t look like a valid email address.');
+                    } else {
+                        // For everything else (user-not-found etc.) still show generic message
+                        showSuccess('If an account with that email exists, a password reset link has been sent.');
+                    }
+                } finally {
+                    resetBtn.disabled    = false;
+                    resetBtn.textContent = 'Send reset email';
+                }
+            });
+        </script>
+    </body>
+</html>
