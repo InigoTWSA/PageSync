@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile · PageSync</title>
-    <link rel="stylesheet" href="../css/pagesync.css">
+    <link rel="stylesheet" href="pagesync.css">
     <style>
         /* ── Page layout ─────────────────────────────────────────── */
         body.dashboard { padding: 0; }
@@ -244,8 +244,16 @@
             margin-bottom: 32px;
         }
 
-        @media (max-width: 600px) {
-            .fav-grid { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 720px) {
+            .fav-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        }
+
+        @media (max-width: 480px) {
+            .fav-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        }
+
+        @media (max-width: 340px) {
+            .fav-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         .fav-slot {
@@ -389,11 +397,13 @@
             border-radius: 12px;
             padding: 13px 16px;
             color: #eceeef;
-            font-size: 14px;
+            font-size: 16px; /* 16px prevents iOS auto-zoom */
             resize: vertical;
             font-family: inherit;
             line-height: 1.6;
             transition: border-color 0.15s;
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .edit-group input[type="text"]:focus,
@@ -411,28 +421,34 @@
         }
 
         .btn-save {
-            padding: 11px 24px;
+            padding: 12px 24px;
             border-radius: 12px;
             border: none;
             background: #3b7df3;
             color: #fff;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
+            min-height: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
             transition: background 0.15s;
         }
 
         .btn-save:hover { background: #5a93f7; }
 
         .btn-cancel {
-            padding: 11px 20px;
+            padding: 12px 20px;
             border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.1);
             background: rgba(255,255,255,0.04);
             color: #9aa0ad;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
+            min-height: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
             transition: background 0.15s;
         }
 

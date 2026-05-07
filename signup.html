@@ -1,31 +1,109 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Sign Up</title>
-        <link rel="stylesheet" href="../css/pagesync.css">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sign Up · PageSync</title>
+        <link rel="stylesheet" href="pagesync.css">
         <style>
-            /* ── Inline OTP ──────────────────────────────────────── */
+            /* ── Email row with Send Code button ─────────────────── */
+            .email-row {
+                display: flex;
+                gap: 8px;
+                align-items: stretch;
+            }
+
+            .email-row .field {
+                flex: 1;
+                margin-bottom: 0;
+            }
+
+            .send-code-btn {
+                padding: 0 16px;
+                border-radius: 14px;
+                border: 1px solid rgba(59,125,243,0.4);
+                background: rgba(59,125,243,0.12);
+                color: #7aabff;
+                font-size: 13px;
+                font-weight: 700;
+                cursor: pointer;
+                white-space: nowrap;
+                transition: background 0.15s, border-color 0.15s, color 0.15s;
+                flex-shrink: 0;
+            }
+
+            .send-code-btn:hover:not(:disabled) {
+                background: rgba(59,125,243,0.22);
+                border-color: rgba(59,125,243,0.6);
+                color: #a0c8ff;
+            }
+
+            .send-code-btn:disabled {
+                opacity: 0.45;
+                cursor: not-allowed;
+            }
+
+            /* ── OTP slide-in ────────────────────────────────────── */
             .otp-inline {
                 overflow: hidden;
                 max-height: 0;
                 opacity: 0;
-                transition: max-height 0.35s ease, opacity 0.3s ease, margin 0.3s ease;
+                transition: max-height 0.35s ease, opacity 0.3s ease;
                 margin-bottom: 0;
             }
 
             .otp-inline.visible {
-                max-height: 120px;
+                max-height: 140px;
                 opacity: 1;
-                margin-bottom: 0;
             }
 
-            .otp-inline .field { margin-bottom: 0; }
-
-            .otp-hint {
-                font-size: 12px;
-                color: #606880;
-                margin: 6px 0 0 4px;
+            .otp-row {
+                display: flex;
+                gap: 8px;
+                align-items: stretch;
+                margin-bottom: 6px;
             }
+
+            .otp-row .field { flex: 1; margin-bottom: 0; }
+
+            #otp-code {
+                letter-spacing: 0.3em;
+                font-size: 18px;
+                font-weight: 700;
+                text-align: center;
+            }
+
+            .verify-btn {
+                padding: 0 16px;
+                border-radius: 14px;
+                border: 1px solid rgba(60,200,100,0.35);
+                background: rgba(60,200,100,0.1);
+                color: #70d090;
+                font-size: 13px;
+                font-weight: 700;
+                cursor: pointer;
+                white-space: nowrap;
+                transition: background 0.15s, border-color 0.15s;
+                flex-shrink: 0;
+            }
+
+            .verify-btn:hover:not(:disabled) {
+                background: rgba(60,200,100,0.18);
+                border-color: rgba(60,200,100,0.5);
+            }
+
+            .verify-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+            .otp-meta {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 2px;
+            }
+
+            .otp-hint { font-size: 12px; color: #606880; }
+
+            .otp-hint.verified { color: #50c878; font-weight: 600; }
 
             .resend-link {
                 font-size: 12px;
@@ -34,13 +112,22 @@
                 border: none;
                 cursor: pointer;
                 padding: 0;
-                margin-top: 6px;
-                margin-left: 4px;
-                display: inline;
                 transition: color 0.15s;
+                flex-shrink: 0;
             }
 
-            .resend-link:hover { color: #7aabff; }
+            .resend-link:hover:not(:disabled) { color: #7aabff; }
+            .resend-link:disabled { color: #404860; cursor: default; }
+
+            /* ── Error / success inline ──────────────────────────── */
+            .field-msg {
+                font-size: 12px;
+                min-height: 16px;
+                margin: 4px 0 0 2px;
+            }
+
+            .field-msg.error   { color: #e05555; }
+            .field-msg.success { color: #50c878; }
 
             /* ── Checkbox row ────────────────────────────────────── */
             .checkbox-row {
@@ -68,7 +155,6 @@
                 flex-shrink: 0;
             }
 
-            /* T&C button sits OUTSIDE the label — fixes click interception */
             .link-button {
                 background: none;
                 border: none;
@@ -137,81 +223,72 @@
 
             .overlay-close {
                 position: absolute;
-                top: 18px;
-                right: 18px;
+                top: 18px; right: 18px;
                 background: rgba(255,255,255,0.06);
-                border: none;
-                color: #9aa0ad;
-                font-size: 16px;
-                width: 32px;
-                height: 32px;
-                border-radius: 50%;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                border: none; color: #9aa0ad;
+                font-size: 16px; width: 32px; height: 32px;
+                border-radius: 50%; cursor: pointer;
+                display: flex; align-items: center; justify-content: center;
                 transition: background 0.15s;
             }
 
-            .overlay-close:hover {
-                background: rgba(255,255,255,0.12);
-                color: #e6e7e8;
-            }
+            .overlay-close:hover { background: rgba(255,255,255,0.12); color: #e6e7e8; }
 
-            .terms-footer {
-                margin-top: 22px;
-                text-align: center;
-            }
+            .terms-footer { margin-top: 22px; text-align: center; }
         </style>
     </head>
     <body>
         <div class="card">
             <div class="logo">↻</div>
             <h1>Sign up</h1>
-            <form id="signup-form" action="#" method="post">
+            <form id="signup-form" action="#" method="post" novalidate>
 
                 <div class="field">
                     <input type="text" id="username" name="username"
                         placeholder="Username" required autocomplete="username">
                 </div>
 
-                <div class="field">
-                    <input type="email" id="email" name="email"
-                        placeholder="Email Address" required autocomplete="email">
+                <!-- Email + Send Code button -->
+                <div class="email-row" style="margin-bottom:6px">
+                    <div class="field">
+                        <input type="email" id="email" name="email"
+                            placeholder="Email Address" required autocomplete="email">
+                    </div>
+                    <button type="button" class="send-code-btn" id="send-code-btn">Send Code</button>
                 </div>
+                <div class="field-msg" id="email-msg"></div>
 
                 <!-- OTP slides in below email -->
                 <div class="otp-inline" id="otp-inline">
-                    <div class="field">
-                        <input type="text" id="otp-code" maxlength="6"
-                            placeholder="Enter 6-digit code" inputmode="numeric"
-                            autocomplete="one-time-code">
+                    <div class="otp-row" style="margin-top:8px">
+                        <div class="field">
+                            <input type="text" id="otp-code" maxlength="6"
+                                placeholder="000000" inputmode="numeric"
+                                autocomplete="one-time-code">
+                        </div>
+                        <button type="button" class="verify-btn" id="verify-btn">Verify</button>
                     </div>
-                    <p class="otp-hint">A verification code was sent to your email.</p>
-                    <button type="button" class="resend-link" id="resend-otp">
-                        Didn't receive it? Resend code
-                    </button>
+                    <div class="otp-meta" style="margin-top:6px">
+                        <span class="otp-hint" id="otp-hint">Enter the 6-digit code sent to your email.</span>
+                        <button type="button" class="resend-link" id="resend-otp" disabled>Resend</button>
+                    </div>
                 </div>
 
-                <div class="field password-wrapper">
+                <div class="field password-wrapper" style="margin-top:12px">
                     <input type="password" id="password" name="password"
                         placeholder="Password" required autocomplete="new-password">
                     <button type="button" class="password-toggle" id="password-toggle">👁️</button>
                 </div>
 
                 <div class="submit-row">
-                    <button type="submit" class="button primary" id="submit-btn">Sign up</button>
+                    <button type="submit" class="button primary" id="submit-btn" disabled>Sign up</button>
                 </div>
 
                 <a class="google-button" id="google-signup" href="#">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
-                    Sign In with Google
+                    Sign up with Google
                 </a>
 
-                <!--
-                    T&C: checkbox and button are SEPARATE elements.
-                    Button is NOT inside the label to avoid click interception.
-                -->
                 <div class="checkbox-row">
                     <label class="terms-checkbox">
                         <input type="checkbox" id="terms-checkbox">
@@ -252,7 +329,14 @@
 
         <script type="module">
             import { signupWithEmail, signInWithGoogle, onAuthStateChange } from './firebase.js';
+            import config from './config.js';
 
+            const EMAILJS_SERVICE_ID  = config.emailjs.serviceId;
+            const EMAILJS_TEMPLATE_ID = config.emailjs.templateId;
+            const EMAILJS_PUBLIC_KEY  = config.emailjs.publicKey;
+            const OTP_ENABLED = EMAILJS_SERVICE_ID !== 'YOUR_EMAILJS_SERVICE_ID';
+
+            // ── DOM ────────────────────────────────────────────────
             const form           = document.getElementById('signup-form');
             const googleBtn      = document.getElementById('google-signup');
             const emailInput     = document.getElementById('email');
@@ -263,77 +347,233 @@
             const termsCheckbox  = document.getElementById('terms-checkbox');
             const otpInline      = document.getElementById('otp-inline');
             const otpCodeInput   = document.getElementById('otp-code');
+            const sendCodeBtn    = document.getElementById('send-code-btn');
+            const verifyBtn      = document.getElementById('verify-btn');
             const resendBtn      = document.getElementById('resend-otp');
+            const otpHint        = document.getElementById('otp-hint');
+            const emailMsg       = document.getElementById('email-msg');
             const termsLayer     = document.getElementById('terms-layer');
             const termsClose     = document.getElementById('terms-close');
             const termsAccept    = document.getElementById('terms-accept');
             const termsLink      = document.getElementById('terms-link');
 
-            let otpStep = false;
+            // ── State ──────────────────────────────────────────────
+            let otpVerified  = false;
+            let resendTimer  = null;
 
-            // Password toggle
+            // ── Helpers ────────────────────────────────────────────
+            function setEmailMsg(msg, type = '') {
+                emailMsg.textContent  = msg;
+                emailMsg.className    = 'field-msg' + (type ? ' ' + type : '');
+            }
+
+            function updateSubmitBtn() {
+                submitBtn.disabled = !(otpVerified && termsCheckbox.checked);
+            }
+
+            async function sha256(str) {
+                const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+                return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+            }
+
+            function genOTP() {
+                return String(Math.floor(100000 + Math.random() * 900000));
+            }
+
+            // ── Resend cooldown ────────────────────────────────────
+            function startCooldown(seconds = 60) {
+                let s = seconds;
+                resendBtn.disabled    = true;
+                resendBtn.textContent = `Resend (${s}s)`;
+                clearInterval(resendTimer);
+                resendTimer = setInterval(() => {
+                    s--;
+                    if (s <= 0) {
+                        clearInterval(resendTimer);
+                        resendBtn.disabled    = false;
+                        resendBtn.textContent = 'Resend';
+                    } else {
+                        resendBtn.textContent = `Resend (${s}s)`;
+                    }
+                }, 1000);
+            }
+
+            // ── Send OTP ───────────────────────────────────────────
+            async function sendOTP(email) {
+                const code   = genOTP();
+                const hashed = await sha256(code);
+
+                sessionStorage.setItem('ps_otp_hash',   hashed);
+                sessionStorage.setItem('ps_otp_expiry', String(Date.now() + 10 * 60 * 1000));
+                sessionStorage.setItem('ps_otp_email',  email);
+
+                if (!OTP_ENABLED) {
+                    console.info(`[PageSync DEV] Signup OTP for ${email}: ${code}`);
+                    return;
+                }
+
+                const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        service_id:  EMAILJS_SERVICE_ID,
+                        template_id: EMAILJS_TEMPLATE_ID,
+                        user_id:     EMAILJS_PUBLIC_KEY,
+                        template_params: {
+                            to_email: email,
+                            otp_code: code,
+                            app_name: 'PageSync',
+                        },
+                    }),
+                });
+                if (!res.ok) throw new Error(`EmailJS error ${res.status}`);
+            }
+
+            // ── Verify OTP ─────────────────────────────────────────
+            async function verifyOTP(input) {
+                const hash   = sessionStorage.getItem('ps_otp_hash');
+                const expiry = Number(sessionStorage.getItem('ps_otp_expiry'));
+                const email  = sessionStorage.getItem('ps_otp_email');
+
+                if (!hash)                            return { ok: false, msg: 'No code found. Please resend.' };
+                if (Date.now() > expiry)              return { ok: false, msg: 'Code expired. Please resend.' };
+                if (email !== emailInput.value.trim()) return { ok: false, msg: 'Email changed. Please resend.' };
+
+                const inputHash = await sha256(input.trim());
+                if (inputHash !== hash)               return { ok: false, msg: 'Incorrect code. Try again.' };
+
+                sessionStorage.removeItem('ps_otp_hash');
+                sessionStorage.removeItem('ps_otp_expiry');
+                sessionStorage.removeItem('ps_otp_email');
+                return { ok: true };
+            }
+
+            // ── Password toggle ────────────────────────────────────
             passwordToggle.addEventListener('click', e => {
                 e.preventDefault();
-                const isPass = passwordInput.type === 'password';
-                passwordInput.type = isPass ? 'text' : 'password';
-                passwordToggle.textContent = isPass ? '👁️‍🗨️' : '👁️';
+                const show = passwordInput.type === 'password';
+                passwordInput.type         = show ? 'text' : 'password';
+                passwordToggle.textContent = show ? '👁️‍🗨️' : '👁️';
             });
 
-            // Sign up
-            form.addEventListener('submit', async e => {
-                e.preventDefault();
-
-                if (otpStep) {
-                    const code = otpCodeInput.value.trim();
-                    if (!code || code.length < 6) { otpCodeInput.focus(); return; }
-                    alert('OTP verified! (wire up verification logic here)');
+            // ── Send Code button ───────────────────────────────────
+            sendCodeBtn.addEventListener('click', async () => {
+                const email = emailInput.value.trim();
+                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    setEmailMsg('Enter a valid email address first.', 'error');
+                    emailInput.focus();
                     return;
                 }
 
-                if (!termsCheckbox.checked) {
-                    alert('Please agree to the Terms & Conditions to continue.');
+                // Reset verification if email changed
+                if (otpVerified) {
+                    otpVerified = false;
+                    updateSubmitBtn();
+                    otpHint.textContent  = 'Enter the 6-digit code sent to your email.';
+                    otpHint.className    = 'otp-hint';
+                    otpCodeInput.disabled = false;
+                    verifyBtn.disabled   = false;
+                    otpCodeInput.value   = '';
+                }
+
+                sendCodeBtn.disabled    = true;
+                sendCodeBtn.textContent = 'Sending…';
+                setEmailMsg('', '');
+
+                try {
+                    await sendOTP(email);
+                    otpInline.classList.add('visible');
+                    setEmailMsg(
+                        OTP_ENABLED
+                            ? `Code sent to ${email}`
+                            : `Dev mode: check browser console (F12) for code`,
+                        'success'
+                    );
+                    setTimeout(() => otpCodeInput.focus(), 380);
+                    startCooldown(60);
+                    sendCodeBtn.textContent = 'Resend';
+                } catch {
+                    setEmailMsg('Could not send code. Check your connection.', 'error');
+                    sendCodeBtn.disabled    = false;
+                    sendCodeBtn.textContent = 'Send Code';
+                }
+            });
+
+            // ── Resend button (inside OTP section) ────────────────
+            resendBtn.addEventListener('click', async () => {
+                if (resendBtn.disabled) return;
+                const email = emailInput.value.trim();
+                resendBtn.disabled    = true;
+                resendBtn.textContent = 'Sending…';
+                try {
+                    await sendOTP(email);
+                    otpCodeInput.value  = '';
+                    otpHint.textContent = 'New code sent!';
+                    otpHint.className   = 'otp-hint success';
+                    setTimeout(() => {
+                        otpHint.textContent = 'Enter the 6-digit code sent to your email.';
+                        otpHint.className   = 'otp-hint';
+                    }, 2500);
+                    otpCodeInput.focus();
+                    startCooldown(60);
+                } catch {
+                    otpHint.textContent = 'Could not resend. Try again.';
+                    otpHint.className   = 'otp-hint error';
+                    resendBtn.disabled  = false;
+                    resendBtn.textContent = 'Resend';
+                }
+            });
+
+            // ── Verify button ──────────────────────────────────────
+            verifyBtn.addEventListener('click', async () => {
+                const code = otpCodeInput.value.trim();
+                if (code.length < 6) {
+                    otpHint.textContent = 'Enter all 6 digits.';
+                    otpHint.className   = 'otp-hint error';
+                    otpCodeInput.focus();
                     return;
                 }
 
-                const email    = emailInput.value.trim();
-                const username = usernameInput.value.trim();
-                const password = passwordInput.value;
+                verifyBtn.disabled    = true;
+                verifyBtn.textContent = '…';
 
-                submitBtn.disabled    = true;
-                submitBtn.textContent = 'Creating account…';
-
-                try {
-                    await signupWithEmail(email, password, username);
-                    window.location.href = 'home.html';
-                } catch (error) {
-                    submitBtn.disabled    = false;
-                    submitBtn.textContent = 'Sign up';
-                    alert('Signup failed: ' + error.message);
+                const { ok, msg } = await verifyOTP(code);
+                if (!ok) {
+                    otpHint.textContent   = msg;
+                    otpHint.className     = 'otp-hint error';
+                    verifyBtn.disabled    = false;
+                    verifyBtn.textContent = 'Verify';
+                    otpCodeInput.select();
+                    return;
                 }
+
+                // ✅ Verified
+                otpVerified           = true;
+                otpHint.textContent   = '✓ Email verified';
+                otpHint.className     = 'otp-hint verified';
+                otpCodeInput.disabled = true;
+                verifyBtn.disabled    = true;
+                verifyBtn.textContent = '✓';
+                resendBtn.disabled    = true;
+                sendCodeBtn.disabled  = true;
+                updateSubmitBtn();
             });
 
-            resendBtn.addEventListener('click', () => {
-                resendBtn.textContent = 'Sent!';
-                setTimeout(() => { resendBtn.textContent = "Didn't receive it? Resend code"; }, 3000);
+            // Also allow Enter key in OTP field to trigger verify
+            otpCodeInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); verifyBtn.click(); }
             });
 
-            // Google sign-up
-            googleBtn.addEventListener('click', async e => {
-                e.preventDefault();
-                try {
-                    await signInWithGoogle();
-                    window.location.href = 'home.html';
-                } catch (error) {
-                    alert('Google signup failed: ' + error.message);
-                }
-            });
+            // ── T&C checkbox ───────────────────────────────────────
+            termsCheckbox.addEventListener('change', updateSubmitBtn);
 
-            // Terms & Conditions
+            // ── T&C Modal ──────────────────────────────────────────
             termsLink.addEventListener('click',   () => termsLayer.classList.add('open'));
             termsClose.addEventListener('click',  () => termsLayer.classList.remove('open'));
             termsAccept.addEventListener('click', () => {
                 termsLayer.classList.remove('open');
-                termsCheckbox.checked = true; // auto-check when they accept
+                termsCheckbox.checked = true;
+                updateSubmitBtn();
             });
             termsLayer.addEventListener('click', e => {
                 if (e.target === termsLayer) termsLayer.classList.remove('open');
@@ -342,7 +582,55 @@
                 if (e.key === 'Escape') termsLayer.classList.remove('open');
             });
 
-            // Redirect if already signed in
+            // ── Sign up form submit ────────────────────────────────
+            form.addEventListener('submit', async e => {
+                e.preventDefault();
+
+                if (!otpVerified) {
+                    setEmailMsg('Please verify your email first.', 'error');
+                    return;
+                }
+                if (!termsCheckbox.checked) return;
+
+                const email    = emailInput.value.trim();
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value;
+
+                if (!username) { usernameInput.focus(); return; }
+                if (!password) { passwordInput.focus(); return; }
+
+                submitBtn.disabled    = true;
+                submitBtn.textContent = 'Creating account…';
+
+                try {
+                    await signupWithEmail(email, password, username);
+                    window.location.href = 'home.html';
+                } catch (err) {
+                    submitBtn.disabled    = false;
+                    submitBtn.textContent = 'Sign up';
+                    const code = err.code || '';
+                    setEmailMsg(
+                        code === 'auth/email-already-in-use' ? 'An account with this email already exists.' :
+                        code === 'auth/invalid-email'        ? 'Invalid email address.' :
+                        code === 'auth/weak-password'        ? 'Password must be at least 6 characters.' :
+                        err.message,
+                        'error'
+                    );
+                }
+            });
+
+            // ── Google sign-up ─────────────────────────────────────
+            googleBtn.addEventListener('click', async e => {
+                e.preventDefault();
+                try {
+                    await signInWithGoogle();
+                    window.location.href = 'home.html';
+                } catch (err) {
+                    setEmailMsg('Google sign-up failed: ' + err.message, 'error');
+                }
+            });
+
+            // ── Already signed in ──────────────────────────────────
             onAuthStateChange(user => {
                 if (user) window.location.href = 'home.html';
             });

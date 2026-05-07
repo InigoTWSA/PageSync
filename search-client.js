@@ -2,10 +2,11 @@
 // Client-side search + detail fetching using free, no-key public APIs.
 //
 // APIs used:
-//   Books / Classics  → Open Library  (openlibrary.org)  — free, no key
-//   Manga / Manhwa    → Jikan v4      (api.jikan.moe)    — free, no key (sfw=true enforced)
-//   Comics            → Open Library  (subject search)   — free, no key
-//   Classics          → Gutendex      (gutendex.com)     — free, no key
+//   Books             → Open Library    (openlibrary.org)    — free, no key
+//   Manga / Manhwa    → MangaDex        (api.mangadex.org)   — free, no key
+//   Classics          → Gutendex        (gutendex.com)       — free, no key
+//   Free Books        → Standard Ebooks (standardebooks.org) — free, no key
+//   Academic          → Internet Archive(archive.org)        — free, no key
 
 // ─── NSFW filter ─────────────────────────────────────────────────────────────
 // Applied to every result from every source before returning.
@@ -33,10 +34,6 @@ const BLOCKED_TITLES = [
   'playboy', 'penthouse', 'hustler', 'barely legal',
 ];
 
-// MAL / Jikan genre IDs that are adults-only
-// 9 = Ecchi, 12 = Hentai, 49 = Erotica
-const BLOCKED_JIKAN_GENRE_IDS = new Set([9, 12, 49]);
-
 function isSafe(item) {
   const haystack = [
     item.title        || '',
@@ -47,54 +44,57 @@ function isSafe(item) {
     ...(item.themes   || []),
   ].join(' ').toLowerCase();
 
-  // Check substring blocklist
   if (BLOCKED_TERMS.some(term => haystack.includes(term))) return false;
 
-  // Check whole-title blocklist
   const titleLower = (item.title || '').toLowerCase();
   if (BLOCKED_TITLES.some(t => titleLower.includes(t))) return false;
-
-  // Check Jikan genre IDs if present (raw genres from Jikan have .mal_id)
-  if (item._rawGenreIds) {
-    if (item._rawGenreIds.some(id => BLOCKED_JIKAN_GENRE_IDS.has(id))) return false;
-  }
 
   return true;
 }
 
 function filterSafe(results) {
-  return results.filter(isSafe).map(item => {
-    // Strip internal-only field before returning
-    const { _rawGenreIds, ...clean } = item;
-    return clean;
-  });
+  return results.filter(isSafe);
 }
 
 // ─── Search entry point ───────────────────────────────────────────────────────
 export async function clientSearch(query, source = 'books', limit = 12) {
   if (!query?.trim()) return { results: [], parsed: {} };
 
-  // Request more than needed so filtering doesn't leave us short
   const fetchLimit = limit + 10;
   const parsed     = parseQuery(query.trim(), source);
   const src        = source === 'books' && parsed.source !== 'books' ? parsed.source : source;
 
   let results = [];
   try {
-    if (src === 'manga')         results = await searchJikan(parsed.keywords, fetchLimit);
-    else if (src === 'comics')   results = await searchOpenLibrarySubject('comics', parsed.keywords, fetchLimit);
+    if (src === 'manga')         results = await searchMangaDex(parsed.keywords, fetchLimit);
     else if (src === 'classics') results = await searchGutenbergRest(parsed.keywords, fetchLimit);
-    else if (src === 'all') {
-      const perSource = Math.ceil(fetchLimit / 3);
-      const [books, manga, classics] = await Promise.allSettled([
-        searchOpenLibrary(parsed.keywords, perSource),
-        searchJikan(parsed.keywords, perSource),
+    else if (src === 'standard') results = await searchStandardEbooks(parsed.keywords, fetchLimit);
+    else if (src === 'academic') results = await searchInternetArchive(parsed.keywords, fetchLimit);
+    else if (src === 'free') {
+      const perSource = Math.ceil(fetchLimit / 2);
+      const [gutenberg, standard] = await Promise.allSettled([
         searchGutenbergRest(parsed.keywords, perSource),
+        searchStandardEbooks(parsed.keywords, perSource),
+      ]);
+      results = [
+        ...(gutenberg.status === 'fulfilled' ? gutenberg.value : []),
+        ...(standard.status  === 'fulfilled' ? standard.value  : []),
+      ];
+    } else if (src === 'all') {
+      const perSource = Math.ceil(fetchLimit / 5);
+      const [books, manga, classics, standard, academic] = await Promise.allSettled([
+        searchOpenLibrary(parsed.keywords, perSource),
+        searchMangaDex(parsed.keywords, perSource),
+        searchGutenbergRest(parsed.keywords, perSource),
+        searchStandardEbooks(parsed.keywords, perSource),
+        searchInternetArchive(parsed.keywords, perSource),
       ]);
       results = [
         ...(books.status    === 'fulfilled' ? books.value    : []),
         ...(manga.status    === 'fulfilled' ? manga.value    : []),
         ...(classics.status === 'fulfilled' ? classics.value : []),
+        ...(standard.status === 'fulfilled' ? standard.value : []),
+        ...(academic.status === 'fulfilled' ? academic.value : []),
       ];
     } else {
       results = await searchOpenLibrary(parsed.keywords, fetchLimit);
@@ -108,13 +108,11 @@ export async function clientSearch(query, source = 'books', limit = 12) {
 
 // ─── Detail entry point ───────────────────────────────────────────────────────
 export async function getBookDetail(id, source) {
-  if (source === 'manga-eden') {
-    return await fetchJikanDetail(id);
-  } else if (source === 'gutenberg') {
-    return await fetchGutenbergDetail(id);
-  } else {
-    return await fetchOpenLibraryDetail(id);
-  }
+  if (source === 'mangadex')         return await fetchMangaDexDetail(id);
+  if (source === 'gutenberg')        return await fetchGutenbergDetail(id);
+  if (source === 'standard-ebooks')  return await fetchStandardEbooksDetail(id);
+  if (source === 'internet-archive') return await fetchArchiveDetail(id);
+  return await fetchOpenLibraryDetail(id);
 }
 
 // ─── Open Library detail ──────────────────────────────────────────────────────
@@ -172,43 +170,6 @@ async function fetchOpenLibraryDetail(externalId) {
   };
 }
 
-// ─── Jikan detail ─────────────────────────────────────────────────────────────
-async function fetchJikanDetail(malId) {
-  const res  = await fetch(`https://api.jikan.moe/v4/manga/${malId}/full`);
-  const data = await res.json();
-  const m    = data.data || {};
-
-  const authors  = (m.authors || []).map(a => a.name?.replace(/,\s*/, ' ')).filter(Boolean);
-  const genres   = (m.genres  || []).map(g => g.name);
-  const themes   = (m.themes  || []).map(t => t.name);
-  const subjects = [...genres, ...themes].slice(0, 8);
-
-  return {
-    id:          `jikan-${m.mal_id}`,
-    externalId:  String(m.mal_id),
-    source:      'manga-eden',
-    sourceLabel: m.type === 'Manhwa' ? 'Manhwa' : m.type === 'Manhua' ? 'Manhua' : 'Manga',
-    title:       m.title_english || m.title || 'Unknown Title',
-    titleNative: m.title_japanese || m.title_synonyms?.[0] || null,
-    authors,
-    author:      authors[0] || 'Unknown Author',
-    cover:       m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || null,
-    rating:      m.score || null,
-    ratingCount: m.scored_by || null,
-    rank:        m.rank || null,
-    popularity:  m.popularity || null,
-    year:        m.published?.prop?.from?.year || null,
-    description: m.synopsis || null,
-    status:      m.status || null,
-    chapters:    m.chapters || null,
-    volumes:     m.volumes  || null,
-    subjects,
-    genres,
-    themes,
-    url:         m.url || null,
-  };
-}
-
 // ─── Gutenberg detail ─────────────────────────────────────────────────────────
 async function fetchGutenbergDetail(gutenbergId) {
   const res  = await fetch(`https://gutendex.com/books/${gutenbergId}`);
@@ -240,19 +201,20 @@ async function fetchGutenbergDetail(gutenbergId) {
   };
 }
 
-// ─── Query parser ─────────────────────────────────────────────────────────────
 function parseQuery(query, forcedSource) {
   let source = forcedSource || 'books';
   if (forcedSource === 'books' || !forcedSource) {
     if (/manga|manhwa|manhua|webtoon|anime|shonen|shojo|seinen|isekai/i.test(query))
       source = 'manga';
-    else if (/comic|graphic novel|marvel|dc comics|batman|superman|spider.?man/i.test(query))
-      source = 'comics';
     else if (/classic|gutenberg|public domain|dickens|tolstoy|austen|shakespeare/i.test(query))
       source = 'classics';
+    else if (/academic|research|scholarly|history|science|philosophy/i.test(query))
+      source = 'academic';
+    else if (/free|read now|readable|standard ebooks/i.test(query))
+      source = 'free';
   }
   const keywords = query
-    .replace(/\b(find|show|search|give me|recommend|good|best|popular|top)\b/gi, '')
+    .replace(/\b(find|show|search|give me|recommend|good|best|popular|top|free|readable)\b/gi, '')
     .replace(/\s+/g, ' ').trim();
   return { keywords, source };
 }
@@ -266,23 +228,6 @@ async function searchOpenLibrary(keywords, limit = 12) {
     externalId:  d.key || String(i),
     source:      'open-library',
     sourceLabel: 'Book',
-    title:       d.title || 'Unknown Title',
-    author:      d.author_name?.[0] || 'Unknown Author',
-    cover:       d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : null,
-    rating:      d.ratings_average ? Math.round(d.ratings_average * 10) / 10 : null,
-    year:        d.first_publish_year || null,
-    subjects:    (d.subject || []).slice(0, 6),
-  }));
-}
-
-async function searchOpenLibrarySubject(subject, keywords, limit = 12) {
-  const url  = `https://openlibrary.org/search.json?q=${encodeURIComponent(keywords + ' ' + subject)}&limit=${limit}&fields=key,title,author_name,cover_i,first_publish_year,ratings_average,subject`;
-  const data = await fetch(url).then(r => r.json());
-  return (data.docs || []).map((d, i) => ({
-    id:          `ol-comic-${d.key?.replace('/works/', '') || i}`,
-    externalId:  d.key || String(i),
-    source:      'open-library',
-    sourceLabel: 'Comics',
     title:       d.title || 'Unknown Title',
     author:      d.author_name?.[0] || 'Unknown Author',
     cover:       d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : null,
@@ -308,30 +253,432 @@ async function searchGutenbergRest(keywords, limit = 12) {
     year:        b.authors?.[0]?.birth_year || null,
     description: b.subjects?.slice(0, 2).join(', ') || null,
     subjects:    (b.subjects || []).slice(0, 6),
+    readUrl:     b.formats?.['text/html'] || b.formats?.['application/epub+zip'] || null,
+    url:         b.id ? `https://www.gutenberg.org/ebooks/${b.id}` : null,
   }));
 }
 
-// ─── Jikan search — sfw=true enforced at API level + client filter ────────────
-async function searchJikan(keywords, limit = 12) {
-  // sfw=true tells Jikan to exclude adult-rated entries at the source
-  const url  = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(keywords)}&limit=${Math.min(limit, 25)}&order_by=popularity&sort=asc&sfw=true`;
-  const data = await fetch(url).then(r => r.json());
-  return (data.data || []).map((m, i) => ({
-    id:              `jikan-${m.mal_id || i}`,
-    externalId:      String(m.mal_id || i),
-    source:          'manga-eden',
-    sourceLabel:     m.type === 'Manhwa' ? 'Manhwa' : m.type === 'Manhua' ? 'Manhua' : 'Manga',
-    title:           m.title_english || m.title || 'Unknown Title',
-    author:          m.authors?.[0]?.name?.replace(/,\s*/, ' ') || 'Unknown Author',
-    cover:           m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || null,
-    rating:          m.score || null,
-    year:            m.published?.prop?.from?.year || null,
-    description:     m.synopsis ? m.synopsis.slice(0, 200) : null,
-    status:          m.status || null,
-    chapters:        m.chapters || null,
-    genres:          (m.genres || []).map(g => g.name),
-    themes:          (m.themes || []).map(t => t.name),
-    // Internal field used by isSafe() — stripped before export
-    _rawGenreIds:    (m.genres || []).map(g => g.mal_id),
-  }));
+// ─── Standard Ebooks search (OPDS feed) ──────────────────────────────────────
+// Standard Ebooks publishes beautiful public-domain books with clean typography.
+// We use their OPDS catalog which returns Atom/XML — parsed client-side.
+
+export async function searchStandardEbooks(keywords, limit = 12) {
+  // SE's OPDS search endpoint
+  const url  = `https://standardebooks.org/opds/all`;
+  try {
+    const res  = await fetch(url);
+    const text = await res.text();
+    const parser = new DOMParser();
+    const xml  = parser.parseFromString(text, 'application/xml');
+    const entries = Array.from(xml.querySelectorAll('entry'));
+
+    // Filter by keyword match against title/author/summary
+    const kw = keywords.toLowerCase();
+    const matched = entries.filter(e => {
+      const title   = e.querySelector('title')?.textContent || '';
+      const author  = e.querySelector('author name')?.textContent || '';
+      const summary = e.querySelector('summary')?.textContent || '';
+      return title.toLowerCase().includes(kw) ||
+             author.toLowerCase().includes(kw) ||
+             summary.toLowerCase().includes(kw);
+    });
+
+    // If no keyword match, return a slice of all (for browse mode)
+    const pool = matched.length ? matched : entries;
+
+    return pool.slice(0, limit).map(e => {
+      const title   = e.querySelector('title')?.textContent || 'Unknown Title';
+      const author  = e.querySelector('author name')?.textContent || 'Unknown Author';
+      const summary = e.querySelector('summary')?.textContent || null;
+      const id      = e.querySelector('id')?.textContent || '';
+      const slug    = id.replace('https://standardebooks.org/ebooks/', '').replace(/\/$/, '');
+
+      // Cover image — SE uses a predictable URL pattern
+      const coverUrl = slug
+        ? `https://standardebooks.org/ebooks/${slug}/downloads/cover.jpg`
+        : null;
+
+      // Read URL — SE provides free epub + web reader
+      const readUrl = slug
+        ? `https://standardebooks.org/ebooks/${slug}/text/single-page`
+        : null;
+
+      // Download links from OPDS
+      const epubLink = Array.from(e.querySelectorAll('link')).find(l =>
+        l.getAttribute('type')?.includes('epub')
+      );
+      const downloadUrl = epubLink?.getAttribute('href') || null;
+
+      // Subjects / categories
+      const subjects = Array.from(e.querySelectorAll('category'))
+        .map(c => c.getAttribute('label') || c.getAttribute('term') || '')
+        .filter(Boolean).slice(0, 6);
+
+      // Published year
+      const published = e.querySelector('published')?.textContent || null;
+      const year = published ? published.slice(0, 4) : null;
+
+      return {
+        id:          `se-${slug}`,
+        externalId:  slug,
+        source:      'standard-ebooks',
+        sourceLabel: 'Free Book',
+        title,
+        author,
+        cover:       coverUrl,
+        rating:      null,
+        year,
+        description: summary,
+        subjects,
+        readUrl,
+        downloadUrl,
+        url:         slug ? `https://standardebooks.org/ebooks/${slug}` : null,
+      };
+    });
+  } catch (err) {
+    console.error('[SE search] error:', err);
+    return [];
+  }
+}
+
+// ─── Standard Ebooks detail ───────────────────────────────────────────────────
+async function fetchStandardEbooksDetail(slug) {
+  // Fetch the OPDS entry for a specific book
+  const url = `https://standardebooks.org/opds/all`;
+  try {
+    const res  = await fetch(url);
+    const text = await res.text();
+    const parser = new DOMParser();
+    const xml  = parser.parseFromString(text, 'application/xml');
+    const entries = Array.from(xml.querySelectorAll('entry'));
+
+    const entry = entries.find(e => {
+      const id = e.querySelector('id')?.textContent || '';
+      return id.includes(slug);
+    });
+
+    if (!entry) throw new Error('Entry not found');
+
+    const title   = entry.querySelector('title')?.textContent || 'Unknown Title';
+    const author  = entry.querySelector('author name')?.textContent || 'Unknown Author';
+    const summary = entry.querySelector('summary')?.textContent || null;
+    const published = entry.querySelector('published')?.textContent || null;
+    const year    = published ? published.slice(0, 4) : null;
+
+    const coverUrl = slug
+      ? `https://standardebooks.org/ebooks/${slug}/downloads/cover.jpg`
+      : null;
+
+    const readUrl = slug
+      ? `https://standardebooks.org/ebooks/${slug}/text/single-page`
+      : null;
+
+    const epubLink = Array.from(entry.querySelectorAll('link')).find(l =>
+      l.getAttribute('type')?.includes('epub')
+    );
+    const downloadUrl = epubLink?.getAttribute('href') || null;
+
+    const subjects = Array.from(entry.querySelectorAll('category'))
+      .map(c => c.getAttribute('label') || c.getAttribute('term') || '')
+      .filter(Boolean).slice(0, 8);
+
+    return {
+      id:            `se-${slug}`,
+      externalId:    slug,
+      source:        'standard-ebooks',
+      sourceLabel:   'Free Book',
+      title,
+      authors:       [author],
+      author,
+      cover:         coverUrl,
+      rating:        null,
+      ratingCount:   null,
+      year,
+      description:   summary,
+      status:        'Public Domain',
+      subjects,
+      genres:        subjects.slice(0, 5),
+      readUrl,
+      downloadUrl,
+      url:           `https://standardebooks.org/ebooks/${slug}`,
+    };
+  } catch (err) {
+    console.error('[SE detail] error:', err);
+    // Return minimal data from slug
+    return {
+      id:          `se-${slug}`,
+      externalId:  slug,
+      source:      'standard-ebooks',
+      sourceLabel: 'Free Book',
+      title:       slug.split('/').pop()?.replace(/_/g, ' ') || 'Unknown',
+      author:      'Unknown Author',
+      cover:       `https://standardebooks.org/ebooks/${slug}/downloads/cover.jpg`,
+      readUrl:     `https://standardebooks.org/ebooks/${slug}/text/single-page`,
+      url:         `https://standardebooks.org/ebooks/${slug}`,
+    };
+  }
+}
+
+// ─── MangaDex search ──────────────────────────────────────────────────────────
+// MangaDex REST API — free, no key, requires covers relationship for art.
+// Content ratings: safe, suggestive only (no erotica/pornographic).
+
+async function searchMangaDex(keywords, limit = 12) {
+  const params = new URLSearchParams({
+    title:                keywords,
+    limit:                Math.min(limit, 25),
+    'contentRating[]':    'safe',
+    'contentRating[]':    'suggestive',
+    'includes[]':         'cover_art',
+    'includes[]':         'author',
+    availableTranslatedLanguage: 'en',
+    order:                'relevance',
+    orderby:              'desc',
+  });
+
+  // MangaDex requires specific array param format
+  const url = `https://api.mangadex.org/manga?title=${encodeURIComponent(keywords)}&limit=${Math.min(limit, 25)}&contentRating[]=safe&contentRating[]=suggestive&includes[]=cover_art&includes[]=author&availableTranslatedLanguage[]=en`;
+
+  try {
+    const res  = await fetch(url, { headers: { 'User-Agent': 'PageSync/1.0' } });
+    const data = await res.json();
+    const list = data.data || [];
+
+    return list.map(m => {
+      const attrs   = m.attributes || {};
+      const title   = attrs.title?.en || Object.values(attrs.title || {})[0] || 'Unknown Title';
+      const desc    = attrs.description?.en || Object.values(attrs.description || {})[0] || null;
+
+      // Author from relationships
+      const authorRel = (m.relationships || []).find(r => r.type === 'author');
+      const author    = authorRel?.attributes?.name || 'Unknown Author';
+
+      // Cover art
+      const coverRel  = (m.relationships || []).find(r => r.type === 'cover_art');
+      const coverFile = coverRel?.attributes?.fileName;
+      const cover     = coverFile
+        ? `https://uploads.mangadex.org/covers/${m.id}/${coverFile}.256.jpg`
+        : null;
+
+      // Genres/tags
+      const genres  = (attrs.tags || [])
+        .filter(t => t.attributes?.group === 'genre')
+        .map(t => t.attributes?.name?.en || '').filter(Boolean);
+      const themes  = (attrs.tags || [])
+        .filter(t => t.attributes?.group === 'theme')
+        .map(t => t.attributes?.name?.en || '').filter(Boolean);
+
+      const year    = attrs.year || null;
+      const status  = attrs.status ? attrs.status.charAt(0).toUpperCase() + attrs.status.slice(1) : null;
+
+      // Content type label
+      const typeMap = { manga: 'Manga', manhwa: 'Manhwa', manhua: 'Manhua', novel: 'Novel' };
+      const sourceLabel = typeMap[attrs.originalLanguage === 'ko' ? 'manhwa' : attrs.originalLanguage === 'zh' ? 'manhua' : 'manga'] || 'Manga';
+
+      return {
+        id:          `mdx-${m.id}`,
+        externalId:  m.id,
+        source:      'mangadex',
+        sourceLabel,
+        title,
+        author,
+        cover,
+        rating:      attrs.rating?.bayesian ? Math.round(attrs.rating.bayesian * 10) / 10 : null,
+        year,
+        description: desc ? desc.slice(0, 200) : null,
+        status,
+        chapters:    attrs.lastChapter || null,
+        genres,
+        themes,
+        url:         `https://mangadex.org/title/${m.id}`,
+        // MangaDex provides a read URL per title
+        readUrl:     `https://mangadex.org/title/${m.id}`,
+        _contentRating: attrs.contentRating,
+      };
+    }).filter(m => !['erotica', 'pornographic'].includes(m._contentRating));
+  } catch (err) {
+    console.error('[MangaDex search] error:', err);
+    return [];
+  }
+}
+
+// ─── MangaDex detail ──────────────────────────────────────────────────────────
+async function fetchMangaDexDetail(mangaId) {
+  try {
+    const [mangaRes, feedRes] = await Promise.allSettled([
+      fetch(`https://api.mangadex.org/manga/${mangaId}?includes[]=cover_art&includes[]=author&includes[]=artist`),
+      fetch(`https://api.mangadex.org/manga/${mangaId}/feed?translatedLanguage[]=en&limit=10&order[chapter]=asc&contentRating[]=safe&contentRating[]=suggestive`),
+    ]);
+
+    const mangaData = mangaRes.status === 'fulfilled' ? await mangaRes.value.json() : {};
+    const feedData  = feedRes.status  === 'fulfilled' ? await feedRes.value.json()  : {};
+
+    const m     = mangaData.data || {};
+    const attrs = m.attributes || {};
+
+    const title   = attrs.title?.en || Object.values(attrs.title || {})[0] || 'Unknown Title';
+    const desc    = attrs.description?.en || Object.values(attrs.description || {})[0] || null;
+
+    const authorRel  = (m.relationships || []).find(r => r.type === 'author');
+    const artistRel  = (m.relationships || []).find(r => r.type === 'artist');
+    const author     = authorRel?.attributes?.name || 'Unknown Author';
+    const artist     = artistRel?.attributes?.name || null;
+    const authors    = [author, artist && artist !== author ? artist : null].filter(Boolean);
+
+    const coverRel   = (m.relationships || []).find(r => r.type === 'cover_art');
+    const coverFile  = coverRel?.attributes?.fileName;
+    const cover      = coverFile
+      ? `https://uploads.mangadex.org/covers/${m.id}/${coverFile}.512.jpg`
+      : null;
+
+    const genres  = (attrs.tags || [])
+      .filter(t => t.attributes?.group === 'genre')
+      .map(t => t.attributes?.name?.en || '').filter(Boolean);
+    const themes  = (attrs.tags || [])
+      .filter(t => t.attributes?.group === 'theme')
+      .map(t => t.attributes?.name?.en || '').filter(Boolean);
+    const subjects = [...genres, ...themes].slice(0, 8);
+
+    const typeMap     = { ko: 'Manhwa', zh: 'Manhua', 'zh-hk': 'Manhua' };
+    const sourceLabel = typeMap[attrs.originalLanguage] || 'Manga';
+
+    // Chapters from feed
+    const chapters = (feedData.data || []).map(ch => {
+      const ca = ch.attributes || {};
+      return {
+        id:      ch.id,
+        chapter: ca.chapter || '?',
+        title:   ca.title || `Chapter ${ca.chapter || '?'}`,
+        pages:   ca.pages || null,
+        url:     `https://mangadex.org/chapter/${ch.id}`,
+      };
+    });
+
+    return {
+      id:            `mdx-${m.id}`,
+      externalId:    m.id,
+      source:        'mangadex',
+      sourceLabel,
+      title,
+      titleNative:   attrs.altTitles?.find(t => t.ja)?.[`ja`] || null,
+      authors,
+      author,
+      cover,
+      rating:        attrs.rating?.bayesian ? Math.round(attrs.rating.bayesian * 10) / 10 : null,
+      ratingCount:   attrs.rating?.count || null,
+      year:          attrs.year || null,
+      description:   desc,
+      status:        attrs.status ? attrs.status.charAt(0).toUpperCase() + attrs.status.slice(1) : null,
+      chapters:      attrs.lastChapter || null,
+      volumes:       attrs.lastVolume  || null,
+      subjects,
+      genres,
+      themes,
+      chapterList:   chapters,   // first 10 English chapters for the reader UI
+      readUrl:       `https://mangadex.org/title/${m.id}`,
+      url:           `https://mangadex.org/title/${m.id}`,
+    };
+  } catch (err) {
+    console.error('[MangaDex detail] error:', err);
+    return null;
+  }
+}
+
+// ─── Internet Archive search ──────────────────────────────────────────────────
+// Uses Archive.org's public search API — returns only texts with open access.
+// Embeddable via archive.org/embed/{identifier}
+
+async function searchInternetArchive(keywords, limit = 12) {
+  // Search for texts that are openly accessible (not borrowed/restricted)
+  const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(keywords)}+mediatype:texts+access-restricted-item:false&fl=identifier,title,creator,description,year,subject,downloads,avg_rating,num_reviews,imagecount&rows=${Math.min(limit, 20)}&page=1&output=json&sort=downloads+desc`;
+
+  try {
+    const res  = await fetch(url);
+    const data = await res.json();
+    const docs = data.response?.docs || [];
+
+    return docs.map((d, i) => {
+      const identifier = d.identifier || '';
+      const cover      = identifier
+        ? `https://archive.org/services/img/${identifier}`
+        : null;
+      const subjects   = Array.isArray(d.subject) ? d.subject.slice(0, 6)
+                       : d.subject ? [d.subject] : [];
+
+      return {
+        id:          `ia-${identifier}`,
+        externalId:  identifier,
+        source:      'internet-archive',
+        sourceLabel: 'Academic',
+        title:       d.title || 'Unknown Title',
+        author:      Array.isArray(d.creator) ? d.creator[0] : (d.creator || 'Unknown Author'),
+        cover,
+        rating:      d.avg_rating ? Math.round(Number(d.avg_rating) * 10) / 10 : null,
+        year:        d.year || null,
+        description: d.description
+          ? (Array.isArray(d.description) ? d.description[0] : d.description).slice(0, 200)
+          : null,
+        subjects,
+        downloadCount: d.downloads || null,
+        // Archive embed URL — works in iframe
+        readUrl:     `https://archive.org/embed/${identifier}`,
+        url:         `https://archive.org/details/${identifier}`,
+      };
+    });
+  } catch (err) {
+    console.error('[Internet Archive search] error:', err);
+    return [];
+  }
+}
+
+// ─── Internet Archive detail ──────────────────────────────────────────────────
+async function fetchArchiveDetail(identifier) {
+  try {
+    const res  = await fetch(`https://archive.org/metadata/${identifier}`);
+    const data = await res.json();
+    const meta = data.metadata || {};
+
+    const title   = Array.isArray(meta.title)   ? meta.title[0]   : (meta.title   || 'Unknown Title');
+    const creator = Array.isArray(meta.creator)  ? meta.creator    : (meta.creator ? [meta.creator] : ['Unknown Author']);
+    const desc    = Array.isArray(meta.description) ? meta.description[0] : (meta.description || null);
+    const subject = Array.isArray(meta.subject)  ? meta.subject    : (meta.subject ? [meta.subject] : []);
+    const year    = meta.year || meta.date?.slice(0, 4) || null;
+
+    // Find a readable file — prefer PDF then epub then djvu
+    const files   = data.files || [];
+    const pdfFile = files.find(f => f.name?.endsWith('.pdf'));
+    const epubFile= files.find(f => f.name?.endsWith('.epub'));
+
+    const downloadUrl = pdfFile
+      ? `https://archive.org/download/${identifier}/${pdfFile.name}`
+      : epubFile
+        ? `https://archive.org/download/${identifier}/${epubFile.name}`
+        : null;
+
+    return {
+      id:            `ia-${identifier}`,
+      externalId:    identifier,
+      source:        'internet-archive',
+      sourceLabel:   'Academic',
+      title,
+      authors:       creator,
+      author:        creator[0] || 'Unknown Author',
+      cover:         `https://archive.org/services/img/${identifier}`,
+      rating:        meta.avg_rating ? Math.round(Number(meta.avg_rating) * 10) / 10 : null,
+      ratingCount:   meta.num_reviews ? Number(meta.num_reviews) : null,
+      year,
+      description:   desc,
+      status:        'Open Access',
+      subjects:      subject.slice(0, 8),
+      genres:        subject.slice(0, 5),
+      downloadCount: meta.downloads ? Number(meta.downloads) : null,
+      downloadUrl,
+      // Archive's built-in embed viewer
+      readUrl:       `https://archive.org/embed/${identifier}`,
+      url:           `https://archive.org/details/${identifier}`,
+    };
+  } catch (err) {
+    console.error('[Archive detail] error:', err);
+    return null;
+  }
 }

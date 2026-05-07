@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading… · PageSync</title>
-    <link rel="stylesheet" href="../css/pagesync.css">
+    <link rel="stylesheet" href="pagesync.css">
     <style>
         /* ── Layout ─────────────────────────────────────────────────── */
         body.dashboard { padding: 0; }
@@ -108,11 +108,13 @@
         .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
 
         .btn-primary {
-            padding: 12px 24px; border-radius: 12px; border: none;
+            padding: 13px 24px; border-radius: 12px; border: none;
             background: #3b7df3; color: #fff;
-            font-size: 14px; font-weight: 700; cursor: pointer;
+            font-size: 15px; font-weight: 700; cursor: pointer;
             transition: background 0.15s, transform 0.1s;
             display: inline-flex; align-items: center; gap: 8px;
+            min-height: 46px; touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         .btn-primary:hover { background: #5a93f7; }
         .btn-primary:active { transform: scale(0.97); }
@@ -120,24 +122,27 @@
         .btn-primary.saved:hover { background: rgba(50,170,90,0.9); }
 
         .btn-secondary {
-            padding: 12px 20px; border-radius: 12px;
+            padding: 13px 20px; border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.12);
             background: rgba(255,255,255,0.05); color: #c0c8d8;
-            font-size: 14px; font-weight: 600; cursor: pointer;
+            font-size: 15px; font-weight: 600; cursor: pointer;
             transition: background 0.15s, border-color 0.15s;
             display: inline-flex; align-items: center; gap: 8px;
-            text-decoration: none;
+            text-decoration: none; min-height: 46px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         .btn-secondary:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.2); }
 
         /* Status selector dropdown */
         .status-select {
-            padding: 12px 16px; border-radius: 12px;
+            padding: 13px 16px; border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.12);
             background: rgba(255,255,255,0.05); color: #c0c8d8;
-            font-size: 14px; font-weight: 600; cursor: pointer;
+            font-size: 16px; font-weight: 600; cursor: pointer;
             appearance: none; -webkit-appearance: none;
-            outline: none;
+            outline: none; min-height: 46px;
+            touch-action: manipulation;
         }
         .status-select:focus { border-color: rgba(59,125,243,0.5); }
 
@@ -150,19 +155,20 @@
             margin-bottom: 14px;
         }
 
-       .desc-text { 
-            display: -webkit-box; 
-            -webkit-box-orient: vertical; 
-            -webkit-line-clamp: 5;
-            line-clamp: 5;
-            overflow: hidden; 
-       
+        /* Description */
+        .book-description {
+            font-size: 15px; color: #9aa0ad; line-height: 1.8;
+            margin-bottom: 36px; max-width: 680px;
+            position: relative;
         }
-        
-        .desc-text.collapsed { 
-            -webkit-line-clamp: 5;
-            line-clamp: 5;
+        .desc-text { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+        .desc-text.collapsed { -webkit-line-clamp: 5; }
+        .desc-toggle {
+            margin-top: 10px; font-size: 13px; color: #3b7df3;
+            background: none; border: none; cursor: pointer; padding: 0;
+            font-weight: 600;
         }
+        .desc-toggle:hover { color: #7aabff; }
 
         /* Genres / tags */
         .genre-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 36px; }
@@ -217,10 +223,23 @@
 
         /* ── Responsive ───────────────────────────────────────────── */
         @media (max-width: 600px) {
-            .hero-content { flex-direction: column; align-items: flex-start; padding: 28px 20px 24px; gap: 20px; }
-            .book-poster  { width: 120px; min-width: 120px; height: 180px; }
-            .book-body    { padding: 28px 20px 0; }
-            .book-topbar  { padding: 14px 20px; }
+            .hero-content { flex-direction: column; align-items: flex-start; padding: 24px 16px 20px; gap: 16px; }
+            .book-poster  { width: 100px; min-width: 100px; height: 150px; border-radius: 12px; }
+            .book-title   { font-size: clamp(18px, 5vw, 28px); }
+            .book-body    { padding: 24px 16px 0; }
+            .book-topbar  { padding: 12px 16px; }
+            .chapter-section { padding: 0 16px 28px; }
+            .reader-section  { margin: 0 16px 28px; }
+            .hero-actions { gap: 8px; }
+            .btn-primary, .btn-secondary { padding: 11px 16px; font-size: 14px; }
+            .stats-row { gap: 14px; }
+            .meta-grid { gap: 12px; }
+        }
+
+        @media (max-width: 400px) {
+            .hero-content { padding: 20px 14px 16px; }
+            .book-poster  { width: 80px; min-width: 80px; height: 120px; }
+            .book-body    { padding: 20px 14px 0; }
         }
     </style>
 </head>
