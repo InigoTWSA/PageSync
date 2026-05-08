@@ -624,7 +624,14 @@
                     await signInWithGoogle();
                     window.location.href = 'home.html';
                 } catch (err) {
-                    setEmailMsg('Google sign-up failed: ' + err.message, 'error');
+                    const code = err.code || '';
+                    setEmailMsg(
+                        code === 'auth/popup-blocked'           ? 'Popup was blocked. Please allow popups for this site.' :
+                        code === 'auth/popup-closed-by-user'    ? 'Sign-up was cancelled.' :
+                        code === 'auth/cancelled-popup-request' ? 'Sign-up was cancelled.' :
+                        'Google sign-up failed: ' + err.message,
+                        'error'
+                    );
                 }
             });
 

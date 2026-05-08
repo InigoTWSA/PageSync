@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings · PageSync</title>
+    <link rel="stylesheet" href="pagesync.css">
+    <style>
+        body.dashboard { padding: 0; }
+
+        /* ── Topbar ──────────────────────────────────────────────── */
+        .settings-topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 32px; position: sticky; top: 0; z-index: 20;
+            background: rgba(9,11,15,0.92); backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .brand {
+            display: inline-flex; align-items: center; gap: 10px;
+            font-size: 20px; font-weight: 700; text-decoration: none;
+            color: #e6e7e8; letter-spacing: -0.02em;
+        }
+        .brand-mark {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #3b7df3, #7d5cff);
+            color: #fff; font-weight: 700; font-size: 14px;
+        }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .menu-button {
+            width: 42px; height: 42px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08); background: #101318;
+            color: #e6e7e8; font-size: 16px; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .avatar {
+            width: 42px; height: 42px; border-radius: 12px; background: #16191f;
+            display: flex; align-items: center; justify-content: center;
+            color: #f3f5f9; font-weight: 700; font-size: 15px; cursor: pointer;
+            text-decoration: none; transition: opacity 0.18s, transform 0.18s, box-shadow 0.18s;
+            overflow: hidden; background-size: cover; background-position: center;
+        }
+        .avatar:hover { opacity: 0.85; transform: scale(1.06); box-shadow: 0 0 0 2px #3b7df3; }
+
+        /* ── Shell ───────────────────────────────────────────────── */
+        .settings-shell {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 32px 80px;
+        }
+
+        .page-title {
+            font-size: 30px; font-weight: 800; color: #f0f2f5;
+            letter-spacing: -0.03em; margin-bottom: 36px;
+        }
+
+        /* ── Settings sections ───────────────────────────────────── */
+        .settings-section {
+            background: #14171d;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .section-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px; flex-shrink: 0;
+        }
+
+        .icon-account  { background: rgba(59,125,243,0.15); }
+        .icon-security { background: rgba(125,92,255,0.15); }
+        .icon-notif    { background: rgba(255,180,50,0.15); }
+        .icon-danger   { background: rgba(200,50,50,0.15); }
+
+        .section-header-text h2 {
+            font-size: 16px; font-weight: 700; color: #e8ecf2; margin-bottom: 2px;
+        }
+        .section-header-text p { font-size: 13px; color: #606880; }
+
+        .section-body { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+        /* ── Field groups ────────────────────────────────────────── */
+        .setting-field label {
+            display: block; font-size: 12px; font-weight: 600;
+            color: #606880; letter-spacing: 0.05em; text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .setting-field input {
+            width: 100%; background: #0e1016;
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+            padding: 13px 16px; color: #eceeef; font-size: 16px;
+            font-family: inherit; transition: border-color 0.15s;
+            box-sizing: border-box; -webkit-appearance: none; appearance: none;
+        }
+        .setting-field input:focus { outline: none; border-color: rgba(59,125,243,0.5); }
+        .setting-field input::placeholder { color: #404860; }
+        .setting-field input:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .field-hint { font-size: 12px; color: #404558; margin-top: 5px; }
+        .field-error { font-size: 12px; color: #e05555; margin-top: 5px; min-height: 16px; }
+        .field-success { font-size: 12px; color: #50c878; margin-top: 5px; min-height: 16px; }
+
+        /* ── Password wrapper ────────────────────────────────────── */
+        .pw-wrapper { position: relative; }
+        .pw-toggle {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #606880; font-size: 16px;
+            cursor: pointer; padding: 6px; display: flex; align-items: center;
+            min-width: 36px; min-height: 36px; justify-content: center;
+            touch-action: manipulation;
+        }
+
+        /* ── Section actions ─────────────────────────────────────── */
+        .section-actions {
+            display: flex; gap: 10px; justify-content: flex-end;
+            padding-top: 4px;
+        }
+
+        .btn-save {
+            padding: 11px 24px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #3b7df3, #7d5cff);
+            color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: opacity 0.15s; min-height: 44px;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .btn-save:hover { opacity: 0.88; }
+        .btn-save:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        /* ── Toggle rows (notifications) ─────────────────────────── */
+        .toggle-row {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 16px; padding: 4px 0;
+        }
+        .toggle-label h3 { font-size: 14px; font-weight: 600; color: #d0d5de; margin-bottom: 3px; }
+        .toggle-label p  { font-size: 12px; color: #505870; }
+
+        .toggle-switch {
+            position: relative; width: 44px; height: 24px; flex-shrink: 0;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; inset: 0; border-radius: 999px;
+            background: rgba(255,255,255,0.1); cursor: pointer;
+            transition: background 0.2s;
+        }
+        .toggle-slider::before {
+            content: ''; position: absolute;
+            width: 18px; height: 18px; border-radius: 50%;
+            left: 3px; top: 3px; background: #8f97a5;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: rgba(59,125,243,0.5); }
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(20px); background: #3b7df3;
+        }
+
+        /* ── Danger zone ─────────────────────────────────────────── */
+        .danger-row {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 16px; flex-wrap: wrap;
+        }
+        .danger-label h3 { font-size: 14px; font-weight: 600; color: #d0d5de; margin-bottom: 3px; }
+        .danger-label p  { font-size: 12px; color: #505870; }
+
+        .btn-danger {
+            padding: 11px 20px; border-radius: 12px; border: 1px solid rgba(200,50,50,0.3);
+            background: rgba(200,50,50,0.1); color: #e07070;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: background 0.15s, border-color 0.15s; white-space: nowrap;
+            min-height: 44px; touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+        }
+        .btn-danger:hover { background: rgba(200,50,50,0.2); border-color: rgba(200,50,50,0.5); color: #f08080; }
+
+        /* ── Divider ─────────────────────────────────────────────── */
+        .section-divider {
+            height: 1px; background: rgba(255,255,255,0.06); margin: 4px 0;
+        }
+
+        /* ── Confirm modal ───────────────────────────────────────── */
+        .confirm-layer {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 60; padding: 20px;
+        }
+        .confirm-layer.open { display: flex; }
+        .confirm-card {
+            width: min(400px, 100%); background: #1a1d26;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+            padding: 28px 24px; text-align: center;
+            animation: modalIn 0.18s ease;
+        }
+        @keyframes modalIn { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: none; } }
+        .confirm-card h3 { font-size: 18px; font-weight: 700; color: #f0f2f5; margin-bottom: 10px; }
+        .confirm-card p  { font-size: 14px; color: #8f97a5; margin-bottom: 8px; line-height: 1.6; }
+        .confirm-input-wrap { margin: 16px 0; text-align: left; }
+        .confirm-input-wrap label { font-size: 12px; color: #606880; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px; }
+        .confirm-input {
+            width: 100%; background: #0e1016; border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px; padding: 12px 14px; color: #eceeef; font-size: 16px;
+            font-family: inherit; box-sizing: border-box;
+        }
+        .confirm-input:focus { outline: none; border-color: rgba(200,50,50,0.5); }
+        .confirm-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .btn-confirm-cancel {
+            padding: 11px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04); color: #9aa0ad; font-size: 14px;
+            font-weight: 600; cursor: pointer; transition: background 0.15s; min-height: 44px;
+        }
+        .btn-confirm-cancel:hover { background: rgba(255,255,255,0.08); }
+        .btn-confirm-delete {
+            padding: 11px 24px; border-radius: 12px; border: none;
+            background: #c03030; color: #fff; font-size: 14px;
+            font-weight: 700; cursor: pointer; transition: background 0.15s;
+            min-height: 44px; opacity: 0.45; cursor: not-allowed;
+        }
+        .btn-confirm-delete.enabled { opacity: 1; cursor: pointer; }
+        .btn-confirm-delete.enabled:hover { background: #d04040; }
+
+        /* ── Side menu ───────────────────────────────────────────── */
+        .menu-layer { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: none; align-items: center; justify-content: center; z-index: 30; padding: 20px; }
+        .menu-layer.open { display: flex; }
+        .menu-card { width: min(460px, 100%); background: rgba(16,18,24,0.98); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; box-shadow: 0 40px 80px rgba(0,0,0,0.35); overflow: hidden; }
+        .menu-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .menu-profile { display: flex; align-items: center; gap: 14px; }
+        .menu-avatar { width: 50px; height: 50px; border-radius: 18px; background: #16191f; display: flex; align-items: center; justify-content: center; color: #f3f5f9; font-weight: 700; background-size: cover; background-position: center; }
+        .menu-name { margin: 0; font-size: 16px; font-weight: 700; }
+        .menu-sub  { margin: 4px 0 0; color: #8f97a5; font-size: 13px; }
+        .menu-close { border: none; background: none; color: #e6e7e8; font-size: 20px; cursor: pointer; }
+        .menu-list { display: grid; gap: 1px; background: rgba(255,255,255,0.05); }
+        .menu-item, .menu-signout { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; text-decoration: none; color: #e6e7e8; background: #101318; border: none; cursor: pointer; font-size: 15px; }
+        .menu-item:hover, .menu-signout:hover { background: rgba(59,125,243,0.12); }
+        .menu-item.active { background: rgba(59,125,243,0.18); color: #fff; }
+        .menu-signout { justify-content: center; gap: 10px; font-weight: 700; color: #f5f7fa; }
+
+        /* ── Toast ───────────────────────────────────────────────── */
+        .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1f2430; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 22px; font-size: 14px; color: #d0d5de; box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.22s, transform 0.22s; pointer-events: none; white-space: nowrap; z-index: 99; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── Responsive ──────────────────────────────────────────── */
+        @media (max-width: 720px) {
+            .settings-topbar { padding: 14px 16px; }
+            .settings-shell  { padding: 24px 16px 60px; }
+            .section-body    { padding: 16px 18px 20px; }
+            .section-header  { padding: 16px 18px; }
+            .page-title      { font-size: 24px; margin-bottom: 24px; }
+        }
+
+        @media (max-width: 480px) {
+            .danger-row { flex-direction: column; align-items: flex-start; }
+            .btn-danger { width: 100%; text-align: center; }
+            .section-actions { justify-content: stretch; }
+            .btn-save { width: 100%; }
+        }
+    </style>
+</head>
+<body class="dashboard">
+
+    <!-- Topbar -->
+    <header class="settings-topbar">
+        <a class="brand" href="home.html">
+            <span class="brand-mark">PS</span>
+            <span>PageSync</span>
+        </a>
+        <div class="topbar-right">
+            <button class="menu-button" id="menu-btn">☰</button>
+            <a class="avatar" id="user-avatar" href="profile.html">PS</a>
+        </div>
+    </header>
+
+    <!-- Side menu -->
+    <div class="menu-layer" id="menu-panel">
+        <div class="menu-card">
+            <div class="menu-header">
+                <div class="menu-profile">
+                    <div class="menu-avatar" id="menu-avatar-display">PS</div>
+                    <div>
+                        <p class="menu-name" id="menu-display-name">PageSync</p>
+                        <p class="menu-sub"  id="menu-email-display">Personal dashboard</p>
+                    </div>
+                </div>
+                <button class="menu-close" id="menu-close">✕</button>
+            </div>
+            <div class="menu-list">
+                <a class="menu-item" href="home.html">Home</a>
+                <a class="menu-item" href="profile.html">Profile</a>
+                <a class="menu-item" href="#">Popular</a>
+                <a class="menu-item" href="#">Top rated</a>
+                <a class="menu-item" href="bookmarks.html">Bookmarks</a>
+                <a class="menu-item" href="lists.html">My Lists</a>
+                <a class="menu-item active" href="settings.html">Settings</a>
+                <button class="menu-signout" id="menu-signout">Sign Out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="settings-shell">
+        <h1 class="page-title">Settings</h1>
+
+        <!-- Account -->
+        <div class="settings-section">
+            <div class="section-header">
+                <div class="section-icon icon-account">👤</div>
+                <div class="section-header-text">
+                    <h2>Account</h2>
+                    <p>Update your display name and username</p>
+                </div>
+            </div>
+            <div class="section-body">
+                <div class="setting-field">
+                    <label>Display Name</label>
+                    <input type="text" id="display-name-input" placeholder="Your name" maxlength="40" autocomplete="name">
+                </div>
+                <div class="setting-field">
+                    <label>Username</label>
+                    <input type="text" id="username-input" placeholder="username" maxlength="30" autocomplete="username">
+                    <div class="field-hint">Letters, numbers, and underscores only.</div>
+                    <div class="field-error" id="username-error"></div>
+                </div>
+                <div class="setting-field">
+                    <label>Email</label>
+                    <input type="email" id="email-display" disabled>
+                    <div class="field-hint">Email cannot be changed here.</div>
+                </div>
+                <div class="section-actions">
+                    <button class="btn-save" id="save-account-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security -->
+        <div class="settings-section">
+            <div class="section-header">
+                <div class="section-icon icon-security">🔒</div>
+                <div class="section-header-text">
+                    <h2>Security</h2>
+                    <p>Change your password</p>
+                </div>
+            </div>
+            <div class="section-body">
+                <div class="setting-field">
+                    <label>Current Password</label>
+                    <div class="pw-wrapper">
+                        <input type="password" id="current-password" placeholder="Enter current password" autocomplete="current-password">
+                        <button type="button" class="pw-toggle" id="toggle-current">👁️</button>
+                    </div>
+                </div>
+                <div class="setting-field">
+                    <label>New Password</label>
+                    <div class="pw-wrapper">
+                        <input type="password" id="new-password" placeholder="At least 6 characters" autocomplete="new-password">
+                        <button type="button" class="pw-toggle" id="toggle-new">👁️</button>
+                    </div>
+                </div>
+                <div class="setting-field">
+                    <label>Confirm New Password</label>
+                    <div class="pw-wrapper">
+                        <input type="password" id="confirm-password" placeholder="Repeat new password" autocomplete="new-password">
+                        <button type="button" class="pw-toggle" id="toggle-confirm">👁️</button>
+                    </div>
+                    <div class="field-error"   id="password-error"></div>
+                    <div class="field-success" id="password-success"></div>
+                </div>
+                <div class="section-actions">
+                    <button class="btn-save" id="save-password-btn">Update Password</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="settings-section">
+            <div class="section-header">
+                <div class="section-icon icon-notif">🔔</div>
+                <div class="section-header-text">
+                    <h2>Notifications</h2>
+                    <p>Manage your notification preferences</p>
+                </div>
+            </div>
+            <div class="section-body">
+                <div class="toggle-row">
+                    <div class="toggle-label">
+                        <h3>New recommendations</h3>
+                        <p>Get notified about books matching your taste</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notif-recommendations" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="section-divider"></div>
+                <div class="toggle-row">
+                    <div class="toggle-label">
+                        <h3>Reading reminders</h3>
+                        <p>Remind me to keep up with my reading list</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notif-reminders">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="section-divider"></div>
+                <div class="toggle-row">
+                    <div class="toggle-label">
+                        <h3>Product updates</h3>
+                        <p>Hear about new PageSync features</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="notif-updates" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="section-actions" style="padding-top:8px">
+                    <button class="btn-save" id="save-notif-btn">Save Preferences</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="settings-section">
+            <div class="section-header">
+                <div class="section-icon icon-danger">⚠️</div>
+                <div class="section-header-text">
+                    <h2>Danger Zone</h2>
+                    <p>Irreversible actions — proceed with caution</p>
+                </div>
+            </div>
+            <div class="section-body">
+                <div class="danger-row">
+                    <div class="danger-label">
+                        <h3>Delete Account</h3>
+                        <p>Permanently delete your account and all your data. This cannot be undone.</p>
+                    </div>
+                    <button class="btn-danger" id="delete-account-btn">Delete Account</button>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /settings-shell -->
+
+    <!-- Delete confirm modal -->
+    <div class="confirm-layer" id="confirm-layer">
+        <div class="confirm-card">
+            <h3>Delete your account?</h3>
+            <p>This will permanently delete your account, bookmarks, lists, and all your data. <strong style="color:#e07070">This cannot be undone.</strong></p>
+            <p>Type <strong style="color:#e6e7e8">DELETE</strong> to confirm.</p>
+            <div class="confirm-input-wrap">
+                <label>Confirm</label>
+                <input type="text" class="confirm-input" id="delete-confirm-input" placeholder="Type DELETE">
+            </div>
+            <div class="confirm-actions">
+                <button class="btn-confirm-cancel" id="confirm-cancel">Cancel</button>
+                <button class="btn-confirm-delete" id="confirm-delete-btn">Delete Forever</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module">
+        import { onAuthStateChange, signOutUser, auth, db } from './firebase.js';
+        import {
+            updateProfile, updatePassword, reauthenticateWithCredential,
+            EmailAuthProvider, deleteUser
+        } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+        import {
+            doc, setDoc, getDoc, deleteDoc, collection, getDocs
+        } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+        let currentUser = null;
+
+        // ── Toast ──────────────────────────────────────────────────
+        let toastTimer;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+        }
+
+        // ── Password toggles ───────────────────────────────────────
+        [['toggle-current','current-password'],['toggle-new','new-password'],['toggle-confirm','confirm-password']].forEach(([btnId, inputId]) => {
+            document.getElementById(btnId).addEventListener('click', () => {
+                const input = document.getElementById(inputId);
+                const show  = input.type === 'password';
+                input.type  = show ? 'text' : 'password';
+                document.getElementById(btnId).textContent = show ? '👁️‍🗨️' : '👁️';
+            });
+        });
+
+        // ── Save account ───────────────────────────────────────────
+        document.getElementById('save-account-btn').addEventListener('click', async () => {
+            const displayName = document.getElementById('display-name-input').value.trim();
+            const username    = document.getElementById('username-input').value.trim().toLowerCase();
+            const errEl       = document.getElementById('username-error');
+            errEl.textContent = '';
+
+            if (!displayName) { showToast('Display name cannot be empty.'); return; }
+            if (!username)    { showToast('Username cannot be empty.'); return; }
+            if (!/^[a-z0-9_]+$/.test(username)) {
+                errEl.textContent = 'Only letters, numbers, and underscores allowed.'; return;
+            }
+
+            const btn = document.getElementById('save-account-btn');
+            btn.disabled = true; btn.textContent = 'Saving…';
+
+            try {
+                // Update Firebase Auth profile
+                await updateProfile(currentUser, { displayName });
+                // Update Firestore user doc
+                await setDoc(doc(db, 'users', currentUser.uid), { displayName, username }, { merge: true });
+                // Update localStorage cache
+                localStorage.setItem('ps_username_' + currentUser.uid, username);
+                // Update menu
+                document.getElementById('menu-display-name').textContent = displayName;
+                showToast('Account updated ✓');
+            } catch (err) {
+                showToast('Failed to save: ' + err.message);
+            } finally {
+                btn.disabled = false; btn.textContent = 'Save Changes';
+            }
+        });
+
+        // ── Save password ──────────────────────────────────────────
+        document.getElementById('save-password-btn').addEventListener('click', async () => {
+            const current  = document.getElementById('current-password').value;
+            const next     = document.getElementById('new-password').value;
+            const confirm  = document.getElementById('confirm-password').value;
+            const errEl    = document.getElementById('password-error');
+            const successEl= document.getElementById('password-success');
+            errEl.textContent = ''; successEl.textContent = '';
+
+            if (!current) { errEl.textContent = 'Enter your current password.'; return; }
+            if (next.length < 6) { errEl.textContent = 'New password must be at least 6 characters.'; return; }
+            if (next !== confirm) { errEl.textContent = 'Passwords do not match.'; return; }
+
+            const btn = document.getElementById('save-password-btn');
+            btn.disabled = true; btn.textContent = 'Updating…';
+
+            try {
+                // Re-authenticate first
+                const credential = EmailAuthProvider.credential(currentUser.email, current);
+                await reauthenticateWithCredential(currentUser, credential);
+                await updatePassword(currentUser, next);
+                successEl.textContent = '✓ Password updated successfully.';
+                document.getElementById('current-password').value = '';
+                document.getElementById('new-password').value     = '';
+                document.getElementById('confirm-password').value = '';
+                showToast('Password updated ✓');
+            } catch (err) {
+                const code = err.code || '';
+                errEl.textContent =
+                    code === 'auth/wrong-password'     ? 'Current password is incorrect.' :
+                    code === 'auth/invalid-credential' ? 'Current password is incorrect.' :
+                    code === 'auth/too-many-requests'  ? 'Too many attempts. Try again later.' :
+                    err.message;
+            } finally {
+                btn.disabled = false; btn.textContent = 'Update Password';
+            }
+        });
+
+        // ── Save notifications (localStorage) ─────────────────────
+        document.getElementById('save-notif-btn').addEventListener('click', () => {
+            const prefs = {
+                recommendations: document.getElementById('notif-recommendations').checked,
+                reminders:       document.getElementById('notif-reminders').checked,
+                updates:         document.getElementById('notif-updates').checked,
+            };
+            localStorage.setItem('ps_notif_' + currentUser.uid, JSON.stringify(prefs));
+            showToast('Preferences saved ✓');
+        });
+
+        // ── Delete account ─────────────────────────────────────────
+        document.getElementById('delete-account-btn').addEventListener('click', () => {
+            document.getElementById('delete-confirm-input').value = '';
+            document.getElementById('confirm-delete-btn').classList.remove('enabled');
+            document.getElementById('confirm-layer').classList.add('open');
+            setTimeout(() => document.getElementById('delete-confirm-input').focus(), 100);
+        });
+
+        document.getElementById('delete-confirm-input').addEventListener('input', e => {
+            const btn = document.getElementById('confirm-delete-btn');
+            btn.classList.toggle('enabled', e.target.value === 'DELETE');
+        });
+
+        document.getElementById('confirm-cancel').addEventListener('click', () => {
+            document.getElementById('confirm-layer').classList.remove('open');
+        });
+
+        document.getElementById('confirm-layer').addEventListener('click', e => {
+            if (e.target === document.getElementById('confirm-layer'))
+                document.getElementById('confirm-layer').classList.remove('open');
+        });
+
+        document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+            if (!document.getElementById('confirm-delete-btn').classList.contains('enabled')) return;
+            try {
+                const uid = currentUser.uid;
+                // Delete Firestore data
+                await deleteDoc(doc(db, 'users', uid));
+                // Delete Firebase Auth user
+                await deleteUser(currentUser);
+                // Clear localStorage
+                Object.keys(localStorage).filter(k => k.includes(uid)).forEach(k => localStorage.removeItem(k));
+                window.location.href = 'login.html';
+            } catch (err) {
+                document.getElementById('confirm-layer').classList.remove('open');
+                if (err.code === 'auth/requires-recent-login') {
+                    showToast('Please sign out and sign back in before deleting your account.');
+                } else {
+                    showToast('Could not delete account: ' + err.message);
+                }
+            }
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') document.getElementById('confirm-layer').classList.remove('open');
+        });
+
+        // ── Side menu ──────────────────────────────────────────────
+        const menuBtn   = document.getElementById('menu-btn');
+        const menuPanel = document.getElementById('menu-panel');
+        menuBtn.addEventListener('click',   () => menuPanel.classList.add('open'));
+        document.getElementById('menu-close').addEventListener('click', () => menuPanel.classList.remove('open'));
+        menuPanel.addEventListener('click', e => { if (e.target === menuPanel) menuPanel.classList.remove('open'); });
+        document.getElementById('menu-signout').addEventListener('click', async () => {
+            try { await signOutUser(); window.location.href = 'login.html'; } catch (err) { showToast(err.message); }
+        });
+
+        // ── Auth ───────────────────────────────────────────────────
+        onAuthStateChange(async user => {
+            if (!user) { window.location.href = 'login.html'; return; }
+            currentUser = user;
+
+            // Avatar
+            const avatarEl     = document.getElementById('user-avatar');
+            const menuAvatarEl = document.getElementById('menu-avatar-display');
+            const photo        = localStorage.getItem('ps_avatar_' + user.uid);
+            if (photo) {
+                avatarEl.style.backgroundImage = "url('" + photo + "')";
+                avatarEl.textContent = '';
+                menuAvatarEl.style.cssText = "background-image:url('" + photo + "');background-size:cover;background-position:center;";
+                menuAvatarEl.textContent = '';
+            } else {
+                const initials = (user.displayName || user.email || 'PS').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                avatarEl.textContent = menuAvatarEl.textContent = initials;
+            }
+
+            // Populate fields
+            document.getElementById('email-display').value = user.email || '';
+            document.getElementById('menu-email-display').textContent = user.email || '';
+
+            // Load from Firestore
+            try {
+                const snap = await getDoc(doc(db, 'users', user.uid));
+                if (snap.exists()) {
+                    const data = snap.data();
+                    document.getElementById('display-name-input').value = data.displayName || user.displayName || '';
+                    document.getElementById('username-input').value     = data.username || localStorage.getItem('ps_username_' + user.uid) || '';
+                    document.getElementById('menu-display-name').textContent = data.displayName || user.displayName || 'Reader';
+                }
+            } catch {}
+
+            // Load notification prefs
+            try {
+                const prefs = JSON.parse(localStorage.getItem('ps_notif_' + user.uid) || '{}');
+                if (prefs.recommendations !== undefined) document.getElementById('notif-recommendations').checked = prefs.recommendations;
+                if (prefs.reminders       !== undefined) document.getElementById('notif-reminders').checked       = prefs.reminders;
+                if (prefs.updates         !== undefined) document.getElementById('notif-updates').checked         = prefs.updates;
+            } catch {}
+        });
+    </script>
+</body>
+</html>
