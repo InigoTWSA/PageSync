@@ -1,45 +1,33 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Sign Up · PageSync</title>
         <link rel="stylesheet" href="pagesync.css">
         <style>
-            /* ── Email row with Send Code button ─────────────────── */
-            .email-row {
-                display: flex;
-                gap: 8px;
-                align-items: stretch;
-            }
-
-            .email-row .field {
-                flex: 1;
-                margin-bottom: 0;
-            }
-
+            /* ── Send Code button (standalone below email) ───────── */
             .send-code-btn {
-                padding: 0 16px;
+                width: 100%;
+                padding: 13px 16px;
                 border-radius: 14px;
                 border: 1px solid rgba(59,125,243,0.4);
                 background: rgba(59,125,243,0.12);
                 color: #7aabff;
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 700;
                 cursor: pointer;
-                white-space: nowrap;
                 transition: background 0.15s, border-color 0.15s, color 0.15s;
-                flex-shrink: 0;
+                min-height: 48px;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
             }
-
             .send-code-btn:hover:not(:disabled) {
                 background: rgba(59,125,243,0.22);
                 border-color: rgba(59,125,243,0.6);
                 color: #a0c8ff;
             }
-
-            .send-code-btn:disabled {
-                opacity: 0.45;
-                cursor: not-allowed;
-            }
+            .send-code-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
             /* ── OTP slide-in ────────────────────────────────────── */
             .otp-inline {
@@ -47,11 +35,9 @@
                 max-height: 0;
                 opacity: 0;
                 transition: max-height 0.35s ease, opacity 0.3s ease;
-                margin-bottom: 0;
             }
-
             .otp-inline.visible {
-                max-height: 140px;
+                max-height: 160px;
                 opacity: 1;
             }
 
@@ -61,7 +47,6 @@
                 align-items: stretch;
                 margin-bottom: 6px;
             }
-
             .otp-row .field { flex: 1; margin-bottom: 0; }
 
             #otp-code {
@@ -72,7 +57,7 @@
             }
 
             .verify-btn {
-                padding: 0 16px;
+                padding: 0 18px;
                 border-radius: 14px;
                 border: 1px solid rgba(60,200,100,0.35);
                 background: rgba(60,200,100,0.1);
@@ -83,13 +68,13 @@
                 white-space: nowrap;
                 transition: background 0.15s, border-color 0.15s;
                 flex-shrink: 0;
+                min-height: 48px;
+                touch-action: manipulation;
             }
-
             .verify-btn:hover:not(:disabled) {
                 background: rgba(60,200,100,0.18);
                 border-color: rgba(60,200,100,0.5);
             }
-
             .verify-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
             .otp-meta {
@@ -97,141 +82,71 @@
                 align-items: center;
                 justify-content: space-between;
                 padding: 0 2px;
+                margin-bottom: 4px;
             }
-
             .otp-hint { font-size: 12px; color: #606880; }
-
             .otp-hint.verified { color: #50c878; font-weight: 600; }
+            .otp-hint.error    { color: #e05555; }
 
             .resend-link {
-                font-size: 12px;
-                color: #3b7df3;
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 0;
-                transition: color 0.15s;
-                flex-shrink: 0;
+                font-size: 12px; color: #3b7df3;
+                background: none; border: none; cursor: pointer;
+                padding: 0; transition: color 0.15s; flex-shrink: 0;
             }
-
             .resend-link:hover:not(:disabled) { color: #7aabff; }
             .resend-link:disabled { color: #404860; cursor: default; }
 
-            /* ── Error / success inline ──────────────────────────── */
-            .field-msg {
-                font-size: 12px;
-                min-height: 16px;
-                margin: 4px 0 0 2px;
-            }
-
+            /* ── Field messages ──────────────────────────────────── */
+            .field-msg { font-size: 12px; min-height: 16px; margin: 4px 0 0 2px; }
             .field-msg.error   { color: #e05555; }
             .field-msg.success { color: #50c878; }
 
             /* ── Checkbox row ────────────────────────────────────── */
             .checkbox-row {
-                margin-top: 16px;
-                text-align: left;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
+                margin-top: 16px; text-align: left;
+                display: flex; flex-direction: column; gap: 8px;
             }
-
             .terms-checkbox {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                font-size: 13px;
-                color: #8f97a5;
-                cursor: pointer;
+                display: flex; align-items: center; gap: 10px;
+                font-size: 13px; color: #8f97a5; cursor: pointer;
             }
-
             .terms-checkbox input[type="checkbox"] {
-                width: 16px;
-                height: 16px;
-                accent-color: #3b7df3;
-                cursor: pointer;
-                flex-shrink: 0;
+                width: 16px; height: 16px;
+                accent-color: #3b7df3; cursor: pointer; flex-shrink: 0;
             }
-
             .link-button {
-                background: none;
-                border: none;
-                color: #3b7df3;
-                cursor: pointer;
-                font-size: 13px;
-                padding: 0;
-                text-decoration: underline;
-                text-underline-offset: 3px;
-                transition: color 0.15s;
-                text-align: left;
+                background: none; border: none; color: #3b7df3; cursor: pointer;
+                font-size: 13px; padding: 0; text-decoration: underline;
+                text-underline-offset: 3px; transition: color 0.15s; text-align: left;
             }
-
             .link-button:hover { color: #7aabff; }
 
             /* ── T&C Modal ───────────────────────────────────────── */
             .terms-layer {
-                position: fixed;
-                inset: 0;
-                background: rgba(0,0,0,0.7);
-                backdrop-filter: blur(4px);
-                -webkit-backdrop-filter: blur(4px);
-                display: none;
-                align-items: center;
-                justify-content: center;
-                z-index: 50;
-                padding: 20px;
+                position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+                backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+                display: none; align-items: center; justify-content: center;
+                z-index: 50; padding: 20px;
             }
-
             .terms-layer.open { display: flex; }
-
             .terms-card {
-                width: min(480px, 100%);
-                background: #1c1f24;
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 24px;
-                padding: 32px 28px;
-                position: relative;
-                max-height: 85vh;
-                overflow-y: auto;
+                width: min(480px, 100%); background: #1c1f24;
+                border: 1px solid rgba(255,255,255,0.1); border-radius: 24px;
+                padding: 32px 28px; position: relative;
+                max-height: 85vh; overflow-y: auto;
             }
-
-            .terms-card h2 {
-                font-size: 20px;
-                font-weight: 600;
-                margin-bottom: 18px;
-                color: #f0f2f5;
-            }
-
-            .terms-content p {
-                font-size: 14px;
-                color: #8f97a5;
-                margin-bottom: 14px;
-                line-height: 1.7;
-                text-align: left;
-            }
-
+            .terms-card h2 { font-size: 20px; font-weight: 600; margin-bottom: 18px; color: #f0f2f5; }
+            .terms-content p { font-size: 14px; color: #8f97a5; margin-bottom: 14px; line-height: 1.7; text-align: left; }
             .terms-content ol { padding-left: 20px; }
-
-            .terms-content ol li {
-                font-size: 14px;
-                color: #8f97a5;
-                margin-bottom: 10px;
-                line-height: 1.7;
-            }
-
+            .terms-content ol li { font-size: 14px; color: #8f97a5; margin-bottom: 10px; line-height: 1.7; }
             .overlay-close {
-                position: absolute;
-                top: 18px; right: 18px;
-                background: rgba(255,255,255,0.06);
-                border: none; color: #9aa0ad;
-                font-size: 16px; width: 32px; height: 32px;
-                border-radius: 50%; cursor: pointer;
-                display: flex; align-items: center; justify-content: center;
+                position: absolute; top: 18px; right: 18px;
+                background: rgba(255,255,255,0.06); border: none; color: #9aa0ad;
+                font-size: 16px; width: 32px; height: 32px; border-radius: 50%;
+                cursor: pointer; display: flex; align-items: center; justify-content: center;
                 transition: background 0.15s;
             }
-
             .overlay-close:hover { background: rgba(255,255,255,0.12); color: #e6e7e8; }
-
             .terms-footer { margin-top: 22px; text-align: center; }
         </style>
     </head>
@@ -239,24 +154,26 @@
         <div class="card">
             <div class="logo">↻</div>
             <h1>Sign up</h1>
-            <form id="signup-form" action="#" method="post" novalidate>
+            <form id="signup-form" novalidate>
 
                 <div class="field">
                     <input type="text" id="username" name="username"
                         placeholder="Username" required autocomplete="username">
                 </div>
 
-                <!-- Email + Send Code button -->
-                <div class="email-row" style="margin-bottom:6px">
-                    <div class="field">
-                        <input type="email" id="email" name="email"
-                            placeholder="Email Address" required autocomplete="email">
-                    </div>
-                    <button type="button" class="send-code-btn" id="send-code-btn">Send Code</button>
+                <!-- Email field -->
+                <div class="field" style="margin-bottom:8px">
+                    <input type="email" id="email" name="email"
+                        placeholder="Email Address" required autocomplete="email">
+                </div>
+
+                <!-- Send Code button (full width, below email) -->
+                <div class="field" style="margin-bottom:6px">
+                    <button type="button" class="send-code-btn" id="send-code-btn">Send Verification Code</button>
                 </div>
                 <div class="field-msg" id="email-msg"></div>
 
-                <!-- OTP slides in below email -->
+                <!-- OTP slides in below send code -->
                 <div class="otp-inline" id="otp-inline">
                     <div class="otp-row" style="margin-top:8px">
                         <div class="field">
@@ -266,13 +183,13 @@
                         </div>
                         <button type="button" class="verify-btn" id="verify-btn">Verify</button>
                     </div>
-                    <div class="otp-meta" style="margin-top:6px">
+                    <div class="otp-meta">
                         <span class="otp-hint" id="otp-hint">Enter the 6-digit code sent to your email.</span>
                         <button type="button" class="resend-link" id="resend-otp" disabled>Resend</button>
                     </div>
                 </div>
 
-                <div class="field password-wrapper" style="margin-top:12px">
+                <div class="field password-wrapper" style="margin-top:8px">
                     <input type="password" id="password" name="password"
                         placeholder="Password" required autocomplete="new-password">
                     <button type="button" class="password-toggle" id="password-toggle">👁️</button>
@@ -304,10 +221,10 @@
         <!-- Terms & Conditions Modal -->
         <div class="terms-layer" id="terms-layer">
             <div class="terms-card">
-                <button class="overlay-close" id="terms-close" aria-label="Close">✕</button>
+                <button class="overlay-close" id="terms-close">✕</button>
                 <h2>Terms &amp; Conditions</h2>
                 <div class="terms-content">
-                    <p>Welcome to PageSync. By using this website, you agree to the following terms and conditions:</p>
+                    <p>Welcome to PageSync. By using this website, you agree to the following terms:</p>
                     <ol>
                         <li>All content on PageSync is for personal use only.</li>
                         <li>You must not share login credentials with others.</li>
@@ -318,21 +235,19 @@
                 </div>
                 <div class="terms-footer">
                     <button class="button primary" id="terms-accept"
-                        style="max-width:160px; margin:0 auto; display:block;">
-                        Got it
-                    </button>
+                        style="max-width:160px;margin:0 auto;display:block;">Got it</button>
                 </div>
             </div>
         </div>
 
         <script type="module">
             import { signupWithEmail, signInWithGoogle, onAuthStateChange } from './firebase.js';
-            import config from './config.js';
+            import emailjsConfig from './emailjs-config.js';
 
-            const EMAILJS_SERVICE_ID  = config.emailjs.serviceId;
-            const EMAILJS_TEMPLATE_ID = config.emailjs.templateId;
-            const EMAILJS_PUBLIC_KEY  = config.emailjs.publicKey;
-            const OTP_ENABLED = EMAILJS_SERVICE_ID !== 'YOUR_EMAILJS_SERVICE_ID';
+            const EMAILJS_SERVICE_ID  = emailjsConfig.serviceId;
+            const EMAILJS_TEMPLATE_ID = emailjsConfig.templateId;
+            const EMAILJS_PUBLIC_KEY  = emailjsConfig.publicKey;
+            const OTP_ENABLED = EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID';
 
             // ── DOM ────────────────────────────────────────────────
             const form           = document.getElementById('signup-form');
@@ -356,13 +271,13 @@
             const termsLink      = document.getElementById('terms-link');
 
             // ── State ──────────────────────────────────────────────
-            let otpVerified  = false;
-            let resendTimer  = null;
+            let otpVerified = false;
+            let resendTimer = null;
 
             // ── Helpers ────────────────────────────────────────────
             function setEmailMsg(msg, type = '') {
-                emailMsg.textContent  = msg;
-                emailMsg.className    = 'field-msg' + (type ? ' ' + type : '');
+                emailMsg.textContent = msg;
+                emailMsg.className   = 'field-msg' + (type ? ' ' + type : '');
             }
 
             function updateSubmitBtn() {
@@ -406,7 +321,7 @@
                 sessionStorage.setItem('ps_otp_email',  email);
 
                 if (!OTP_ENABLED) {
-                    console.info(`[PageSync DEV] Signup OTP for ${email}: ${code}`);
+                    console.info(`[PageSync DEV] OTP for ${email}: ${code}`);
                     return;
                 }
 
@@ -433,12 +348,12 @@
                 const expiry = Number(sessionStorage.getItem('ps_otp_expiry'));
                 const email  = sessionStorage.getItem('ps_otp_email');
 
-                if (!hash)                            return { ok: false, msg: 'No code found. Please resend.' };
-                if (Date.now() > expiry)              return { ok: false, msg: 'Code expired. Please resend.' };
+                if (!hash)                             return { ok: false, msg: 'No code found. Please resend.' };
+                if (Date.now() > expiry)               return { ok: false, msg: 'Code expired. Please resend.' };
                 if (email !== emailInput.value.trim()) return { ok: false, msg: 'Email changed. Please resend.' };
 
                 const inputHash = await sha256(input.trim());
-                if (inputHash !== hash)               return { ok: false, msg: 'Incorrect code. Try again.' };
+                if (inputHash !== hash)                return { ok: false, msg: 'Incorrect code. Try again.' };
 
                 sessionStorage.removeItem('ps_otp_hash');
                 sessionStorage.removeItem('ps_otp_expiry');
@@ -454,7 +369,7 @@
                 passwordToggle.textContent = show ? '👁️‍🗨️' : '👁️';
             });
 
-            // ── Send Code button ───────────────────────────────────
+            // ── Send Code ──────────────────────────────────────────
             sendCodeBtn.addEventListener('click', async () => {
                 const email = emailInput.value.trim();
                 if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -463,15 +378,14 @@
                     return;
                 }
 
-                // Reset verification if email changed
                 if (otpVerified) {
-                    otpVerified = false;
-                    updateSubmitBtn();
-                    otpHint.textContent  = 'Enter the 6-digit code sent to your email.';
-                    otpHint.className    = 'otp-hint';
+                    otpVerified           = false;
+                    otpHint.textContent   = 'Enter the 6-digit code sent to your email.';
+                    otpHint.className     = 'otp-hint';
                     otpCodeInput.disabled = false;
-                    verifyBtn.disabled   = false;
-                    otpCodeInput.value   = '';
+                    verifyBtn.disabled    = false;
+                    otpCodeInput.value    = '';
+                    updateSubmitBtn();
                 }
 
                 sendCodeBtn.disabled    = true;
@@ -489,15 +403,16 @@
                     );
                     setTimeout(() => otpCodeInput.focus(), 380);
                     startCooldown(60);
-                    sendCodeBtn.textContent = 'Resend';
+                    sendCodeBtn.textContent = 'Resend Code';
+                    sendCodeBtn.disabled    = false;
                 } catch {
                     setEmailMsg('Could not send code. Check your connection.', 'error');
                     sendCodeBtn.disabled    = false;
-                    sendCodeBtn.textContent = 'Send Code';
+                    sendCodeBtn.textContent = 'Send Verification Code';
                 }
             });
 
-            // ── Resend button (inside OTP section) ────────────────
+            // ── Resend button ──────────────────────────────────────
             resendBtn.addEventListener('click', async () => {
                 if (resendBtn.disabled) return;
                 const email = emailInput.value.trim();
@@ -545,7 +460,6 @@
                     return;
                 }
 
-                // ✅ Verified
                 otpVerified           = true;
                 otpHint.textContent   = '✓ Email verified';
                 otpHint.className     = 'otp-hint verified';
@@ -557,15 +471,12 @@
                 updateSubmitBtn();
             });
 
-            // Also allow Enter key in OTP field to trigger verify
             otpCodeInput.addEventListener('keydown', e => {
                 if (e.key === 'Enter') { e.preventDefault(); verifyBtn.click(); }
             });
 
-            // ── T&C checkbox ───────────────────────────────────────
+            // ── T&C ────────────────────────────────────────────────
             termsCheckbox.addEventListener('change', updateSubmitBtn);
-
-            // ── T&C Modal ──────────────────────────────────────────
             termsLink.addEventListener('click',   () => termsLayer.classList.add('open'));
             termsClose.addEventListener('click',  () => termsLayer.classList.remove('open'));
             termsAccept.addEventListener('click', () => {
@@ -573,21 +484,13 @@
                 termsCheckbox.checked = true;
                 updateSubmitBtn();
             });
-            termsLayer.addEventListener('click', e => {
-                if (e.target === termsLayer) termsLayer.classList.remove('open');
-            });
-            document.addEventListener('keydown', e => {
-                if (e.key === 'Escape') termsLayer.classList.remove('open');
-            });
+            termsLayer.addEventListener('click', e => { if (e.target === termsLayer) termsLayer.classList.remove('open'); });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') termsLayer.classList.remove('open'); });
 
-            // ── Sign up form submit ────────────────────────────────
+            // ── Sign up ────────────────────────────────────────────
             form.addEventListener('submit', async e => {
                 e.preventDefault();
-
-                if (!otpVerified) {
-                    setEmailMsg('Please verify your email first.', 'error');
-                    return;
-                }
+                if (!otpVerified) { setEmailMsg('Please verify your email first.', 'error'); return; }
                 if (!termsCheckbox.checked) return;
 
                 const email    = emailInput.value.trim();
