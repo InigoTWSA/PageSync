@@ -3,9 +3,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-import config from './config.js';
+const firebaseConfig = {
+    apiKey:            "AIzaSyBEgkePSSuw1LkVOXLWL__pzcC11HGY_Ww",
+    authDomain:        "pagesync-7a722.firebaseapp.com",
+    projectId:         "pagesync-7a722",
+    storageBucket:     "pagesync-7a722.appspot.com",
+    messagingSenderId: "612753494941",
+    appId:             "1:612753494941:web:192411b4fca39ddfdf9574",
+};
 
-const app = initializeApp(config.firebase);
+const app = initializeApp(firebaseConfig);
 export const auth           = getAuth(app);
 export const db             = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
