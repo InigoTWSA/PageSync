@@ -7,7 +7,7 @@
 
 const emailjsConfig = {
     serviceId:  'service_xk3a4ra',
-    templateId: 'template_bvfgd6o',
+    templateId: 'template_9fyv7sb',
     publicKey:  'b89SzeGXUOLgddsEs',
 };
 
