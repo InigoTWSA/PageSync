@@ -329,9 +329,10 @@
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        service_id:  EMAILJS_SERVICE_ID,
-                        template_id: EMAILJS_TEMPLATE_ID,
-                        user_id:     EMAILJS_PUBLIC_KEY,
+                        service_id:   EMAILJS_SERVICE_ID,
+                        template_id:  EMAILJS_TEMPLATE_ID,
+                        user_id:      EMAILJS_PUBLIC_KEY,
+                        accessToken:  EMAILJS_PUBLIC_KEY,
                         template_params: {
                             to_email: email,
                             otp_code: code,
@@ -339,7 +340,10 @@
                         },
                     }),
                 });
-                if (!res.ok) throw new Error(`EmailJS error ${res.status}`);
+                if (!res.ok) {
+                    const errText = await res.text();
+                    throw new Error(`EmailJS ${res.status}: ${errText}`);
+                }
             }
 
             // ── Verify OTP ─────────────────────────────────────────
@@ -405,8 +409,9 @@
                     startCooldown(60);
                     sendCodeBtn.textContent = 'Resend Code';
                     sendCodeBtn.disabled    = false;
-                } catch {
-                    setEmailMsg('Could not send code. Check your connection.', 'error');
+                } catch (err) {
+                    console.error('EmailJS error:', err.message);
+                    setEmailMsg('Could not send code: ' + err.message, 'error');
                     sendCodeBtn.disabled    = false;
                     sendCodeBtn.textContent = 'Send Verification Code';
                 }
