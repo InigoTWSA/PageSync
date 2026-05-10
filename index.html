@@ -1,34 +1,860 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0;url=/login.html">
-    <title>Redirecting...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PageSync — Track Every Story</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
     <style>
-      body {
-        background: #101113;
-        color: #e6e7e8;
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 20px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-      }
-      p {
-        margin: 0;
-      }
-      a {
-        color: #3b7df3;
-        text-decoration: none;
-      }
-      a:hover {
-        color: #5a8df7;
-      }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #080a0e;
+            --bg2:       #0d1018;
+            --bg3:       #12151d;
+            --border:    rgba(255,255,255,0.07);
+            --text:      #e8ecf4;
+            --muted:     #5a6070;
+            --dim:       #9aa0b0;
+            --blue:      #3b7df3;
+            --blue-glow: rgba(59,125,243,0.25);
+            --purple:    #7d5cff;
+            --green:     #40c878;
+            --orange:    #f0923a;
+            --pink:      #f05080;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* ── Noise texture overlay ───────────────────────────────── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Nav ─────────────────────────────────────────────────── */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(8,10,14,0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .nav-logo {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 14px;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .nav-wordmark {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link {
+            padding: 9px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            color: var(--dim);
+            transition: color 0.15s, background 0.15s;
+        }
+
+        .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+        .nav-cta {
+            padding: 9px 20px;
+            border-radius: 10px;
+            background: var(--blue);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: opacity 0.15s, transform 0.15s;
+            white-space: nowrap;
+        }
+
+        .nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+
+        /* ── Hero ────────────────────────────────────────────────── */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 24px 80px;
+            overflow: hidden;
+        }
+
+        /* Radial glow */
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: -100px; left: 50%;
+            transform: translateX(-50%);
+            width: 800px; height: 600px;
+            background: radial-gradient(ellipse at center,
+                rgba(59,125,243,0.12) 0%,
+                rgba(125,92,255,0.06) 40%,
+                transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(59,125,243,0.3);
+            background: rgba(59,125,243,0.08);
+            font-size: 13px;
+            color: #7aabff;
+            font-weight: 500;
+            margin-bottom: 28px;
+            animation: fadeUp 0.6s ease both;
+        }
+
+        .badge-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--blue);
+            animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .hero-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(42px, 8vw, 88px);
+            font-weight: 800;
+            line-height: 1.0;
+            letter-spacing: -0.04em;
+            margin-bottom: 24px;
+            animation: fadeUp 0.6s 0.1s ease both;
+        }
+
+        .hero-title .line1 { display: block; color: var(--text); }
+
+        .hero-title .line2 {
+            display: block;
+            background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 60%, var(--pink) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: clamp(16px, 2.5vw, 20px);
+            color: var(--dim);
+            max-width: 520px;
+            margin: 0 auto 40px;
+            font-weight: 300;
+            line-height: 1.7;
+            animation: fadeUp 0.6s 0.2s ease both;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeUp 0.6s 0.3s ease both;
+        }
+
+        .btn-hero-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 15px 32px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            color: #fff;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 8px 32px rgba(59,125,243,0.35);
+            white-space: nowrap;
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(59,125,243,0.45);
+        }
+
+        .btn-hero-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 15px 28px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+            color: var(--dim);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255,255,255,0.07);
+            color: var(--text);
+            border-color: rgba(255,255,255,0.14);
+        }
+
+        /* ── Hero preview cards ──────────────────────────────────── */
+        .hero-preview {
+            margin-top: 72px;
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeUp 0.7s 0.4s ease both;
+        }
+
+        .preview-card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--dim);
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .preview-card:hover { border-color: rgba(59,125,243,0.3); transform: translateY(-2px); }
+
+        .preview-icon {
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .preview-card strong { color: var(--text); font-weight: 600; display: block; font-size: 13px; }
+        .preview-card span   { font-size: 12px; }
+
+        /* ── Section common ──────────────────────────────────────── */
+        section {
+            position: relative;
+            z-index: 1;
+        }
+
+        .section-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 100px 32px;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--blue);
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(28px, 5vw, 48px);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .section-sub {
+            font-size: 17px;
+            color: var(--muted);
+            max-width: 500px;
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        /* ── Features ────────────────────────────────────────────── */
+        .features-section { background: var(--bg); }
+
+        .features-header { margin-bottom: 56px; }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .feature-card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px 26px;
+            transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(255,255,255,0.12);
+            transform: translateY(-3px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        .feature-card:hover::before { opacity: 1; }
+
+        .fc-blue::before   { background: linear-gradient(90deg, var(--blue), var(--purple)); }
+        .fc-green::before  { background: linear-gradient(90deg, var(--green), #3bd8a8); }
+        .fc-orange::before { background: linear-gradient(90deg, var(--orange), #f0d03a); }
+        .fc-pink::before   { background: linear-gradient(90deg, var(--pink), var(--purple)); }
+        .fc-purple::before { background: linear-gradient(90deg, var(--purple), var(--blue)); }
+        .fc-teal::before   { background: linear-gradient(90deg, #30b8c8, var(--green)); }
+
+        .feature-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 18px;
+        }
+
+        .fi-blue   { background: rgba(59,125,243,0.15); }
+        .fi-green  { background: rgba(64,200,120,0.15); }
+        .fi-orange { background: rgba(240,146,58,0.15); }
+        .fi-pink   { background: rgba(240,80,128,0.15); }
+        .fi-purple { background: rgba(125,92,255,0.15); }
+        .fi-teal   { background: rgba(48,184,200,0.15); }
+
+        .feature-card h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        /* ── Sources ─────────────────────────────────────────────── */
+        .sources-section { background: var(--bg2); }
+
+        .sources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 14px;
+            margin-top: 52px;
+        }
+
+        .source-card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 22px 20px;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .source-card:hover {
+            border-color: rgba(255,255,255,0.12);
+            transform: translateY(-2px);
+        }
+
+        .source-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 999px;
+            margin-bottom: 12px;
+            letter-spacing: 0.04em;
+        }
+
+        .sb-book     { background: rgba(59,125,243,0.15);  color: #7aabff; }
+        .sb-manga    { background: rgba(255,100,50,0.15);   color: #ff8060; }
+        .sb-classic  { background: rgba(64,200,120,0.15);   color: #60d090; }
+        .sb-free     { background: rgba(255,200,80,0.15);   color: #ffd060; }
+        .sb-academic { background: rgba(160,100,255,0.15);  color: #c090ff; }
+
+        .source-card h4 {
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .source-card p {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* ── Stats ───────────────────────────────────────────────── */
+        .stats-section { background: var(--bg); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .stat-item {
+            background: var(--bg3);
+            padding: 36px 28px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: 'Syne', sans-serif;
+            font-size: 40px;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        /* ── CTA ─────────────────────────────────────────────────── */
+        .cta-section { background: var(--bg2); }
+
+        .cta-box {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 72px 48px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-box::before {
+            content: '';
+            position: absolute;
+            top: -100px; left: 50%;
+            transform: translateX(-50%);
+            width: 600px; height: 400px;
+            background: radial-gradient(ellipse,
+                rgba(59,125,243,0.1) 0%,
+                transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-box h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(28px, 5vw, 48px);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 16px;
+        }
+
+        .cta-box p {
+            font-size: 17px;
+            color: var(--muted);
+            margin-bottom: 36px;
+            font-weight: 300;
+        }
+
+        .cta-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ── Footer ──────────────────────────────────────────────── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--dim);
+            font-size: 14px;
+        }
+
+        .footer-copy { font-size: 13px; color: var(--muted); }
+
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-links a {
+            font-size: 13px;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+
+        .footer-links a:hover { color: var(--dim); }
+
+        /* ── Animations ──────────────────────────────────────────── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── Responsive ──────────────────────────────────────────── */
+        @media (max-width: 900px) {
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-grid    { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 720px) {
+            nav { padding: 14px 20px; }
+            .nav-link { display: none; }
+            .section-inner { padding: 72px 20px; }
+            .features-grid { grid-template-columns: 1fr; gap: 12px; }
+            .stats-grid    { grid-template-columns: repeat(2, 1fr); }
+            .cta-box { padding: 48px 24px; }
+            footer { flex-direction: column; align-items: flex-start; padding: 24px 20px; }
+        }
+
+        @media (max-width: 480px) {
+            .hero-preview { gap: 10px; }
+            .preview-card { padding: 12px 14px; }
+            .stats-grid   { grid-template-columns: 1fr 1fr; }
+            .stat-item    { padding: 24px 16px; }
+            .stat-number  { font-size: 32px; }
+        }
     </style>
-  </head>
-  <body>
-    <p>Redirecting to <a href="/login.html">login page</a>...</p>
-  </body>
+</head>
+<body>
+
+    <!-- Nav -->
+    <nav>
+        <a class="nav-brand" href="index.html">
+            <div class="nav-logo">PS</div>
+            <span class="nav-wordmark">PageSync</span>
+        </a>
+        <div class="nav-links">
+            <a class="nav-link" href="#features">Features</a>
+            <a class="nav-link" href="#sources">Sources</a>
+            <a class="nav-link" href="login.html">Sign in</a>
+            <a class="nav-cta" href="signup.html">Get started</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">
+            <span class="badge-dot"></span>
+            Your personal reading universe
+        </div>
+
+        <h1 class="hero-title">
+            <span class="line1">Track every</span>
+            <span class="line2">story you love</span>
+        </h1>
+
+        <p class="hero-sub">
+            Books, manga, classics, academic texts — all in one place.
+            Search, save, read, and organise everything you've ever wanted to explore.
+        </p>
+
+        <div class="hero-actions">
+            <a class="btn-hero-primary" href="signup.html">
+                Start for free →
+            </a>
+            <a class="btn-hero-secondary" href="login.html">
+                Sign in
+            </a>
+        </div>
+
+        <div class="hero-preview">
+            <div class="preview-card">
+                <span class="preview-icon">📚</span>
+                <div>
+                    <strong>Books</strong>
+                    <span>Open Library</span>
+                </div>
+            </div>
+            <div class="preview-card">
+                <span class="preview-icon">🎌</span>
+                <div>
+                    <strong>Manga</strong>
+                    <span>MangaDex</span>
+                </div>
+            </div>
+            <div class="preview-card">
+                <span class="preview-icon">📖</span>
+                <div>
+                    <strong>Classics</strong>
+                    <span>Gutenberg</span>
+                </div>
+            </div>
+            <div class="preview-card">
+                <span class="preview-icon">🎓</span>
+                <div>
+                    <strong>Academic</strong>
+                    <span>Internet Archive</span>
+                </div>
+            </div>
+            <div class="preview-card">
+                <span class="preview-icon">✨</span>
+                <div>
+                    <strong>Free Reads</strong>
+                    <span>Standard Ebooks</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features-section" id="features">
+        <div class="section-inner">
+            <div class="features-header reveal">
+                <div class="section-label">Features</div>
+                <h2 class="section-title">Everything your reading life needs</h2>
+                <p class="section-sub">Built for readers who take their hobby seriously — from casual page-turners to obsessive collectors.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card fc-blue reveal">
+                    <div class="feature-icon fi-blue">🔍</div>
+                    <h3>Unified Search</h3>
+                    <p>Search across books, manga, classics, and academic texts all at once. No tab-switching, no repetition.</p>
+                </div>
+                <div class="feature-card fc-green reveal">
+                    <div class="feature-icon fi-green">📑</div>
+                    <h3>Smart Bookmarks</h3>
+                    <p>Save anything to your library with a single tap. Track reading status — Reading, Planned, Completed, On Hold.</p>
+                </div>
+                <div class="feature-card fc-orange reveal">
+                    <div class="feature-icon fi-orange">📖</div>
+                    <h3>Read In-App</h3>
+                    <p>Read public domain books and classics directly inside PageSync. No external apps, no downloads needed.</p>
+                </div>
+                <div class="feature-card fc-pink reveal">
+                    <div class="feature-icon fi-pink">🎌</div>
+                    <h3>Manga Chapters</h3>
+                    <p>Browse chapter lists for any manga title. Jump straight to reading on MangaDex with one click.</p>
+                </div>
+                <div class="feature-card fc-purple reveal">
+                    <div class="feature-icon fi-purple">📋</div>
+                    <h3>Custom Lists</h3>
+                    <p>Curate collections like "Summer Reading" or "Dark Academia" and share them with anyone.</p>
+                </div>
+                <div class="feature-card fc-teal reveal">
+                    <div class="feature-icon fi-teal">👤</div>
+                    <h3>Personal Profile</h3>
+                    <p>Showcase your favourite books, track your reading history, and make your shelf uniquely yours.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sources -->
+    <section class="sources-section" id="sources">
+        <div class="section-inner">
+            <div class="reveal">
+                <div class="section-label">Sources</div>
+                <h2 class="section-title">Powered by the best open libraries</h2>
+                <p class="section-sub">We connect to trusted, free sources so you always get accurate, up-to-date information.</p>
+            </div>
+
+            <div class="sources-grid">
+                <div class="source-card reveal">
+                    <span class="source-badge sb-book">Books</span>
+                    <h4>Open Library</h4>
+                    <p>Millions of book records from the Internet Archive's open catalogue.</p>
+                </div>
+                <div class="source-card reveal">
+                    <span class="source-badge sb-manga">Manga</span>
+                    <h4>MangaDex</h4>
+                    <p>Comprehensive manga database with chapter listings and English translations.</p>
+                </div>
+                <div class="source-card reveal">
+                    <span class="source-badge sb-classic">Classics</span>
+                    <h4>Project Gutenberg</h4>
+                    <p>Over 70,000 free public domain books, fully readable in-app.</p>
+                </div>
+                <div class="source-card reveal">
+                    <span class="source-badge sb-free">Free Reads</span>
+                    <h4>Standard Ebooks</h4>
+                    <p>Beautifully formatted public domain books with modern typography.</p>
+                </div>
+                <div class="source-card reveal">
+                    <span class="source-badge sb-academic">Academic</span>
+                    <h4>Internet Archive</h4>
+                    <p>Millions of open-access texts, research papers, and historical documents.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats-section">
+        <div class="section-inner">
+            <div class="stats-grid reveal">
+                <div class="stat-item">
+                    <div class="stat-number">5M+</div>
+                    <div class="stat-label">Books indexed</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">70K+</div>
+                    <div class="stat-label">Free classics</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">500K+</div>
+                    <div class="stat-label">Manga titles</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Free to use</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="section-inner">
+            <div class="cta-box reveal">
+                <h2>Ready to sync your shelf?</h2>
+                <p>Join PageSync and bring all your reading in one place — for free, forever.</p>
+                <div class="cta-actions">
+                    <a class="btn-hero-primary" href="signup.html">Create free account →</a>
+                    <a class="btn-hero-secondary" href="login.html">Already have an account</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <a class="footer-brand" href="index.html">
+            <div class="nav-logo" style="width:28px;height:28px;font-size:11px">PS</div>
+            <span>PageSync</span>
+        </a>
+        <span class="footer-copy">© 2026 PageSync. Built for readers.</span>
+        <div class="footer-links">
+            <a href="login.html">Sign in</a>
+            <a href="signup.html">Sign up</a>
+        </div>
+    </footer>
+
+    <script>
+        // Scroll reveal
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach((entry, i) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => entry.target.classList.add('visible'), i * 80);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    </script>
+</body>
 </html>

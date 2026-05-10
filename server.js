@@ -1,20 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import crypto from 'crypto';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname  = dirname(__filename);
-
-const app  = express();
+const app = express();
 const port = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json());
-
-// ── Serve static files from the project root ──────────────────────────────────
-app.use(express.static(__dirname));
 
 const users = [];
 
@@ -39,9 +31,9 @@ function findUserByGoogleId(googleId) {
 }
 
 function generateUniqueUsername(base) {
-    let username  = normalizeUsername(base.replace(/[^a-z0-9]/gi, '') || 'user');
+    let username = normalizeUsername(base.replace(/[^a-z0-9]/gi, '') || 'user');
     let candidate = username;
-    let suffix    = 1;
+    let suffix = 1;
 
     while (findUserByUsername(candidate)) {
         candidate = `${username}${suffix}`;
@@ -77,12 +69,12 @@ app.post('/api/signup', (req, res) => {
     }
 
     const user = {
-        id:           crypto.randomUUID(),
-        username:     username.trim(),
-        email:        email.trim().toLowerCase(),
+        id: crypto.randomUUID(),
+        username: username.trim(),
+        email: email.trim().toLowerCase(),
         passwordHash: hashPassword(password),
-        provider:     'local',
-        createdAt:    new Date().toISOString(),
+        provider: 'local',
+        createdAt: new Date().toISOString(),
     };
 
     users.push(user);
@@ -118,6 +110,7 @@ app.post('/api/forgot-password', (req, res) => {
         return res.json({ message: 'If that account exists, a reset email was sent.' });
     }
 
+    // In a real backend, send an email using a provider like SendGrid or Nodemailer.
     console.log(`Password reset requested for ${user.email}`);
     return res.json({ message: 'Reset password instructions sent.' });
 });
@@ -139,17 +132,68 @@ app.post('/api/auth/google', (req, res) => {
 
     const username = generateUniqueUsername(displayName);
     user = {
-        id:           crypto.randomUUID(),
+        id: crypto.randomUUID(),
         username,
-        email:        email.trim().toLowerCase(),
+        email: email.trim().toLowerCase(),
         passwordHash: null,
-        provider:     'google',
+        provider: 'google',
         googleId,
-        createdAt:    new Date().toISOString(),
+        createdAt: new Date().toISOString(),
     };
 
     users.push(user);
     return res.status(201).json({ message: 'Google account created', user: { id: user.id, username: user.username, email: user.email } });
+});
+
+// ── MangaDex proxy ────────────────────────────────────────────────────────────
+// Forwards requests to MangaDex server-side to avoid browser CORS restrictions.
+
+const MDX_BASE = 'https://api.mangadex.org';
+const MDX_HEADERS = {
+    'Content-Type': 'application/json',
+    'User-Agent':   'PageSync/1.0',
+};
+
+// Search manga
+app.get('/api/manga/search', async (req, res) => {
+    try {
+        const { q = '', limit = 18 } = req.query;
+        const url = `${MDX_BASE}/manga?title=${encodeURIComponent(q)}&limit=${Math.min(Number(limit), 25)}&contentRating[]=safe&contentRating[]=suggestive&includes[]=cover_art&includes[]=author&availableTranslatedLanguage[]=en&order[relevance]=desc`;
+        const response = await fetch(url, { headers: MDX_HEADERS });
+        const data     = await response.json();
+        return res.json(data);
+    } catch (err) {
+        console.error('[MangaDex proxy /search]', err.message);
+        return res.status(500).json({ error: 'MangaDex search failed', data: [] });
+    }
+});
+
+// Get manga detail
+app.get('/api/manga/detail/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const url = `${MDX_BASE}/manga/${id}?includes[]=cover_art&includes[]=author&includes[]=artist`;
+        const response = await fetch(url, { headers: MDX_HEADERS });
+        const data     = await response.json();
+        return res.json(data);
+    } catch (err) {
+        console.error('[MangaDex proxy /detail]', err.message);
+        return res.status(500).json({ error: 'MangaDex detail failed' });
+    }
+});
+
+// Get manga chapters
+app.get('/api/manga/chapters/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const url = `${MDX_BASE}/manga/${id}/feed?translatedLanguage[]=en&limit=20&order[chapter]=asc&contentRating[]=safe&contentRating[]=suggestive`;
+        const response = await fetch(url, { headers: MDX_HEADERS });
+        const data     = await response.json();
+        return res.json(data);
+    } catch (err) {
+        console.error('[MangaDex proxy /chapters]', err.message);
+        return res.status(500).json({ error: 'MangaDex chapters failed' });
+    }
 });
 
 app.listen(port, () => {

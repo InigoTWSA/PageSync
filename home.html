@@ -133,7 +133,7 @@
         <div class="search-box">
             <button class="search-trigger" id="search-trigger" aria-label="Open search">
                 <span class="search-icon">⌕</span>
-                <span class="search-placeholder">Search books, manga, comics…</span>
+                <span class="search-placeholder">Search books, manga, classics…</span>
                 <span class="search-hint">NLP ✦</span>
             </button>
         </div>
@@ -157,7 +157,6 @@
                 <div class="search-filters">
                     <button class="filter-chip active" data-source="books">Books</button>
                     <button class="filter-chip" data-source="manga">Manga</button>
-                    <button class="filter-chip" data-source="comics">Comics</button>
                     <button class="filter-chip" data-source="classics">Classics</button>
                     <button class="filter-chip" data-source="all">All</button>
                 </div>
@@ -200,10 +199,10 @@
             <div class="menu-list">
                 <a class="menu-item active" href="home.html">Home</a>
                 <a class="menu-item" href="profile.html">Profile</a>
-                <a class="menu-item" href="popular.html">Popular</a>
-                <a class="menu-item" href="top-rated.html">Top rated</a>
-                <a class="menu-item" href="bookmarks.html">Bookmarks</a>
-                <a class="menu-item" href="settings.html">Settings</a>
+                <a class="menu-item" href="#">Popular</a>
+                <a class="menu-item" href="#">Top rated</a>
+                <a class="menu-item" href="#">Bookmarks</a>
+                <a class="menu-item" href="#">Settings</a>
                 <button class="menu-signout" id="menu-signout">Sign Out</button>
             </div>
         </div>
@@ -238,13 +237,6 @@
                 <a href="#" data-prefill="classic literature" data-source="classics">See more</a>
             </div>
             <div class="section-scroll" id="section-classics"></div>
-        </div>
-        <div>
-            <div class="section-header">
-                <h2>Comics &amp; Graphic Novels</h2>
-                <a href="#" data-prefill="graphic novel superhero" data-source="comics">See more</a>
-            </div>
-            <div class="section-scroll" id="section-comics"></div>
         </div>
     </section>
 
@@ -427,14 +419,13 @@
 
     // ── Load all sections ──────────────────────────────────────────
     async function loadDashboard() {
-        ['section-manga','section-books','section-classics','section-comics','section-romance','section-fantasy']
+        ['section-manga','section-books','section-classics','section-romance','section-fantasy']
             .forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = skelCards(6); });
 
-        const [manga, books, classics, comics, romance, fantasy] = await Promise.allSettled([
+        const [manga, books, classics, romance, fantasy] = await Promise.allSettled([
             clientSearch('popular action manga',    'manga',    8),
             clientSearch('bestselling fiction',      'books',    8),
             clientSearch('classic literature',       'classics', 8),
-            clientSearch('graphic novel superhero', 'comics',   8),
             clientSearch('romance manhwa webtoon',   'manga',    8),
             clientSearch('fantasy adventure novel',  'books',    8),
         ]);
@@ -443,7 +434,6 @@
         renderSection('section-manga',    val(manga));
         renderSection('section-books',    val(books));
         renderSection('section-classics', val(classics));
-        renderSection('section-comics',   val(comics));
         renderSection('section-romance',  val(romance));
         renderSection('section-fantasy',  val(fantasy));
     }
