@@ -469,6 +469,7 @@ body.dashboard {
     grid-auto-columns: minmax(240px, 1fr);
     gap: 18px;
     overflow-x: auto;
+    padding-right: 24px;
     padding-bottom: 6px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.18) transparent;

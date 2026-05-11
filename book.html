@@ -507,16 +507,68 @@
                 ext.style.display = 'inline-flex';
             }
 
-            // Read link (Gutenberg)
-            if (book.readUrl) {
+            // Read link / Chapter list
+            if (book.source === 'mangadex') {
+                // For manga — show "Read" button that loads chapters
                 const actionsEl = document.getElementById('hero-actions');
-                const readBtn = document.createElement('a');
-                readBtn.className = 'btn-secondary';
-                readBtn.href = book.readUrl;
-                readBtn.target = '_blank';
-                readBtn.rel = 'noopener';
-                readBtn.textContent = '📖 Read Free';
+                const readBtn   = document.createElement('button');
+                readBtn.className   = 'btn-primary';
+                readBtn.textContent = '📖 Read Chapters';
+                readBtn.addEventListener('click', () => {
+                    // Build reader URL
+                    const readerParams = new URLSearchParams({
+                        manga:   book.externalId || '',
+                        title:   encodeURIComponent(book.title || ''),
+                        back:    window.location.href,
+                    });
+                    window.location.href = `reader.html?${readerParams.toString()}`;
+                });
                 actionsEl.appendChild(readBtn);
+            } else if (book.readUrl) {
+                // For Gutenberg / Standard Ebooks / Internet Archive — inline reader
+                const actionsEl = document.getElementById('hero-actions');
+                const readBtn   = document.createElement('button');
+                readBtn.className   = 'btn-secondary';
+                readBtn.textContent = '📖 Read Free';
+                readBtn.style.cssText = 'border-color:rgba(60,200,100,0.3);color:#80e0a0;';
+                readBtn.addEventListener('click', () => {
+                    const section = document.getElementById('reader-section');
+                    const toggle  = document.getElementById('reader-toggle');
+                    if (section) {
+                        section.style.display = '';
+                        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        setTimeout(() => {
+                            if (!toggle.classList.contains('open')) toggle.click();
+                        }, 400);
+                    }
+                });
+                actionsEl.appendChild(readBtn);
+
+                // Set up inline reader
+                const readerSection  = document.getElementById('reader-section');
+                const readerToggle   = document.getElementById('reader-toggle');
+                const readerWrap     = document.getElementById('reader-frame-wrap');
+                const readerIframe   = document.getElementById('reader-iframe');
+                const readerUrlLabel = document.getElementById('reader-url-display');
+                const readerOpenNew  = document.getElementById('reader-open-new');
+                const readerSrcLabel = document.getElementById('reader-source-label');
+
+                if (readerSection) {
+                    readerSection.style.display = '';
+                    readerUrlLabel.textContent  = book.readUrl;
+                    readerOpenNew.href          = book.readUrl;
+                    const readerLabels = {
+                        'standard-ebooks':  'Standard Ebooks · Beautiful public domain typography',
+                        'gutenberg':        'Project Gutenberg · Public domain classic',
+                        'internet-archive': 'Internet Archive · Open access text',
+                    };
+                    readerSrcLabel.textContent = readerLabels[book.source] || 'Free to read';
+                    readerToggle.addEventListener('click', () => {
+                        const isOpen = readerToggle.classList.toggle('open');
+                        readerWrap.classList.toggle('open', isOpen);
+                        if (isOpen && !readerIframe.src) readerIframe.src = book.readUrl;
+                    });
+                }
             }
 
             // Description
