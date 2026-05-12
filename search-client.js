@@ -110,6 +110,7 @@ export async function clientSearch(query, source = 'books', limit = 12) {
 // ─── Detail entry point ───────────────────────────────────────────────────────
 export async function getBookDetail(id, source) {
   if (source === 'mangadex')         return await fetchMangaDexDetail(id);
+  if (source === 'jikan')            return await fetchJikanDetail(id);
   if (source === 'gutenberg')        return await fetchGutenbergDetail(id);
   if (source === 'standard-ebooks')  return await fetchStandardEbooksDetail(id);
   if (source === 'internet-archive') return await fetchArchiveDetail(id);
@@ -455,46 +456,46 @@ async function fetchStandardEbooksDetail(slug) {
 const BLOCKED_JIKAN_GENRE_IDS = new Set([9, 12, 49]); // Ecchi, Hentai, Erotica
 
 async function searchMangaDex(keywords, limit = 12) {
-  // Always try Jikan first — reliable, no CORS
-  const jikanResults = await searchJikanFallback(keywords, limit);
-  if (jikanResults.length >= 4) return jikanResults;
-
-  // If Jikan returns too few, try MangaDex proxy
+  // Try MangaDex proxy first — real UUIDs mean chapters + reader work properly
   try {
     const proxyUrl = `/api/manga/search?q=${encodeURIComponent(keywords)}&limit=${Math.min(limit, 25)}`;
-    const res      = await fetch(proxyUrl, { signal: AbortSignal.timeout(4000) });
+    const res      = await fetch(proxyUrl, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) throw new Error(`Proxy ${res.status}`);
     const data = await res.json();
     const list = data.data || [];
-    if (!list.length) return jikanResults;
 
-    return list.map(m => {
-      const attrs      = m.attributes || {};
-      const title      = attrs.title?.en || Object.values(attrs.title || {})[0] || 'Unknown Title';
-      const desc       = attrs.description?.en || Object.values(attrs.description || {})[0] || null;
-      const authorRel  = (m.relationships || []).find(r => r.type === 'author');
-      const author     = authorRel?.attributes?.name || 'Unknown Author';
-      const coverRel   = (m.relationships || []).find(r => r.type === 'cover_art');
-      const coverFile  = coverRel?.attributes?.fileName;
-      const cover      = coverFile ? `https://uploads.mangadex.org/covers/${m.id}/${coverFile}.256.jpg` : null;
-      const genres     = (attrs.tags || []).filter(t => t.attributes?.group === 'genre').map(t => t.attributes?.name?.en || '').filter(Boolean);
-      const themes     = (attrs.tags || []).filter(t => t.attributes?.group === 'theme').map(t => t.attributes?.name?.en || '').filter(Boolean);
-      const typeMap    = { ko: 'Manhwa', zh: 'Manhua', 'zh-hk': 'Manhua' };
-      const sourceLabel= typeMap[attrs.originalLanguage] || 'Manga';
-      return {
-        id: `mdx-${m.id}`, externalId: m.id, source: 'mangadex', sourceLabel, title, author, cover,
-        rating: attrs.rating?.bayesian ? Math.round(attrs.rating.bayesian * 10) / 10 : null,
-        year: attrs.year || null, description: desc ? desc.slice(0, 200) : null,
-        status: attrs.status ? attrs.status.charAt(0).toUpperCase() + attrs.status.slice(1) : null,
-        chapters: attrs.lastChapter || null, genres, themes,
-        url: `https://mangadex.org/title/${m.id}`, readUrl: `https://mangadex.org/title/${m.id}`,
-        _contentRating: attrs.contentRating,
-      };
-    }).filter(m => !['erotica','pornographic'].includes(m._contentRating))
-      .map(({ _contentRating, ...clean }) => clean);
-  } catch {
-    return jikanResults;
+    if (list.length >= 4) {
+      return list.map(m => {
+        const attrs      = m.attributes || {};
+        const title      = attrs.title?.en || Object.values(attrs.title || {})[0] || 'Unknown Title';
+        const desc       = attrs.description?.en || Object.values(attrs.description || {})[0] || null;
+        const authorRel  = (m.relationships || []).find(r => r.type === 'author');
+        const author     = authorRel?.attributes?.name || 'Unknown Author';
+        const coverRel   = (m.relationships || []).find(r => r.type === 'cover_art');
+        const coverFile  = coverRel?.attributes?.fileName;
+        const cover      = coverFile ? `https://uploads.mangadex.org/covers/${m.id}/${coverFile}.256.jpg` : null;
+        const genres     = (attrs.tags || []).filter(t => t.attributes?.group === 'genre').map(t => t.attributes?.name?.en || '').filter(Boolean);
+        const themes     = (attrs.tags || []).filter(t => t.attributes?.group === 'theme').map(t => t.attributes?.name?.en || '').filter(Boolean);
+        const typeMap    = { ko: 'Manhwa', zh: 'Manhua', 'zh-hk': 'Manhua' };
+        const sourceLabel= typeMap[attrs.originalLanguage] || 'Manga';
+        return {
+          id: `mdx-${m.id}`, externalId: m.id, source: 'mangadex', sourceLabel, title, author, cover,
+          rating: attrs.rating?.bayesian ? Math.round(attrs.rating.bayesian * 10) / 10 : null,
+          year: attrs.year || null, description: desc ? desc.slice(0, 200) : null,
+          status: attrs.status ? attrs.status.charAt(0).toUpperCase() + attrs.status.slice(1) : null,
+          chapters: attrs.lastChapter || null, genres, themes,
+          url: `https://mangadex.org/title/${m.id}`, readUrl: `https://mangadex.org/title/${m.id}`,
+          _contentRating: attrs.contentRating,
+        };
+      }).filter(m => !['erotica','pornographic'].includes(m._contentRating))
+        .map(({ _contentRating, ...clean }) => clean);
+    }
+  } catch (err) {
+    console.warn('[MangaDex proxy] failed, falling back to Jikan:', err.message);
   }
+
+  // Fallback to Jikan if proxy is down or returned too few results
+  return await searchJikanFallback(keywords, limit);
 }
 
 async function searchJikanFallback(keywords, limit = 12) {
@@ -507,7 +508,7 @@ async function searchJikanFallback(keywords, limit = 12) {
       return {
         id:          `jikan-${m.mal_id || i}`,
         externalId:  String(m.mal_id || i),
-        source:      'mangadex',
+        source:      'jikan',
         sourceLabel: typeMap[m.type] || 'Manga',
         title:       m.title_english || m.title || 'Unknown Title',
         author:      authors[0] || 'Unknown Author',
@@ -529,6 +530,64 @@ async function searchJikanFallback(keywords, limit = 12) {
   } catch (err) {
     console.error('[Jikan fallback] error:', err);
     return [];
+  }
+}
+
+
+// ─── Jikan detail (MAL-based, no proxy needed) ───────────────────────────────
+async function fetchJikanDetail(malId) {
+  try {
+    const [detailRes, chaptersRes] = await Promise.allSettled([
+      fetch(`https://api.jikan.moe/v4/manga/${malId}`),
+      fetch(`https://api.jikan.moe/v4/manga/${malId}/chapters?page=1`),
+    ]);
+
+    const detail   = detailRes.status   === 'fulfilled' ? await detailRes.value.json()   : {};
+    const chapData = chaptersRes.status === 'fulfilled' ? await chaptersRes.value.json() : {};
+
+    const m       = detail.data || {};
+    const authors = (m.authors || []).map(a => a.name?.replace(/,\s*/, ' ')).filter(Boolean);
+    const genres  = (m.genres  || []).map(g => g.name);
+    const themes  = (m.themes  || []).map(t => t.name);
+    const typeMap = { Manhwa: 'Manhwa', Manhua: 'Manhua', Novel: 'Novel' };
+
+    const chapterList = (chapData.data || []).map(ch => ({
+      id:      String(ch.mal_id),
+      chapter: String(ch.chapter_number ?? ch.mal_id),
+      title:   ch.title || `Chapter ${ch.chapter_number ?? ''}`,
+      pages:   null,
+      url:     `https://myanimelist.net/manga/${malId}/chapters`,
+    }));
+
+    return {
+      id:          `jikan-${malId}`,
+      externalId:  String(malId),
+      source:      'jikan',
+      sourceLabel: typeMap[m.type] || 'Manga',
+      title:       m.title_english || m.title || 'Unknown Title',
+      titleNative: m.title_japanese || null,
+      authors,
+      author:      authors[0] || 'Unknown Author',
+      cover:       m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || null,
+      rating:      m.score || null,
+      ratingCount: m.scored_by || null,
+      year:        m.published?.prop?.from?.year || null,
+      description: m.synopsis || null,
+      status:      m.status || null,
+      chapters:    m.chapters || null,
+      volumes:     m.volumes  || null,
+      rank:        m.rank     || null,
+      popularity:  m.popularity || null,
+      genres,
+      themes,
+      subjects:    [...genres, ...themes].slice(0, 8),
+      chapterList,
+      url:         m.url || `https://myanimelist.net/manga/${malId}`,
+      readUrl:     m.url || null,
+    };
+  } catch (err) {
+    console.error('[Jikan detail] error:', err);
+    return null;
   }
 }
 

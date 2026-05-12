@@ -23,6 +23,7 @@
             display: inline-flex; align-items: center; gap: 10px;
             font-size: 20px; font-weight: 700; text-decoration: none; color: #e6e7e8;
         }
+        .brand:visited, .brand:hover, .brand:active { color: #e6e7e8; }
         .brand-mark {
             width: 36px; height: 36px; border-radius: 10px;
             display: inline-flex; align-items: center; justify-content: center;
@@ -215,6 +216,8 @@
 
         /* ── Chapter list ─────────────────────────────────────────── */
         .chapter-section {
+            max-width: 960px;
+            margin: 0 auto;
             padding: 0 36px 40px;
         }
 
@@ -341,7 +344,7 @@
         .chapter-more-btn:hover { background: rgba(255,255,255,0.06); color: #d0d5de; }
 
         /* ── Inline Reader ─────────────────────────────────────────── */
-        .reader-section { margin: 0 36px 40px; }
+        .reader-section { max-width: 960px; margin: 0 auto; padding: 0 36px 40px; }
 
         .reader-toggle-bar {
             display: flex; align-items: center; justify-content: space-between;
@@ -375,7 +378,7 @@
 
         @media (max-width: 600px) {
             .chapter-section { padding: 0 16px 28px; }
-            .reader-section   { margin: 0 16px 28px; }
+            .reader-section   { padding: 0 16px 28px; }
             .reader-iframe    { height: 65vh; }
         }
         .toast {
@@ -708,28 +711,35 @@
             }
 
             // Read link / Chapter list
-            if (book.source === 'mangadex') {
-                // Fetch and render chapter list
+            if (book.source === 'mangadex' || book.source === 'jikan') {
+                // Render chapter list
                 const chapterSection  = document.getElementById('chapter-section');
-                const chapterList     = document.getElementById('chapter-list');
+                const chapterListEl   = document.getElementById('chapter-list');
                 const chapterMoreBtn  = document.getElementById('chapter-more-btn');
                 chapterSection.style.display = '';
-                chapterList.innerHTML = '<p style="color:#404558;font-size:13px;padding:16px 0">Loading chapters…</p>';
 
-                try {
+                // Use chapterList already returned by detail fetch if available,
+                // otherwise fall back to a direct MangaDex proxy fetch
+                async function getChapters() {
+                    if (book.chapterList && book.chapterList.length) return book.chapterList;
+                    chapterListEl.innerHTML = '<p style="color:#404558;font-size:13px;padding:16px 0">Loading chapters…</p>';
                     const res  = await fetch(`/api/manga/chapters?id=${book.externalId}`);
                     const data = await res.json();
-                    const chapters = (data.data || []).map(ch => ({
+                    return (data.data || []).map(ch => ({
                         id:      ch.id,
                         chapter: ch.attributes?.chapter || '?',
                         title:   ch.attributes?.title   || '',
                         pages:   ch.attributes?.pages   || null,
                     }));
+                }
+
+                try {
+                    const chapters = await getChapters();
 
                     if (!chapters.length) {
-                        chapterList.innerHTML = '<p style="color:#404558;font-size:13px;padding:16px 0">No chapters available yet.</p>';
+                        chapterListEl.innerHTML = '<p style="color:#404558;font-size:13px;padding:16px 0">No chapters available yet.</p>';
                     } else {
-                        chapterList.innerHTML = chapters.map(ch => {
+                        chapterListEl.innerHTML = chapters.map(ch => {
                             const readerUrl = `reader.html?chapter=${ch.id}&manga=${book.externalId}&title=${encodeURIComponent(book.title||'')}&back=${encodeURIComponent(window.location.href)}`;
                             return `
                             <a class="chapter-item" href="${readerUrl}">
@@ -750,7 +760,7 @@
                         }
                     }
                 } catch {
-                    chapterList.innerHTML = '<p style="color:#404558;font-size:13px;padding:16px 0">Could not load chapters.</p>';
+                    chapterListEl.innerHTML = '<p style="color:#404558;font-size:13px;padding:16px 0">Could not load chapters.</p>';
                 }
 
                 // Add "Start Reading" button in hero

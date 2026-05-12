@@ -503,7 +503,7 @@ body.dashboard {
 
 @media (max-width: 720px) {
     .topbar { flex-direction: row; align-items: center; flex-wrap: nowrap; }
-    .section-scroll { grid-auto-columns: minmax(155px, 1fr); }
+    .section-scroll { grid-auto-columns: minmax(155px, 200px); }
     .split-grid { grid-template-columns: 1fr; gap: 16px; }
 }
 
@@ -533,7 +533,7 @@ body.dashboard {
 .section-scroll {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: minmax(180px, 1fr);
+    grid-auto-columns: minmax(180px, 220px);
     gap: 14px;
     overflow-x: auto;
     padding-bottom: 8px;
@@ -608,7 +608,7 @@ body.dashboard {
 }
 
 @media (max-width: 600px) {
-    .section-scroll { grid-auto-columns: minmax(150px, 1fr); gap: 12px; }
+    .section-scroll { grid-auto-columns: minmax(150px, 195px); gap: 12px; }
     .book-cover { min-height: 160px; }
 }
 
@@ -646,12 +646,12 @@ body.dashboard {
 
 @media (max-width: 720px) {
     .topbar { flex-direction: row; align-items: center; }
-    .section-scroll { grid-auto-columns: minmax(155px, 1fr); }
+    .section-scroll { grid-auto-columns: minmax(155px, 200px); }
     .split-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
-    .section-scroll { grid-auto-columns: minmax(140px, 1fr); gap: 10px; }
+    .section-scroll { grid-auto-columns: minmax(140px, 185px); gap: 10px; }
 }
 
 /* ── Search Trigger Button ──────────────────────────────────────────────── */
