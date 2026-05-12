@@ -62,6 +62,38 @@ app.get('/api/manga/chapters/:id', async (req, res) => {
     }
 });
 
+// Get chapter pages (image URLs)
+app.get('/api/manga/pages', async (req, res) => {
+    try {
+        const { id } = req.query;
+        if (!id) return res.status(400).json({ error: 'id is required' });
+
+        const response = await fetch(`https://api.mangadex.org/at-home/server/${id}`, {
+            headers: { 'Content-Type': 'application/json', 'User-Agent': 'PageSync/1.0' },
+        });
+
+        if (!response.ok) {
+            return res.status(response.status).json({ error: 'MangaDex returned error' });
+        }
+
+        const data     = await response.json();
+        const baseUrl  = data.baseUrl;
+        const hash     = data.chapter?.hash;
+        const pages    = data.chapter?.data    || [];
+        const lowPages = data.chapter?.dataSaver || [];
+
+        return res.json({
+            baseUrl,
+            hash,
+            pages:      pages.map(p    => `${baseUrl}/data/${hash}/${p}`),
+            pagesSaver: lowPages.map(p => `${baseUrl}/data-saver/${hash}/${p}`),
+        });
+    } catch (err) {
+        console.error('[MangaDex proxy /pages]', err.message);
+        return res.status(500).json({ error: 'Failed to fetch chapter pages' });
+    }
+});
+
 app.listen(port, () => {
     console.log(`PageSync running at http://localhost:${port}`);
 });
