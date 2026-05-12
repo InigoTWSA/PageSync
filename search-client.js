@@ -34,43 +34,25 @@ function parseQueryRegex(query, forcedSource) {
 }
 
 async function parseQuery(query, forcedSource) {
-  const apiKey = GEMINI_API_KEY;
-  if (!apiKey) {
-    return parseQueryRegex(query, forcedSource);
-  }
+  if (!GEMINI_API_KEY) return parseQueryRegex(query, forcedSource);
   try {
     const prompt = `You are a search query parser for a book/manga/comics tracking app.
-Given a natural language search query, extract structured search parameters.
-Respond ONLY with valid JSON — no markdown, no explanation.
-JSON shape: { "keywords": "clean search keywords", "source": "books|manga|classics|academic|free|all" }
-Rules:
-- source = "manga" if query mentions manga, manhwa, manhua, webtoon, or Japanese/Korean comics
-- source = "classics" if query mentions classic, public domain, historical literature
-- source = "academic" if query mentions academic, scholarly, research, rare, historical
-- source = "free" if query mentions free, readable, read now, standard ebooks
-- source = "all" if query is vague or mentions multiple types
-- source = "books" otherwise (default)
-${forcedSource && forcedSource !== 'books' ? `- User already selected source "${forcedSource}", keep it.` : ''}
+Respond ONLY with valid JSON: { "keywords": "clean search keywords", "source": "books|manga|classics|academic|free|all" }
+Rules: source=manga for manga/manhwa/manhua/webtoon, source=classics for classic/public domain, source=academic for scholarly/research, source=free for free/readable, source=all if vague, source=books otherwise.
+${forcedSource && forcedSource !== 'books' ? 'Keep source as "' + forcedSource + '".' : ''}
 Query: ${query}`;
-
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-        signal: AbortSignal.timeout(4000),
-      }
+        signal: AbortSignal.timeout(4000) }
     );
-    const data   = await res.json();
-    const text   = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-    return {
-      keywords: parsed.keywords || query,
-      source:   forcedSource || parsed.source || 'books',
-    };
+    const data = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const p    = JSON.parse(text.replace(/\`\`\`json|\`\`\`/g, '').trim());
+    return { keywords: p.keywords || query, source: forcedSource || p.source || 'books' };
   } catch (err) {
-    console.warn('[Gemini parseQuery] fallback to regex:', err.message);
+    console.warn('[Gemini] fallback to regex:', err.message);
     return parseQueryRegex(query, forcedSource);
   }
 }
@@ -83,8 +65,8 @@ const BLOCKED_TERMS = [
   // Explicit adult content labels
   'hentai', 'erotic', 'erotica', 'eroge', 'pornograph', 'explicit sex',
   'adult content', 'sexually explicit', 'xxx', 'nsfw',
-  // Common adult manga/doujin labels
-  'ecchi', 'doujinshi', 'doujin', 'lemon fanfic',
+  // Common adult manga/doujin labels (blocked via genre IDs for manga, not text match)
+  'lemon fanfic',
   // Fetish / kink terms
   'bdsm', 'bondage', 'fetish', 'dominatrix', 'sadism', 'masochism',
   // Violence-only extreme
@@ -102,19 +84,24 @@ const BLOCKED_TITLES = [
 ];
 
 function isSafe(item) {
-  const haystack = [
+  // Check title + genres/themes/subjects (reliable signals)
+  const strictHaystack = [
     item.title        || '',
-    item.author       || '',
-    item.description  || '',
     ...(item.subjects || []),
     ...(item.genres   || []),
     ...(item.themes   || []),
   ].join(' ').toLowerCase();
 
-  if (BLOCKED_TERMS.some(term => haystack.includes(term))) return false;
+  if (BLOCKED_TERMS.some(term => strictHaystack.includes(term))) return false;
 
   const titleLower = (item.title || '').toLowerCase();
   if (BLOCKED_TITLES.some(t => titleLower.includes(t))) return false;
+
+  // Only check description for the most explicit terms (not 'ecchi'/'doujin'
+  // which appear in many legitimate synopses)
+  const descHard = ['hentai','pornograph','explicit sex','sexually explicit','xxx','lolicon','shotacon','child porn'];
+  const desc = (item.description || '').toLowerCase();
+  if (descHard.some(term => desc.includes(term))) return false;
 
   return true;
 }
@@ -151,7 +138,7 @@ export async function clientSearch(query, source = 'books', limit = 12) {
         ...(gutenberg.status === 'fulfilled' ? gutenberg.value : []),
         ...(standard.status  === 'fulfilled' ? standard.value  : []),
       ];
-    } else if (source === 'all') {
+    } else if (src === 'all') {
       const perSource = Math.ceil(fetchLimit / 5);
       const [books, manga, classics, standard, academic] = await Promise.allSettled([
         searchOpenLibrary(keywords, perSource),
