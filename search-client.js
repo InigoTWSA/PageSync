@@ -9,6 +9,70 @@
 //   Free Books        → Standard Ebooks (standardebooks.org) — free, no key
 //   Academic          → Internet Archive(archive.org)        — free, no key
 
+
+import config from './config.js';
+
+// ─── Gemini NLP query parser ──────────────────────────────────────────────────
+function parseQueryRegex(query, forcedSource) {
+  let source = forcedSource || 'books';
+  if (!forcedSource || forcedSource === 'books') {
+    if (/manga|manhwa|manhua|webtoon|anime|shonen|shojo|seinen|isekai/i.test(query))
+      source = 'manga';
+    else if (/classic|gutenberg|public domain|dickens|tolstoy|austen|shakespeare/i.test(query))
+      source = 'classics';
+    else if (/academic|research|scholarly|history|science|philosophy/i.test(query))
+      source = 'academic';
+    else if (/free|read now|readable|standard ebooks/i.test(query))
+      source = 'free';
+  }
+  const keywords = query
+    .replace(/\b(find|show|search|give me|recommend|good|best|popular|top|free|readable)\b/gi, '')
+    .replace(/\s+/g, ' ').trim() || query.trim();
+  return { keywords, source };
+}
+
+async function parseQuery(query, forcedSource) {
+  const apiKey = config?.gemini?.apiKey;
+  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY') {
+    return parseQueryRegex(query, forcedSource);
+  }
+  try {
+    const prompt = `You are a search query parser for a book/manga/comics tracking app.
+Given a natural language search query, extract structured search parameters.
+Respond ONLY with valid JSON — no markdown, no explanation.
+JSON shape: { "keywords": "clean search keywords", "source": "books|manga|classics|academic|free|all" }
+Rules:
+- source = "manga" if query mentions manga, manhwa, manhua, webtoon, or Japanese/Korean comics
+- source = "classics" if query mentions classic, public domain, historical literature
+- source = "academic" if query mentions academic, scholarly, research, rare, historical
+- source = "free" if query mentions free, readable, read now, standard ebooks
+- source = "all" if query is vague or mentions multiple types
+- source = "books" otherwise (default)
+${forcedSource && forcedSource !== 'books' ? `- User already selected source "${forcedSource}", keep it.` : ''}
+Query: ${query}`;
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        signal: AbortSignal.timeout(4000),
+      }
+    );
+    const data   = await res.json();
+    const text   = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+    return {
+      keywords: parsed.keywords || query,
+      source:   forcedSource || parsed.source || 'books',
+    };
+  } catch (err) {
+    console.warn('[Gemini parseQuery] fallback to regex:', err.message);
+    return parseQueryRegex(query, forcedSource);
+  }
+}
+
 // ─── NSFW filter ─────────────────────────────────────────────────────────────
 // Applied to every result from every source before returning.
 
@@ -65,16 +129,17 @@ export async function clientSearch(query, source = 'books', limit = 12) {
   if (!query?.trim()) return { results: [], parsed: {} };
 
   const fetchLimit = limit + 10;
-  const keywords   = query.trim();
-  const parsed     = { keywords, source };
+  const parsed     = await parseQuery(query.trim(), source);
+  const keywords   = parsed.keywords;
+  const src        = parsed.source || source;
 
   let results = [];
   try {
-    if (source === 'manga')         results = await searchMangaDex(keywords, fetchLimit);
-    else if (source === 'classics') results = await searchGutenbergRest(keywords, fetchLimit);
-    else if (source === 'standard') results = await searchStandardEbooks(keywords, fetchLimit);
-    else if (source === 'academic') results = await searchInternetArchive(keywords, fetchLimit);
-    else if (source === 'free') {
+    if (src === 'manga')         results = await searchMangaDex(keywords, fetchLimit);
+    else if (src === 'classics') results = await searchGutenbergRest(keywords, fetchLimit);
+    else if (src === 'standard') results = await searchStandardEbooks(keywords, fetchLimit);
+    else if (src === 'academic') results = await searchInternetArchive(keywords, fetchLimit);
+    else if (src === 'free') {
       const perSource = Math.ceil(fetchLimit / 2);
       const [gutenberg, standard] = await Promise.allSettled([
         searchGutenbergRest(keywords, perSource),

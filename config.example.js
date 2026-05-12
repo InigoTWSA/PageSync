@@ -18,6 +18,12 @@ const config = {
     appId:             "YOUR_APP_ID",
   },
 
+  // ── Gemini (NLP search query parsing) ────────────────────────────
+  // Google AI Studio → https://aistudio.google.com/app/apikey
+  gemini: {
+    apiKey: "YOUR_GEMINI_API_KEY",
+  },
+  
   // ── EmailJS (OTP emails) ──────────────────────────────────────────
   // 1. Sign up at https://emailjs.com (free — 200 emails/month)
   // 2. Add an Email Service (Gmail, Outlook, etc.)

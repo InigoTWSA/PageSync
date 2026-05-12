@@ -821,7 +821,7 @@
     <script type="module">
         import { onAuthStateChange, db } from './firebase.js';
         import {
-            collection, getDocs, query
+            collection, getDocs, query, doc, getDoc, setDoc
         } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
  
         async function loadStats(uid) {
@@ -854,14 +854,16 @@
         let activeSlotIndex = null;
  
         const MAX_SLOTS = 5;
-        const KEY = uid => `ps_profile_${uid}`;
- 
-        function loadProfile(uid) {
-            try { return JSON.parse(localStorage.getItem(KEY(uid))) || {}; } catch { return {}; }
+
+        async function loadProfile(uid) {
+            try {
+                const snap = await getDoc(doc(db, 'users', uid));
+                return snap.exists() ? (snap.data().profile || {}) : {};
+            } catch { return {}; }
         }
- 
-        function saveProfile(uid, data) {
-            localStorage.setItem(KEY(uid), JSON.stringify(data));
+
+        async function saveProfile(uid, data) {
+            await setDoc(doc(db, 'users', uid), { profile: data }, { merge: true });
         }
  
         /* ── DOM refs ───────────────────────────────────────────── */
@@ -896,13 +898,13 @@
         onAuthStateChange(user => {
             if (!user) { window.location.href = 'login.html'; return; }
             currentUser = user;
-            renderFromStorage();
+            await renderFromStorage();
             loadStats(user.uid);
         });
  
-        function renderFromStorage() {
+        async function renderFromStorage() {
             const uid = currentUser.uid;
-            const p   = loadProfile(uid);
+            const p   = await loadProfile(uid);
  
             // Display name / username
             const displayName = p.displayName || currentUser.displayName || 'Reader';
@@ -923,8 +925,7 @@
             if (p.avatarDataUrl) {
                 avatarEl.style.backgroundImage = `url('${p.avatarDataUrl}')`;
                 avatarInitials.style.display = 'none';
-                // Also update topbar avatar on home via localStorage
-                localStorage.setItem(`ps_avatar_${uid}`, p.avatarDataUrl);
+
             } else {
                 const initials = displayName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'PS';
                 avatarInitials.textContent   = initials;
@@ -932,8 +933,7 @@
                 avatarEl.style.backgroundImage = '';
             }
  
-            // Also persist username for home.html menu
-            localStorage.setItem(`ps_username_${uid}`, displayName);
+
  
             // Banner
             if (p.bannerDataUrl) {
@@ -946,13 +946,13 @@
         }
  
         /* ── Edit panel toggle ──────────────────────────────────── */
-        editToggleBtn.addEventListener('click', () => {
+        editToggleBtn.addEventListener('click', async () => {
             const isOpen = editPanel.classList.toggle('open');
             editToggleBtn.textContent = isOpen ? 'Done' : 'Edit profile';
             editToggleBtn.classList.toggle('active', isOpen);
  
             if (isOpen) {
-                const p = loadProfile(currentUser.uid);
+                const p = await loadProfile(currentUser.uid);
                 editDisplayName.value = p.displayName || currentUser.displayName || '';
                 editUsername.value    = p.username    || currentUser.email?.split('@')[0] || '';
                 editBio.value         = p.bio || '';
@@ -965,14 +965,14 @@
             editToggleBtn.classList.remove('active');
         });
  
-        editSaveBtn.addEventListener('click', () => {
+        editSaveBtn.addEventListener('click', async () => {
             const uid = currentUser.uid;
-            const p   = loadProfile(uid);
+            const p   = await loadProfile(uid);
             p.displayName = editDisplayName.value.trim() || p.displayName;
             p.username    = editUsername.value.trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'') || p.username;
             p.bio         = editBio.value.trim();
-            saveProfile(uid, p);
-            renderFromStorage();
+            await saveProfile(uid, p);
+            await renderFromStorage();
             editPanel.classList.remove('open');
             editToggleBtn.textContent = 'Edit profile';
             editToggleBtn.classList.remove('active');
@@ -985,12 +985,12 @@
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = ev => {
+            reader.onload = async ev => {
                 const uid = currentUser.uid;
-                const p   = loadProfile(uid);
+                const p   = await loadProfile(uid);
                 p.avatarDataUrl = ev.target.result;
-                saveProfile(uid, p);
-                renderFromStorage();
+                await saveProfile(uid, p);
+                await renderFromStorage();
                 showToast('Profile picture updated ✓');
             };
             reader.readAsDataURL(file);
@@ -1003,11 +1003,11 @@
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = ev => {
+            reader.onload = async ev => {
                 const uid = currentUser.uid;
-                const p   = loadProfile(uid);
+                const p   = await loadProfile(uid);
                 p.bannerDataUrl = ev.target.result;
-                saveProfile(uid, p);
+                await saveProfile(uid, p);
                 bannerImg.src = ev.target.result;
                 bannerImg.style.display = 'block';
                 showToast('Banner updated ✓');
