@@ -32,8 +32,17 @@ function parseQueryRegex(query, forcedSource) {
   return { keywords, source };
 }
 
+const _parseCache = new Map();
+
 async function parseQuery(query, forcedSource) {
-  if (!GEMINI_API_KEY) return parseQueryRegex(query, forcedSource);
+  const cacheKey = `${query}::${forcedSource || ''}`;
+  if (_parseCache.has(cacheKey)) return _parseCache.get(cacheKey);
+
+  if (!GEMINI_API_KEY) {
+    const result = parseQueryRegex(query, forcedSource);
+    _parseCache.set(cacheKey, result);
+    return result;
+  }
   try {
     const prompt = `You are a search query parser for a book/manga/comics app.
 Respond ONLY with valid JSON: { "keywords": "clean search keywords", "source": "books|manga|classics|academic|free|all" }
@@ -49,10 +58,14 @@ Query: ${query}`;
     const data = await res.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const p    = JSON.parse(text.replace(/```json|```/g, '').trim());
-    return { keywords: p.keywords || query, source: forcedSource || p.source || 'books' };
+    const result = { keywords: p.keywords || query, source: forcedSource || p.source || 'books' };
+    _parseCache.set(cacheKey, result);
+    return result;
   } catch (err) {
     console.warn('[Gemini] fallback to regex:', err.message);
-    return parseQueryRegex(query, forcedSource);
+    const result = parseQueryRegex(query, forcedSource);
+    _parseCache.set(cacheKey, result);
+    return result;
   }
 }
 
@@ -493,7 +506,7 @@ async function searchMangaDex(keywords, limit = 12) {
 
 async function searchJikanFallback(keywords, limit = 12) {
   try {
-    const url  = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(keywords)}&limit=${Math.min(limit + 5, 25)}&order_by=scored&sort=desc&sfw=true`;
+    const url  = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(keywords)}&limit=${Math.min(limit + 5, 25)}&order_by=score&sort=desc`;
     console.log('[Jikan] fetching:', url);
     const res  = await fetch(url);
     const data = await res.json();
