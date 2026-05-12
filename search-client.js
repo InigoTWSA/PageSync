@@ -449,82 +449,57 @@ async function fetchStandardEbooksDetail(slug) {
   }
 }
 
-// ─── MangaDex search (via server-side proxy — no CORS) ───────────────────────
-// Proxy routes in server.js forward to api.mangadex.org server-side.
-// Falls back to Jikan if proxy is unavailable (e.g. static-only deploy).
+// ─── MangaDex search (Jikan primary, MangaDex proxy as enhancement) ──────────
+// Jikan works everywhere with no CORS. Returns multiple results reliably.
 
 const BLOCKED_JIKAN_GENRE_IDS = new Set([9, 12, 49]); // Ecchi, Hentai, Erotica
 
-// Detect if we're running on localhost (proxy available) or static Vercel
-const PROXY_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? ''   // same origin on localhost
-  : '';  // on Vercel, proxy routes are available via same domain if server.js is deployed
-
 async function searchMangaDex(keywords, limit = 12) {
+  // Always try Jikan first — reliable, no CORS
+  const jikanResults = await searchJikanFallback(keywords, limit);
+  if (jikanResults.length >= 4) return jikanResults;
+
+  // If Jikan returns too few, try MangaDex proxy
   try {
-    // Try proxy first
     const proxyUrl = `/api/manga/search?q=${encodeURIComponent(keywords)}&limit=${Math.min(limit, 25)}`;
-    const res      = await fetch(proxyUrl);
+    const res      = await fetch(proxyUrl, { signal: AbortSignal.timeout(4000) });
     if (!res.ok) throw new Error(`Proxy ${res.status}`);
     const data = await res.json();
     const list = data.data || [];
+    if (!list.length) return jikanResults;
 
     return list.map(m => {
-      const attrs   = m.attributes || {};
-      const title   = attrs.title?.en || Object.values(attrs.title || {})[0] || 'Unknown Title';
-      const desc    = attrs.description?.en || Object.values(attrs.description || {})[0] || null;
-
-      const authorRel = (m.relationships || []).find(r => r.type === 'author');
-      const author    = authorRel?.attributes?.name || 'Unknown Author';
-
-      const coverRel  = (m.relationships || []).find(r => r.type === 'cover_art');
-      const coverFile = coverRel?.attributes?.fileName;
-      const cover     = coverFile
-        ? `https://uploads.mangadex.org/covers/${m.id}/${coverFile}.256.jpg`
-        : null;
-
-      const genres = (attrs.tags || [])
-        .filter(t => t.attributes?.group === 'genre')
-        .map(t => t.attributes?.name?.en || '').filter(Boolean);
-      const themes = (attrs.tags || [])
-        .filter(t => t.attributes?.group === 'theme')
-        .map(t => t.attributes?.name?.en || '').filter(Boolean);
-
-      const typeMap     = { ko: 'Manhwa', zh: 'Manhua', 'zh-hk': 'Manhua' };
-      const sourceLabel = typeMap[attrs.originalLanguage] || 'Manga';
-
+      const attrs      = m.attributes || {};
+      const title      = attrs.title?.en || Object.values(attrs.title || {})[0] || 'Unknown Title';
+      const desc       = attrs.description?.en || Object.values(attrs.description || {})[0] || null;
+      const authorRel  = (m.relationships || []).find(r => r.type === 'author');
+      const author     = authorRel?.attributes?.name || 'Unknown Author';
+      const coverRel   = (m.relationships || []).find(r => r.type === 'cover_art');
+      const coverFile  = coverRel?.attributes?.fileName;
+      const cover      = coverFile ? `https://uploads.mangadex.org/covers/${m.id}/${coverFile}.256.jpg` : null;
+      const genres     = (attrs.tags || []).filter(t => t.attributes?.group === 'genre').map(t => t.attributes?.name?.en || '').filter(Boolean);
+      const themes     = (attrs.tags || []).filter(t => t.attributes?.group === 'theme').map(t => t.attributes?.name?.en || '').filter(Boolean);
+      const typeMap    = { ko: 'Manhwa', zh: 'Manhua', 'zh-hk': 'Manhua' };
+      const sourceLabel= typeMap[attrs.originalLanguage] || 'Manga';
       return {
-        id:          `mdx-${m.id}`,
-        externalId:  m.id,
-        source:      'mangadex',
-        sourceLabel,
-        title,
-        author,
-        cover,
-        rating:      attrs.rating?.bayesian ? Math.round(attrs.rating.bayesian * 10) / 10 : null,
-        year:        attrs.year || null,
-        description: desc ? desc.slice(0, 200) : null,
-        status:      attrs.status ? attrs.status.charAt(0).toUpperCase() + attrs.status.slice(1) : null,
-        chapters:    attrs.lastChapter || null,
-        genres,
-        themes,
-        url:         `https://mangadex.org/title/${m.id}`,
-        readUrl:     `https://mangadex.org/title/${m.id}`,
+        id: `mdx-${m.id}`, externalId: m.id, source: 'mangadex', sourceLabel, title, author, cover,
+        rating: attrs.rating?.bayesian ? Math.round(attrs.rating.bayesian * 10) / 10 : null,
+        year: attrs.year || null, description: desc ? desc.slice(0, 200) : null,
+        status: attrs.status ? attrs.status.charAt(0).toUpperCase() + attrs.status.slice(1) : null,
+        chapters: attrs.lastChapter || null, genres, themes,
+        url: `https://mangadex.org/title/${m.id}`, readUrl: `https://mangadex.org/title/${m.id}`,
         _contentRating: attrs.contentRating,
       };
     }).filter(m => !['erotica','pornographic'].includes(m._contentRating))
       .map(({ _contentRating, ...clean }) => clean);
-
   } catch {
-    // Fallback to Jikan if proxy fails
-    console.warn('[MangaDex] proxy unavailable, falling back to Jikan');
-    return searchJikanFallback(keywords, limit);
+    return jikanResults;
   }
 }
 
 async function searchJikanFallback(keywords, limit = 12) {
   try {
-    const url  = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(keywords)}&limit=${Math.min(limit, 25)}&order_by=popularity&sort=asc&sfw=true`;
+    const url  = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(keywords)}&limit=${Math.min(limit + 5, 25)}&order_by=scored&sort=desc&sfw=true`;
     const data = await fetch(url).then(r => r.json());
     return (data.data || []).map((m, i) => {
       const authors = (m.authors || []).map(a => a.name?.replace(/,\s*/, ' ')).filter(Boolean);

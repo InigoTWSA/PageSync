@@ -109,7 +109,149 @@
         .skeleton-thumb { width: 112px; height: 112px; border-radius: 18px; flex-shrink: 0; }
         .skeleton-text-block { flex: 1; display: flex; flex-direction: column; gap: 10px; }
 
-        .section-error { color: #505870; font-size: 14px; padding: 20px 0; min-width: 200px; }
+        /* ── Add popup ───────────────────────────────────────────── */
+        .add-popup {
+            position: fixed;
+            z-index: 200;
+            background: #1a1d26;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            width: 260px;
+            overflow: hidden;
+            animation: popIn 0.15s ease;
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.94) translateY(-6px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .add-popup-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #505870;
+            padding: 12px 16px 8px;
+        }
+
+        .add-popup-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+            margin: 0 16px;
+        }
+
+        .popup-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.12s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            color: #d0d5de;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+        }
+
+        .popup-option:hover { background: rgba(255,255,255,0.05); }
+
+        .popup-option-icon {
+            width: 32px; height: 32px;
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px; flex-shrink: 0;
+        }
+
+        .poi-bookmark { background: rgba(59,125,243,0.15); }
+        .poi-list     { background: rgba(125,92,255,0.15); }
+
+        .popup-option-text strong {
+            display: block; font-size: 13px; font-weight: 600; color: #e0e5f0;
+        }
+
+        .popup-option-text span {
+            font-size: 11px; color: #505870;
+        }
+
+        /* Status select inside popup */
+        .popup-status-wrap {
+            padding: 8px 16px 12px;
+        }
+
+        .popup-status-select {
+            width: 100%;
+            padding: 9px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            color: #c0c8d8;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .popup-status-select:focus { outline: none; border-color: rgba(59,125,243,0.4); }
+
+        .popup-save-btn {
+            width: calc(100% - 32px);
+            margin: 0 16px 12px;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            background: #3b7df3;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s;
+        }
+
+        .popup-save-btn:hover { background: #5a93f7; }
+
+        /* List picker inside popup */
+        .popup-lists-wrap {
+            padding: 6px 8px 10px;
+            max-height: 180px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .popup-list-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 10px; border-radius: 10px;
+            cursor: pointer; transition: background 0.12s;
+            border: none; background: none; width: 100%;
+            text-align: left; color: #c0c8d8;
+            font-size: 13px; font-family: inherit;
+        }
+
+        .popup-list-item:hover { background: rgba(255,255,255,0.06); }
+
+        .popup-list-icon {
+            font-size: 14px; flex-shrink: 0;
+        }
+
+        .popup-empty {
+            font-size: 12px; color: #404558;
+            text-align: center; padding: 16px 12px;
+        }
+
+        .popup-back {
+            display: flex; align-items: center; gap: 6px;
+            padding: 10px 16px 6px;
+            font-size: 12px; color: #606880;
+            cursor: pointer; border: none; background: none;
+            font-family: inherit; transition: color 0.12s;
+        }
+
+        .popup-back:hover { color: #9aa0ad; }
 
         .toast {
             position: fixed; bottom: 28px; left: 50%;
@@ -257,11 +399,13 @@
     </section>
 
 </div>
+<div class="add-popup" id="add-popup" style="display:none"></div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
-    import { onAuthStateChange, signOutUser, auth, getBooks, addBook } from './firebase.js';
+    import { onAuthStateChange, signOutUser, auth, getBooks, addBook, db } from './firebase.js';
     import { clientSearch } from './search-client.js';
+    import { collection, getDocs, doc, updateDoc, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const esc     = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const escAttr = s => (s||'').replace(/'/g,'&#39;');
@@ -347,21 +491,153 @@
         });
     }
 
-    // ── Save to library ────────────────────────────────────────────
+    // ── Add popup ──────────────────────────────────────────────────
+    const popup   = document.getElementById('add-popup');
+    let popupOpen = false;
+
+    function closePopup() {
+        popup.style.display = 'none';
+        popupOpen = false;
+    }
+
+    document.addEventListener('click', e => {
+        if (popupOpen && !popup.contains(e.target) && !e.target.classList.contains('card-add-btn')) {
+            closePopup();
+        }
+    });
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup(); });
+
+    function positionPopup(btn) {
+        const rect = btn.getBoundingClientRect();
+        const pw   = 260;
+        let left   = rect.right - pw;
+        let top    = rect.bottom + 8;
+        if (left < 8) left = 8;
+        if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+        if (top + 300 > window.innerHeight) top = rect.top - 8 - Math.min(300, top + 300 - window.innerHeight);
+        popup.style.left = `${left}px`;
+        popup.style.top  = `${top + window.scrollY}px`;
+    }
+
     async function saveBook(book, btn) {
         const user = auth.currentUser;
         if (!user) { showToast('Sign in to save books'); return; }
-        btn.textContent = '…'; btn.disabled = true;
+
+        popupOpen = true;
+        popup.style.display = 'block';
+        positionPopup(btn);
+        showMainMenu(book, btn, user);
+    }
+
+    function showMainMenu(book, btn, user) {
+        popup.innerHTML = `
+            <div class="add-popup-title">Add "${esc(book.title?.slice(0,28) || 'book')}"</div>
+            <div class="add-popup-divider"></div>
+            <button class="popup-option" id="opt-bookmark">
+                <span class="popup-option-icon poi-bookmark">🔖</span>
+                <span class="popup-option-text">
+                    <strong>Add to Bookmarks</strong>
+                    <span>Save to your reading library</span>
+                </span>
+            </button>
+            <button class="popup-option" id="opt-list">
+                <span class="popup-option-icon poi-list">📋</span>
+                <span class="popup-option-text">
+                    <strong>Add to a List</strong>
+                    <span>Save to a custom collection</span>
+                </span>
+            </button>`;
+
+        popup.querySelector('#opt-bookmark').addEventListener('click', () => showBookmarkMenu(book, btn, user));
+        popup.querySelector('#opt-list').addEventListener('click', () => showListMenu(book, user));
+    }
+
+    function showBookmarkMenu(book, btn, user) {
+        popup.innerHTML = `
+            <button class="popup-back" id="popup-back">← Back</button>
+            <div class="add-popup-divider"></div>
+            <div class="popup-status-wrap">
+                <select class="popup-status-select" id="status-select">
+                    <option value="planned">Plan to Read</option>
+                    <option value="reading">Currently Reading</option>
+                    <option value="completed">Completed</option>
+                    <option value="paused">On Hold</option>
+                    <option value="dropped">Dropped</option>
+                </select>
+            </div>
+            <button class="popup-save-btn" id="popup-save">Save to Bookmarks</button>`;
+
+        popup.querySelector('#popup-back').addEventListener('click', () => showMainMenu(book, btn, user));
+        popup.querySelector('#popup-save').addEventListener('click', async () => {
+            const status  = popup.querySelector('#status-select').value;
+            const saveBtn = popup.querySelector('#popup-save');
+            saveBtn.textContent = 'Saving…'; saveBtn.disabled = true;
+            try {
+                await addBook(user.uid, {
+                    title: book.title, author: book.author, status,
+                    externalId: book.externalId, source: book.source,
+                    sourceLabel: book.sourceLabel, coverUrl: book.cover || '',
+                    rating: book.rating || null, year: book.year || null,
+                });
+                btn.textContent = '✓'; btn.classList.add('added');
+                showToast(`"${book.title}" added to bookmarks`);
+                closePopup();
+            } catch {
+                saveBtn.textContent = 'Save to Bookmarks'; saveBtn.disabled = false;
+                showToast('Could not save — try again');
+            }
+        });
+    }
+
+    async function showListMenu(book, user) {
+        popup.innerHTML = `
+            <button class="popup-back" id="popup-back">← Back</button>
+            <div class="add-popup-divider"></div>
+            <div class="popup-lists-wrap" id="lists-wrap">
+                <p class="popup-empty">Loading lists…</p>
+            </div>`;
+
+        popup.querySelector('#popup-back').addEventListener('click', () => showMainMenu(book, null, user));
+
         try {
-            await addBook(user.uid, {
-                title: book.title, author: book.author, status: 'planned',
-                externalId: book.externalId, source: book.source, coverUrl: book.cover || '',
+            const snap  = await getDocs(collection(db, 'users', user.uid, 'lists'));
+            const lists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const wrap  = popup.querySelector('#lists-wrap');
+
+            if (!lists.length) {
+                wrap.innerHTML = `<p class="popup-empty">No lists yet.<br>Create one in My Lists.</p>`;
+                return;
+            }
+
+            wrap.innerHTML = lists.map(l => `
+                <button class="popup-list-item" data-id="${esc(l.id)}" data-name="${esc(l.name||'')}">
+                    <span class="popup-list-icon">📋</span>
+                    <span>${esc(l.name || 'Untitled')}</span>
+                </button>`).join('');
+
+            wrap.querySelectorAll('.popup-list-item').forEach(item => {
+                item.addEventListener('click', async () => {
+                    item.textContent = 'Adding…';
+                    try {
+                        const bookEntry = {
+                            title: book.title, author: book.author,
+                            externalId: book.externalId, source: book.source,
+                            sourceLabel: book.sourceLabel, cover: book.cover || '',
+                        };
+                        await updateDoc(doc(db, 'users', user.uid, 'lists', item.dataset.id), {
+                            books: arrayUnion(bookEntry),
+                        });
+                        showToast(`Added to "${item.dataset.name}"`);
+                        closePopup();
+                    } catch {
+                        showToast('Could not add to list — try again');
+                        item.textContent = item.dataset.name;
+                    }
+                });
             });
-            btn.textContent = '✓'; btn.classList.add('added');
-            showToast(`"${book.title}" added to library`);
-        } catch (err) {
-            btn.textContent = '+'; btn.disabled = false;
-            showToast('Could not save — try again');
+        } catch {
+            popup.querySelector('#lists-wrap').innerHTML = `<p class="popup-empty">Could not load lists.</p>`;
         }
     }
 
@@ -417,14 +693,14 @@
     // ── Load all sections ──────────────────────────────────────────
     async function loadDashboard() {
         ['section-manga','section-books','section-classics','section-romance','section-fantasy']
-            .forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = skelCards(6); });
+            .forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = skelCards(8); });
 
         const [manga, books, classics, romance, fantasy] = await Promise.allSettled([
-            clientSearch('popular action manga',    'manga',    8),
-            clientSearch('bestselling fiction',      'books',    8),
-            clientSearch('classic literature',       'classics', 8),
-            clientSearch('romance manhwa webtoon',   'manga',    8),
-            clientSearch('fantasy adventure novel',  'books',    8),
+            clientSearch('action adventure manga', 'manga',    8),
+            clientSearch('bestselling fiction',     'books',    8),
+            clientSearch('classic literature',      'classics', 8),
+            clientSearch('romance manhwa',          'manga',    8),
+            clientSearch('fantasy adventure novel', 'books',    8),
         ]);
 
         const val = r => r.status === 'fulfilled' ? r.value.results : [];

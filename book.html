@@ -213,7 +213,171 @@
             background-size: 600px 100%; animation: shimmer 1.4s infinite linear; border-radius: 10px;
         }
 
-        /* ── Toast ────────────────────────────────────────────────── */
+        /* ── Chapter list ─────────────────────────────────────────── */
+        .chapter-section {
+            padding: 0 36px 40px;
+        }
+
+        .chapter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .chapter-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #e8ecf2;
+        }
+
+        .chapter-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .ch-tab {
+            padding: 7px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.07);
+            background: rgba(255,255,255,0.03);
+            color: #606880;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            touch-action: manipulation;
+        }
+        .ch-tab.active {
+            background: rgba(255,100,50,0.15);
+            border-color: rgba(255,100,50,0.3);
+            color: #ff8060;
+        }
+        .ch-tab:hover:not(.active) { background: rgba(255,255,255,0.06); color: #d0d5de; }
+
+        .chapter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .chapter-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .chapter-item:hover {
+            background: rgba(255,100,50,0.07);
+            border-color: rgba(255,100,50,0.2);
+        }
+
+        .chapter-item-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+        .chapter-num {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ff8060;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .chapter-divider {
+            width: 1px; height: 16px;
+            background: rgba(255,255,255,0.08);
+            flex-shrink: 0;
+        }
+
+        .chapter-title-text {
+            font-size: 13px;
+            color: #9aa0ad;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chapter-pages {
+            font-size: 12px;
+            color: #404558;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .chapter-arrow {
+            font-size: 12px;
+            color: #404558;
+            flex-shrink: 0;
+            transition: color 0.15s;
+        }
+        .chapter-item:hover .chapter-arrow { color: #ff8060; }
+
+        .chapter-more-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.07);
+            background: rgba(255,255,255,0.03);
+            color: #606880;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        .chapter-more-btn:hover { background: rgba(255,255,255,0.06); color: #d0d5de; }
+
+        /* ── Inline Reader ─────────────────────────────────────────── */
+        .reader-section { margin: 0 36px 40px; }
+
+        .reader-toggle-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px; background: rgba(60,200,100,0.08);
+            border: 1px solid rgba(60,200,100,0.2); border-radius: 16px;
+            margin-bottom: 16px; cursor: pointer; transition: background 0.15s;
+        }
+        .reader-toggle-bar:hover { background: rgba(60,200,100,0.13); }
+        .reader-toggle-left { display: flex; align-items: center; gap: 12px; }
+        .reader-toggle-icon { font-size: 22px; line-height: 1; }
+        .reader-toggle-text h3 { font-size: 15px; font-weight: 700; color: #e0f0e8; margin-bottom: 2px; }
+        .reader-toggle-text p  { font-size: 12px; color: #60a070; margin: 0; }
+        .reader-toggle-arrow { font-size: 18px; color: #60a070; transition: transform 0.25s; }
+        .reader-toggle-bar.open .reader-toggle-arrow { transform: rotate(180deg); }
+
+        .reader-frame-wrap {
+            display: none; border-radius: 16px; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08); background: #fff;
+        }
+        .reader-frame-wrap.open { display: block; }
+
+        .reader-toolbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 16px; background: #1a1d24;
+            border-bottom: 1px solid rgba(255,255,255,0.08); gap: 10px;
+        }
+        .reader-toolbar-url { flex: 1; font-size: 12px; color: #606880; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .reader-open-new { font-size: 12px; color: #7aabff; text-decoration: none; font-weight: 600; white-space: nowrap; transition: color 0.15s; }
+        .reader-open-new:hover { color: #a0c8ff; }
+        .reader-iframe { width: 100%; height: 75vh; border: none; display: block; }
+
+        @media (max-width: 600px) {
+            .chapter-section { padding: 0 16px 28px; }
+            .reader-section   { margin: 0 16px 28px; }
+            .reader-iframe    { height: 65vh; }
+        }
         .toast {
             position: fixed; bottom: 28px; left: 50%;
             transform: translateX(-50%) translateY(20px);
@@ -314,6 +478,41 @@
                 <div class="genre-list" id="genre-list"></div>
             </div>
 
+        </div>
+    </div><!-- /book-shell -->
+
+    <!-- Chapter list (manga) -->
+    <div class="chapter-section" id="chapter-section" style="display:none">
+        <div class="chapter-header">
+            <h2>Chapters</h2>
+            <div class="chapter-tabs">
+                <button class="ch-tab active" id="ch-tab-all">All</button>
+            </div>
+        </div>
+        <div class="chapter-list" id="chapter-list"></div>
+        <a class="chapter-more-btn" id="chapter-more-btn" href="#" target="_blank" rel="noopener" style="display:none">
+            View all chapters on MangaDex ↗
+        </a>
+    </div>
+
+    <!-- Inline reader (Gutenberg / Standard Ebooks / Internet Archive) -->
+    <div class="reader-section" id="reader-section" style="display:none">
+        <div class="reader-toggle-bar" id="reader-toggle">
+            <div class="reader-toggle-left">
+                <span class="reader-toggle-icon">📖</span>
+                <div class="reader-toggle-text">
+                    <h3>Read this book for free</h3>
+                    <p id="reader-source-label">Public domain · Opens inline</p>
+                </div>
+            </div>
+            <span class="reader-toggle-arrow">▾</span>
+        </div>
+        <div class="reader-frame-wrap" id="reader-frame-wrap">
+            <div class="reader-toolbar">
+                <span class="reader-toolbar-url" id="reader-url-display"></span>
+                <a class="reader-open-new" id="reader-open-new" href="#" target="_blank" rel="noopener">Open in new tab ↗</a>
+            </div>
+            <iframe class="reader-iframe" id="reader-iframe" title="Book reader" loading="lazy"></iframe>
         </div>
     </div>
 
@@ -510,21 +709,60 @@
 
             // Read link / Chapter list
             if (book.source === 'mangadex') {
-                // For manga — show "Read" button that loads chapters
+                // Fetch and render chapter list
+                const chapterSection  = document.getElementById('chapter-section');
+                const chapterList     = document.getElementById('chapter-list');
+                const chapterMoreBtn  = document.getElementById('chapter-more-btn');
+                chapterSection.style.display = '';
+                chapterList.innerHTML = '<p style="color:#404558;font-size:13px;padding:16px 0">Loading chapters…</p>';
+
+                try {
+                    const res  = await fetch(`/api/manga/chapters?id=${book.externalId}`);
+                    const data = await res.json();
+                    const chapters = (data.data || []).map(ch => ({
+                        id:      ch.id,
+                        chapter: ch.attributes?.chapter || '?',
+                        title:   ch.attributes?.title   || '',
+                        pages:   ch.attributes?.pages   || null,
+                    }));
+
+                    if (!chapters.length) {
+                        chapterList.innerHTML = '<p style="color:#404558;font-size:13px;padding:16px 0">No chapters available yet.</p>';
+                    } else {
+                        chapterList.innerHTML = chapters.map(ch => {
+                            const readerUrl = `reader.html?chapter=${ch.id}&manga=${book.externalId}&title=${encodeURIComponent(book.title||'')}&back=${encodeURIComponent(window.location.href)}`;
+                            return `
+                            <a class="chapter-item" href="${readerUrl}">
+                                <div class="chapter-item-left">
+                                    <span class="chapter-num">Ch. ${esc(String(ch.chapter))}</span>
+                                    ${ch.title ? `<span class="chapter-divider"></span><span class="chapter-title-text">${esc(ch.title)}</span>` : ''}
+                                </div>
+                                <div style="display:flex;align-items:center;gap:10px">
+                                    ${ch.pages ? `<span class="chapter-pages">${ch.pages}p</span>` : ''}
+                                    <span class="chapter-arrow">↗</span>
+                                </div>
+                            </a>`;
+                        }).join('');
+
+                        if (book.url) {
+                            chapterMoreBtn.href = book.url;
+                            chapterMoreBtn.style.display = '';
+                        }
+                    }
+                } catch {
+                    chapterList.innerHTML = '<p style="color:#404558;font-size:13px;padding:16px 0">Could not load chapters.</p>';
+                }
+
+                // Add "Start Reading" button in hero
                 const actionsEl = document.getElementById('hero-actions');
                 const readBtn   = document.createElement('button');
                 readBtn.className   = 'btn-primary';
-                readBtn.textContent = '📖 Read Chapters';
+                readBtn.textContent = '📖 Start Reading';
                 readBtn.addEventListener('click', () => {
-                    // Build reader URL
-                    const readerParams = new URLSearchParams({
-                        manga:   book.externalId || '',
-                        title:   encodeURIComponent(book.title || ''),
-                        back:    window.location.href,
-                    });
-                    window.location.href = `reader.html?${readerParams.toString()}`;
+                    chapterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
                 actionsEl.appendChild(readBtn);
+
             } else if (book.readUrl) {
                 // For Gutenberg / Standard Ebooks / Internet Archive — inline reader
                 const actionsEl = document.getElementById('hero-actions');
@@ -562,6 +800,7 @@
                         'standard-ebooks':  'Standard Ebooks · Beautiful public domain typography',
                         'gutenberg':        'Project Gutenberg · Public domain classic',
                         'internet-archive': 'Internet Archive · Open access text',
+                        'open-library':     'Open Library · Free public domain ebook',
                     };
                     readerSrcLabel.textContent = readerLabels[book.source] || 'Free to read';
                     readerToggle.addEventListener('click', () => {
