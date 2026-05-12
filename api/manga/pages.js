@@ -25,15 +25,18 @@ export default async function handler(req, res) {
         const data     = await response.json();
         const baseUrl  = data.baseUrl;
         const hash     = data.chapter?.hash;
-        const pages    = data.chapter?.data || [];
+        const pages    = data.chapter?.data    || [];
         const lowPages = data.chapter?.dataSaver || [];
 
-        // Return both full quality and data-saver URLs
+        // Proxy images through /api/manga/image — the MangaDex CDN blocks browsers
+        // that don't send a valid Referer header, causing pages 10+ to 404.
+        const proxy = (url) => `/api/manga/image?url=${encodeURIComponent(url)}`;
+
         return res.status(200).json({
             baseUrl,
             hash,
-            pages: pages.map(p => `${baseUrl}/data/${hash}/${p}`),
-            pagesSaver: lowPages.map(p => `${baseUrl}/data-saver/${hash}/${p}`),
+            pages:      pages.map(p    => proxy(`${baseUrl}/data/${hash}/${p}`)),
+            pagesSaver: lowPages.map(p => proxy(`${baseUrl}/data-saver/${hash}/${p}`)),
         });
     } catch (err) {
         console.error('[MangaDex pages proxy]', err.message);
