@@ -33,8 +33,15 @@ export async function signInWithGoogle() {
       email:       user.email,
       username,
       provider:    'google',
+      avatarUrl:   user.photoURL || '',
       createdAt:   serverTimestamp(),
     });
+  } else {
+    // Sync Google photo if not already stored
+    const data = userSnapshot.data();
+    if (!data.avatarUrl && user.photoURL) {
+      await setDoc(userDocRef, { avatarUrl: user.photoURL }, { merge: true });
+    }
   }
 
   return user;
@@ -53,6 +60,7 @@ export async function signupWithEmail(email, password, username) {
     username,
     displayName: '',
     provider:    'local',
+    avatarUrl:   '',
     createdAt:   serverTimestamp(),
   });
 

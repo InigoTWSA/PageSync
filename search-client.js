@@ -58,37 +58,40 @@ function filterSafe(results) {
 }
 
 // ─── Search entry point ───────────────────────────────────────────────────────
+// Source routing is handled by the Claude NLP backend (/api/search).
+// clientSearch is used for direct/explicit source fetches only (e.g. user picks
+// a tab, or the backend is unavailable). Keywords are passed as-is — no regex.
 export async function clientSearch(query, source = 'books', limit = 12) {
   if (!query?.trim()) return { results: [], parsed: {} };
 
   const fetchLimit = limit + 10;
-  const parsed     = parseQuery(query.trim(), source);
-  const src        = source === 'books' && parsed.source !== 'books' ? parsed.source : source;
+  const keywords   = query.trim();
+  const parsed     = { keywords, source };
 
   let results = [];
   try {
-    if (src === 'manga')         results = await searchMangaDex(parsed.keywords, fetchLimit);
-    else if (src === 'classics') results = await searchGutenbergRest(parsed.keywords, fetchLimit);
-    else if (src === 'standard') results = await searchStandardEbooks(parsed.keywords, fetchLimit);
-    else if (src === 'academic') results = await searchInternetArchive(parsed.keywords, fetchLimit);
-    else if (src === 'free') {
+    if (source === 'manga')         results = await searchMangaDex(keywords, fetchLimit);
+    else if (source === 'classics') results = await searchGutenbergRest(keywords, fetchLimit);
+    else if (source === 'standard') results = await searchStandardEbooks(keywords, fetchLimit);
+    else if (source === 'academic') results = await searchInternetArchive(keywords, fetchLimit);
+    else if (source === 'free') {
       const perSource = Math.ceil(fetchLimit / 2);
       const [gutenberg, standard] = await Promise.allSettled([
-        searchGutenbergRest(parsed.keywords, perSource),
-        searchStandardEbooks(parsed.keywords, perSource),
+        searchGutenbergRest(keywords, perSource),
+        searchStandardEbooks(keywords, perSource),
       ]);
       results = [
         ...(gutenberg.status === 'fulfilled' ? gutenberg.value : []),
         ...(standard.status  === 'fulfilled' ? standard.value  : []),
       ];
-    } else if (src === 'all') {
+    } else if (source === 'all') {
       const perSource = Math.ceil(fetchLimit / 5);
       const [books, manga, classics, standard, academic] = await Promise.allSettled([
-        searchOpenLibrary(parsed.keywords, perSource),
-        searchMangaDex(parsed.keywords, perSource),
-        searchGutenbergRest(parsed.keywords, perSource),
-        searchStandardEbooks(parsed.keywords, perSource),
-        searchInternetArchive(parsed.keywords, perSource),
+        searchOpenLibrary(keywords, perSource),
+        searchMangaDex(keywords, perSource),
+        searchGutenbergRest(keywords, perSource),
+        searchStandardEbooks(keywords, perSource),
+        searchInternetArchive(keywords, perSource),
       ]);
       results = [
         ...(books.status    === 'fulfilled' ? books.value    : []),
@@ -98,7 +101,7 @@ export async function clientSearch(query, source = 'books', limit = 12) {
         ...(academic.status === 'fulfilled' ? academic.value : []),
       ];
     } else {
-      results = await searchOpenLibrary(parsed.keywords, fetchLimit);
+      results = await searchOpenLibrary(keywords, fetchLimit);
     }
   } catch (err) {
     console.error('[search-client] error:', err);
@@ -219,24 +222,6 @@ async function fetchGutenbergDetail(gutenbergId) {
     readUrl:       b.formats?.['text/html'] || b.formats?.['application/epub+zip'] || null,
     url:           `https://www.gutenberg.org/ebooks/${b.id}`,
   };
-}
-
-function parseQuery(query, forcedSource) {
-  let source = forcedSource || 'books';
-  if (forcedSource === 'books' || !forcedSource) {
-    if (/manga|manhwa|manhua|webtoon|anime|shonen|shojo|seinen|isekai/i.test(query))
-      source = 'manga';
-    else if (/classic|gutenberg|public domain|dickens|tolstoy|austen|shakespeare/i.test(query))
-      source = 'classics';
-    else if (/academic|research|scholarly|history|science|philosophy/i.test(query))
-      source = 'academic';
-    else if (/free|read now|readable|standard ebooks/i.test(query))
-      source = 'free';
-  }
-  const keywords = query
-    .replace(/\b(find|show|search|give me|recommend|good|best|popular|top|free|readable)\b/gi, '')
-    .replace(/\s+/g, ' ').trim();
-  return { keywords, source };
 }
 
 // ─── Open Library search ──────────────────────────────────────────────────────
