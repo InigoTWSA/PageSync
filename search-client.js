@@ -149,11 +149,28 @@ async function fetchOpenLibraryDetail(externalId) {
   const subjects = (work.subjects || []).slice(0, 8);
   const rating   = ratings?.summary?.average ? Math.round(ratings.summary.average * 10) / 10 : null;
 
+  // Check if this work has a freely readable ebook via Internet Archive
+  let readUrl     = null;
+  let sourceLabel = 'Book';
+  try {
+    const editionRes = await fetch(`https://openlibrary.org${workKey}/editions.json?limit=5`);
+    const editionData = await editionRes.json();
+    const editions    = editionData.entries || [];
+    // Find a publicly readable edition
+    for (const ed of editions) {
+      if (ed.ocaid && ed.ebook_access === 'public') {
+        readUrl     = `https://openlibrary.org/embed/books/ia:${ed.ocaid}`;
+        sourceLabel = 'Free Book';
+        break;
+      }
+    }
+  } catch { /* editions not critical */ }
+
   return {
     id:          `ol-${workKey.replace('/works/', '')}`,
     externalId:  workKey,
     source:      'open-library',
-    sourceLabel: 'Book',
+    sourceLabel,
     title:       work.title || 'Unknown Title',
     authors,
     author:      authors[0] || 'Unknown Author',
@@ -167,6 +184,7 @@ async function fetchOpenLibraryDetail(externalId) {
     status:      null,
     chapters:    null,
     genres:      subjects.slice(0, 5),
+    readUrl,
     url:         `https://openlibrary.org${workKey}`,
   };
 }
@@ -222,20 +240,31 @@ function parseQuery(query, forcedSource) {
 
 // ─── Open Library search ──────────────────────────────────────────────────────
 async function searchOpenLibrary(keywords, limit = 12) {
-  const url  = `https://openlibrary.org/search.json?q=${encodeURIComponent(keywords)}&limit=${limit}&fields=key,title,author_name,cover_i,first_publish_year,ratings_average,subject`;
+  const url  = `https://openlibrary.org/search.json?q=${encodeURIComponent(keywords)}&limit=${limit}&fields=key,title,author_name,cover_i,first_publish_year,ratings_average,subject,ebook_access,ia`;
   const data = await fetch(url).then(r => r.json());
-  return (data.docs || []).map((d, i) => ({
-    id:          `ol-${d.key?.replace('/works/', '') || i}`,
-    externalId:  d.key || String(i),
-    source:      'open-library',
-    sourceLabel: 'Book',
-    title:       d.title || 'Unknown Title',
-    author:      d.author_name?.[0] || 'Unknown Author',
-    cover:       d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : null,
-    rating:      d.ratings_average ? Math.round(d.ratings_average * 10) / 10 : null,
-    year:        d.first_publish_year || null,
-    subjects:    (d.subject || []).slice(0, 6),
-  }));
+  return (data.docs || []).map((d, i) => {
+    const isReadable = d.ebook_access === 'public';
+    const iaId       = Array.isArray(d.ia) ? d.ia[0] : (d.ia || null);
+    const readUrl    = isReadable && iaId
+      ? `https://openlibrary.org/embed/books/ia:${iaId}`
+      : null;
+
+    return {
+      id:          `ol-${d.key?.replace('/works/', '') || i}`,
+      externalId:  d.key || String(i),
+      source:      'open-library',
+      sourceLabel: isReadable ? 'Free Book' : 'Book',
+      title:       d.title || 'Unknown Title',
+      author:      d.author_name?.[0] || 'Unknown Author',
+      cover:       d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : null,
+      rating:      d.ratings_average ? Math.round(d.ratings_average * 10) / 10 : null,
+      year:        d.first_publish_year || null,
+      subjects:    (d.subject || []).slice(0, 6),
+      readUrl,
+      ebookAccess: d.ebook_access || null,
+      iaId,
+    };
+  });
 }
 
 // ─── Gutenberg search ─────────────────────────────────────────────────────────
