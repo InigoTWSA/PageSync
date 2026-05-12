@@ -494,14 +494,16 @@ async function searchMangaDex(keywords, limit = 12) {
 async function searchJikanFallback(keywords, limit = 12) {
   try {
     const url  = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(keywords)}&limit=${Math.min(limit + 5, 25)}&order_by=scored&sort=desc&sfw=true`;
-    const data = await fetch(url).then(r => r.json());
-    return (data.data || [])
-      .filter(m => {
-        // Filter on raw Jikan data where mal_id still exists
+    console.log('[Jikan] fetching:', url);
+    const res  = await fetch(url);
+    const data = await res.json();
+    console.log('[Jikan] raw count:', data.data?.length, 'status:', res.status, 'error:', data.error);
+    const beforeFilter = (data.data || []).filter(m => {
         const genreIds = (m.genres || []).map(g => g.mal_id);
         return !genreIds.some(id => BLOCKED_JIKAN_GENRE_IDS.has(id));
-      })
-      .map((m, i) => {
+      });
+    console.log('[Jikan] after genre filter:', beforeFilter.length);
+    return beforeFilter.map((m, i) => {
         const authors = (m.authors || []).map(a => a.name?.replace(/,\s*/, ' ')).filter(Boolean);
         const typeMap = { Manhwa: 'Manhwa', Manhua: 'Manhua', Novel: 'Novel' };
         return {
