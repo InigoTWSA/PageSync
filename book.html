@@ -343,6 +343,44 @@
         }
         .chapter-more-btn:hover { background: rgba(255,255,255,0.06); color: #d0d5de; }
 
+        /* ── Licensed / no-chapters card ──────────────────────────── */
+        .licensed-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 20px;
+            padding: 28px 28px 24px;
+        }
+        .licensed-card-top {
+            display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px;
+        }
+        .licensed-icon {
+            font-size: 28px; flex-shrink: 0; line-height: 1;
+        }
+        .licensed-card h3 {
+            font-size: 16px; font-weight: 700; color: #d8dde8; margin-bottom: 6px;
+        }
+        .licensed-card p {
+            font-size: 13px; color: #606880; line-height: 1.6;
+        }
+        .where-to-read {
+            display: flex; flex-wrap: wrap; gap: 8px;
+        }
+        .read-source-btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 9px 16px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.09);
+            background: rgba(255,255,255,0.04);
+            color: #a0a8b8; font-size: 13px; font-weight: 600;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .read-source-btn:hover {
+            background: rgba(255,255,255,0.09);
+            border-color: rgba(255,255,255,0.16);
+            color: #e6e7e8;
+        }
+        .read-source-btn .src-icon { font-size: 15px; }
+
         /* ── Inline Reader ─────────────────────────────────────────── */
         .reader-section { max-width: 960px; margin: 0 auto; padding: 0 36px 40px; }
 
@@ -737,7 +775,46 @@
                     const chapters = await getChapters();
 
                     if (!chapters.length) {
-                        chapterListEl.innerHTML = '<p style="color:#404558;font-size:13px;padding:16px 0">No chapters available yet.</p>';
+                        // Hide the chapter section entirely — nothing to show
+                        chapterSection.style.display = 'none';
+
+                        // Build "Where to read" links
+                        const sources = [];
+                        if (book.url && book.url.includes('myanimelist')) {
+                            sources.push({ label: 'MyAnimeList', icon: '📋', href: book.url });
+                        }
+                        if (book.url && book.url.includes('mangadex')) {
+                            sources.push({ label: 'MangaDex', icon: '📖', href: book.url });
+                        }
+                        // Always offer these as generic fallbacks
+                        const searchQ = encodeURIComponent(book.title || '');
+                        sources.push({ label: 'BookWalker',  icon: '🛒', href: `https://global.bookwalker.jp/search/?word=${searchQ}` });
+                        sources.push({ label: 'Amazon',      icon: '📦', href: `https://www.amazon.com/s?k=${searchQ}+manga` });
+                        sources.push({ label: 'ComiXology',  icon: '💬', href: `https://www.comixology.com/search?search=${searchQ}` });
+
+                        const licensedCard = document.createElement('div');
+                        licensedCard.className = 'chapter-section';
+                        licensedCard.innerHTML = `
+                            <div class="licensed-card">
+                                <div class="licensed-card-top">
+                                    <span class="licensed-icon">🔒</span>
+                                    <div>
+                                        <h3>No free chapters available</h3>
+                                        <p>This title is likely licensed, so free chapters aren't hosted on MangaDex.
+                                        You can read it through an official or legal source below.</p>
+                                    </div>
+                                </div>
+                                <div class="where-to-read">
+                                    ${sources.map(s => `
+                                        <a class="read-source-btn" href="${s.href}" target="_blank" rel="noopener">
+                                            <span class="src-icon">${s.icon}</span>${s.label} ↗
+                                        </a>`).join('')}
+                                </div>
+                            </div>`;
+                        // Insert after the genres section
+                        const genresSection = document.getElementById('genres-section');
+                        genresSection.parentNode.insertAdjacentElement('afterend', licensedCard);
+
                     } else {
                         chapterListEl.innerHTML = chapters.map(ch => {
                             const readerUrl = `reader.html?chapter=${ch.id}&manga=${book.externalId}&title=${encodeURIComponent(book.title||'')}&back=${encodeURIComponent(window.location.href)}`;
@@ -763,7 +840,7 @@
                     chapterListEl.innerHTML = '<p style="color:#404558;font-size:13px;padding:16px 0">Could not load chapters.</p>';
                 }
 
-                // Add "Start Reading" button in hero
+                // Add "Start Reading" button in hero — only if chapters loaded
                 const actionsEl = document.getElementById('hero-actions');
                 const readBtn   = document.createElement('button');
                 readBtn.className   = 'btn-primary';
@@ -771,7 +848,10 @@
                 readBtn.addEventListener('click', () => {
                     chapterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
-                actionsEl.appendChild(readBtn);
+                // Only append if we have chapters (section is visible)
+                if (chapterSection.style.display !== 'none') {
+                    actionsEl.appendChild(readBtn);
+                }
 
             } else if (book.readUrl) {
                 // For Gutenberg / Standard Ebooks / Internet Archive — inline reader
