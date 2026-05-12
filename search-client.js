@@ -495,31 +495,34 @@ async function searchJikanFallback(keywords, limit = 12) {
   try {
     const url  = `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(keywords)}&limit=${Math.min(limit + 5, 25)}&order_by=scored&sort=desc&sfw=true`;
     const data = await fetch(url).then(r => r.json());
-    return (data.data || []).map((m, i) => {
-      const authors = (m.authors || []).map(a => a.name?.replace(/,\s*/, ' ')).filter(Boolean);
-      const typeMap = { Manhwa: 'Manhwa', Manhua: 'Manhua', Novel: 'Novel' };
-      return {
-        id:          `jikan-${m.mal_id || i}`,
-        externalId:  String(m.mal_id || i),
-        source:      'jikan',
-        sourceLabel: typeMap[m.type] || 'Manga',
-        title:       m.title_english || m.title || 'Unknown Title',
-        author:      authors[0] || 'Unknown Author',
-        cover:       m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || null,
-        rating:      m.score || null,
-        year:        m.published?.prop?.from?.year || null,
-        description: m.synopsis ? m.synopsis.slice(0, 200) : null,
-        status:      m.status || null,
-        chapters:    m.chapters || null,
-        genres:      (m.genres  || []).map(g => g.name),
-        themes:      (m.themes  || []).map(t => t.name),
-        url:         m.url || null,
-        readUrl:     m.url || null,
-      };
-    }).filter(m => {
-      const rawIds = (m.genres || []).map(g => g.mal_id);
-      return !rawIds.some(id => BLOCKED_JIKAN_GENRE_IDS.has(id));
-    });
+    return (data.data || [])
+      .filter(m => {
+        // Filter on raw Jikan data where mal_id still exists
+        const genreIds = (m.genres || []).map(g => g.mal_id);
+        return !genreIds.some(id => BLOCKED_JIKAN_GENRE_IDS.has(id));
+      })
+      .map((m, i) => {
+        const authors = (m.authors || []).map(a => a.name?.replace(/,\s*/, ' ')).filter(Boolean);
+        const typeMap = { Manhwa: 'Manhwa', Manhua: 'Manhua', Novel: 'Novel' };
+        return {
+          id:          `jikan-${m.mal_id || i}`,
+          externalId:  String(m.mal_id || i),
+          source:      'jikan',
+          sourceLabel: typeMap[m.type] || 'Manga',
+          title:       m.title_english || m.title || 'Unknown Title',
+          author:      authors[0] || 'Unknown Author',
+          cover:       m.images?.jpg?.large_image_url || m.images?.jpg?.image_url || null,
+          rating:      m.score || null,
+          year:        m.published?.prop?.from?.year || null,
+          description: m.synopsis ? m.synopsis.slice(0, 200) : null,
+          status:      m.status || null,
+          chapters:    m.chapters || null,
+          genres:      (m.genres  || []).map(g => g.name),
+          themes:      (m.themes  || []).map(t => t.name),
+          url:         m.url || null,
+          readUrl:     m.url || null,
+        };
+      });
   } catch (err) {
     console.error('[Jikan fallback] error:', err);
     return [];
