@@ -10,7 +10,9 @@
 //   Academic          → Internet Archive(archive.org)        — free, no key
 
 
-import config from './config.js';
+// ── Gemini API key — fill this in to enable NLP search parsing.
+// Get one free at https://aistudio.google.com/app/apikey
+const GEMINI_API_KEY = 'AIzaSyDxasdDlGC0Bb1xsGs0OUW7jaZIsoVuH0k';
 
 // ─── Gemini NLP query parser ──────────────────────────────────────────────────
 function parseQueryRegex(query, forcedSource) {
@@ -32,8 +34,8 @@ function parseQueryRegex(query, forcedSource) {
 }
 
 async function parseQuery(query, forcedSource) {
-  const apiKey = config?.gemini?.apiKey;
-  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY') {
+  const apiKey = GEMINI_API_KEY;
+  if (!apiKey) {
     return parseQueryRegex(query, forcedSource);
   }
   try {
