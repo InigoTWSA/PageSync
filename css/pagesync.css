@@ -1462,3 +1462,182 @@ html { scroll-behavior: smooth; }
     color: #404558;
     padding: 20px 0;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   THEME TOGGLE BUTTON
+══════════════════════════════════════════════════════════════════════════════ */
+
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.05);
+    color: #9aa0b0;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+    flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.15);
+    color: #e6e7e8;
+    transform: rotate(15deg);
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   LIGHT MODE OVERRIDES  [data-theme="light"]
+   Applied to html element via theme.js
+══════════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="light"] {
+    color-scheme: light;
+}
+
+[data-theme="light"] body {
+    background: #f0f2f7;
+    color: #1a1d24;
+}
+
+/* Auth cards */
+[data-theme="light"] .card {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.08);
+    color: #1a1d24;
+}
+
+[data-theme="light"] .field input {
+    background: #f5f6fa;
+    border-color: rgba(0,0,0,0.1);
+    color: #1a1d24;
+}
+
+[data-theme="light"] .field input::placeholder { color: #9095a0; }
+[data-theme="light"] .field input:focus { border-color: rgba(59,125,243,0.5); }
+
+[data-theme="light"] h1 { color: #1a1d24; }
+[data-theme="light"] .description { color: #6b7280; }
+
+/* Topbar / app shell */
+[data-theme="light"] .topbar {
+    background: rgba(240,242,247,0.92);
+    border-bottom-color: rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .brand,
+[data-theme="light"] .brand span { color: #1a1d24 !important; }
+
+[data-theme="light"] .search-trigger {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.1);
+    color: #6b7280;
+}
+
+[data-theme="light"] .search-placeholder { color: #9095a0; }
+[data-theme="light"] .search-hint { color: #3b7df3; }
+
+[data-theme="light"] .menu-button {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.08);
+    color: #4a5060;
+}
+
+[data-theme="light"] .menu-button:hover { background: rgba(0,0,0,0.1); }
+
+/* Sidebar */
+[data-theme="light"] .sidebar {
+    background: #ffffff;
+    border-right-color: rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .sidebar-link {
+    color: #4a5060;
+}
+
+[data-theme="light"] .sidebar-link:hover,
+[data-theme="light"] .sidebar-link.active {
+    background: rgba(59,125,243,0.08);
+    color: #3b7df3;
+}
+
+/* Main content area */
+[data-theme="light"] .main-content { background: #f0f2f7; }
+
+[data-theme="light"] .section-header h2 { color: #1a1d24; }
+[data-theme="light"] .section-header a  { color: #3b7df3; }
+
+/* Book / media cards */
+[data-theme="light"] .book-card {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .book-card:hover {
+    border-color: rgba(59,125,243,0.3);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+[data-theme="light"] .book-title  { color: #1a1d24; }
+[data-theme="light"] .book-author { color: #6b7280; }
+[data-theme="light"] .book-meta   { color: #9095a0; }
+
+/* Status badges */
+[data-theme="light"] .status-badge {
+    background: rgba(59,125,243,0.1);
+    color: #3b7df3;
+}
+
+/* Slide-in menu */
+[data-theme="light"] .slide-menu {
+    background: #ffffff;
+    border-left-color: rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .menu-item { color: #4a5060; }
+[data-theme="light"] .menu-item:hover { background: rgba(0,0,0,0.04); color: #1a1d24; }
+[data-theme="light"] .menu-name  { color: #1a1d24; }
+[data-theme="light"] .menu-email { color: #6b7280; }
+
+/* Search modal */
+[data-theme="light"] .search-modal {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.1);
+}
+
+[data-theme="light"] .search-modal-input {
+    background: #f5f6fa;
+    border-color: rgba(0,0,0,0.1);
+    color: #1a1d24;
+}
+
+[data-theme="light"] .search-result-item:hover { background: rgba(0,0,0,0.04); }
+[data-theme="light"] .search-result-title      { color: #1a1d24; }
+[data-theme="light"] .search-result-sub        { color: #6b7280; }
+
+/* Toggle button in light mode */
+[data-theme="light"] .theme-toggle {
+    border-color: rgba(0,0,0,0.1);
+    background: rgba(0,0,0,0.04);
+    color: #4a5060;
+}
+
+[data-theme="light"] .theme-toggle:hover {
+    background: rgba(0,0,0,0.08);
+    color: #1a1d24;
+}
+
+/* Profile page */
+[data-theme="light"] .profile-wrap   { background: #f0f2f7; }
+[data-theme="light"] .profile-card   { background: #ffffff; border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .profile-name   { color: #1a1d24; }
+[data-theme="light"] .profile-handle { color: #6b7280; }
+[data-theme="light"] .stat-card      { background: #f5f6fa; border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .stat-number    { color: #1a1d24; }
+[data-theme="light"] .stat-label     { color: #6b7280; }
+[data-theme="light"] .section-divider { border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .profile-section-title { color: #1a1d24; }
