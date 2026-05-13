@@ -1,7 +1,7 @@
 // firebase.js - Shared Firebase configuration and utilities
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, initializeFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey:            "AIzaSyBEgkePSSuw1LkVOXLWL__pzcC11HGY_Ww",
@@ -14,7 +14,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth           = getAuth(app);
-export const db             = getFirestore(app);
+export const db             = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+    useFetchStreams: false,
+});
 export const googleProvider = new GoogleAuthProvider();
 
 // ── Auth helpers ──────────────────────────────────────────────────────────────
