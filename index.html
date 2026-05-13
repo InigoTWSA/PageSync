@@ -1149,24 +1149,28 @@
             });
         }
 
-        // ── Fetch MangaDex covers via the local proxy ─────────────
-        // Uses three different search terms for variety
+        // ── Fetch MangaDex covers directly (their API allows CORS on search) ──
         const mdxQueries = ['action', 'romance', 'fantasy'];
 
         async function fetchMangaDexCovers() {
             const urls = [];
             await Promise.allSettled(mdxQueries.map(async q => {
                 try {
-                    const res  = await fetch(`/api/manga/search?q=${encodeURIComponent(q)}&limit=12`);
+                    const res  = await fetch(
+                        `https://api.mangadex.org/manga?title=${encodeURIComponent(q)}&limit=18` +
+                        `&contentRating[]=safe&contentRating[]=suggestive` +
+                        `&includes[]=cover_art&availableTranslatedLanguage[]=en&order[relevance]=desc`
+                    );
                     const data = await res.json();
                     (data.data || []).forEach(manga => {
                         const coverRel = manga.relationships?.find(r => r.type === 'cover_art');
-                        if (!coverRel?.attributes?.fileName) return;
+                        const fileName = coverRel?.attributes?.fileName;
+                        if (!fileName) return;
                         urls.push(
-                            `https://uploads.mangadex.org/covers/${manga.id}/${coverRel.attributes.fileName}.256.jpg`
+                            `https://uploads.mangadex.org/covers/${manga.id}/${fileName}.256.jpg`
                         );
                     });
-                } catch {}
+                } catch (e) { console.warn('[belt] MangaDex fetch failed:', e); }
             }));
             return urls;
         }
