@@ -569,10 +569,11 @@ async function fetchJikanDetail(malId) {
     let mdxCover    = null;
 
     try {
+      // Route through the server proxy (/api/manga/search, /api/manga/chapters)
+      // instead of calling api.mangadex.org directly — direct calls are CORS-blocked
+      // by browsers since MangaDex does not send Access-Control-Allow-Origin headers.
       const mdxSearch = await fetch(
-        `https://api.mangadex.org/manga?title=${encodeURIComponent(title)}&limit=5` +
-        `&contentRating[]=safe&contentRating[]=suggestive` +
-        `&includes[]=cover_art&availableTranslatedLanguage[]=en`,
+        `/api/manga/search?q=${encodeURIComponent(title)}&limit=5`,
         { signal: AbortSignal.timeout(6000) }
       );
       const mdxData = await mdxSearch.json();
@@ -585,9 +586,7 @@ async function fetchJikanDetail(malId) {
         if (coverFile) mdxCover = `https://uploads.mangadex.org/covers/${match.id}/${coverFile}.512.jpg`;
 
         const chRes = await fetch(
-          `https://api.mangadex.org/manga/${match.id}/feed` +
-          `?translatedLanguage[]=en&limit=20&order[chapter]=asc` +
-          `&contentRating[]=safe&contentRating[]=suggestive`,
+          `/api/manga/chapters?id=${match.id}`,
           { signal: AbortSignal.timeout(6000) }
         );
         const chData = await chRes.json();
