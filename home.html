@@ -568,21 +568,30 @@
 
         popup.querySelector('#popup-back').addEventListener('click', () => showMainMenu(book, btn, user));
         popup.querySelector('#popup-save').addEventListener('click', async () => {
-            const status  = popup.querySelector('#status-select').value;
-            const saveBtn = popup.querySelector('#popup-save');
+            const statusSelect = popup.querySelector('#status-select');
+            const saveBtn      = popup.querySelector('#popup-save');
+            if (!statusSelect || !saveBtn) return;
+            const status = statusSelect.value;
             saveBtn.textContent = 'Saving…'; saveBtn.disabled = true;
             try {
                 await addBook(user.uid, {
-                    title: book.title, author: book.author, status,
-                    externalId: book.externalId, source: book.source,
-                    sourceLabel: book.sourceLabel, coverUrl: book.cover || '',
-                    rating: book.rating || null, year: book.year || null,
+                    title:       book.title,
+                    author:      book.author,
+                    status,
+                    externalId:  book.externalId,
+                    source:      book.source,
+                    sourceLabel: book.sourceLabel,
+                    coverUrl:    book.cover || '',
+                    rating:      book.rating || null,
+                    year:        book.year   || null,
                 });
-                btn.textContent = '✓'; btn.classList.add('added');
+                // btn may be null if opened via the list-menu back button
+                if (btn) { btn.textContent = '✓'; btn.classList.add('added'); }
                 showToast(`"${book.title}" added to bookmarks`);
                 closePopup();
-            } catch {
-                saveBtn.textContent = 'Save to Bookmarks'; saveBtn.disabled = false;
+            } catch (err) {
+                console.error('[addBook] save failed:', err);
+                if (saveBtn) { saveBtn.textContent = 'Save to Bookmarks'; saveBtn.disabled = false; }
                 showToast('Could not save — try again');
             }
         });
@@ -598,10 +607,15 @@
 
         popup.querySelector('#popup-back').addEventListener('click', () => showMainMenu(book, null, user));
 
+        // Store wrap reference BEFORE any await — popup.innerHTML may change while Firestore fetches
+        const wrap = popup.querySelector('#lists-wrap');
+
         try {
             const snap  = await getDocs(collection(db, 'users', user.uid, 'lists'));
             const lists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            const wrap  = popup.querySelector('#lists-wrap');
+
+            // Guard: user may have closed or navigated the popup during the fetch
+            if (!popup.contains(wrap)) return;
 
             if (!lists.length) {
                 wrap.innerHTML = `<p class="popup-empty">No lists yet.<br>Create one in My Lists.</p>`;
@@ -619,23 +633,30 @@
                     item.textContent = 'Adding…';
                     try {
                         const bookEntry = {
-                            title: book.title, author: book.author,
-                            externalId: book.externalId, source: book.source,
-                            sourceLabel: book.sourceLabel, cover: book.cover || '',
+                            title:       book.title,
+                            author:      book.author,
+                            externalId:  book.externalId,
+                            source:      book.source,
+                            sourceLabel: book.sourceLabel,
+                            cover:       book.cover || '',
                         };
                         await updateDoc(doc(db, 'users', user.uid, 'lists', item.dataset.id), {
                             books: arrayUnion(bookEntry),
                         });
                         showToast(`Added to "${item.dataset.name}"`);
                         closePopup();
-                    } catch {
+                    } catch (err) {
+                        console.error('[addToList] failed:', err);
                         showToast('Could not add to list — try again');
                         item.textContent = item.dataset.name;
                     }
                 });
             });
-        } catch {
-            popup.querySelector('#lists-wrap').innerHTML = `<p class="popup-empty">Could not load lists.</p>`;
+        } catch (err) {
+            console.error('[showListMenu] Firestore fetch failed:', err);
+            if (popup.contains(wrap)) {
+                wrap.innerHTML = `<p class="popup-empty">Could not load lists.</p>`;
+            }
         }
     }
 
