@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Rated · PageSync</title>
+    <link rel="stylesheet" href="css/pagesync.css">
+    <style>
+        /* ── Avatar & card hover (same as home) ───────────────────── */
+        .avatar {
+            cursor: pointer;
+            transition: opacity 0.18s, transform 0.18s, box-shadow 0.18s;
+            text-decoration: none;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+        }
+        .avatar:hover { opacity: 0.85; transform: scale(1.06); box-shadow: 0 0 0 2px #3b7df3; }
+
+        /* ── Page hero ─────────────────────────────────────────────── */
+        .page-hero {
+            margin: 32px 0 28px;
+        }
+        .page-hero h1 {
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #f0f2f5;
+            margin-bottom: 6px;
+        }
+        .page-hero p {
+            font-size: 14px;
+            color: #606880;
+        }
+
+        /* ── Filter tabs ───────────────────────────────────────────── */
+        .tab-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 9px 20px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            color: #8f97a5;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            font-family: inherit;
+            white-space: nowrap;
+            min-height: 40px;
+            touch-action: manipulation;
+        }
+        .tab-btn:hover { background: rgba(255,255,255,0.08); color: #d0d5de; }
+        .tab-btn.active {
+            background: rgba(59,125,243,0.18);
+            border-color: rgba(59,125,243,0.4);
+            color: #7aabff;
+        }
+
+        /* ── Ranked list ───────────────────────────────────────────── */
+        .ranked-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .rank-card {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 16px 20px;
+            background: #14171d;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.15s, border-color 0.15s, transform 0.15s;
+            position: relative;
+        }
+        .rank-card:hover {
+            background: #181c24;
+            border-color: rgba(255,255,255,0.12);
+            transform: translateX(3px);
+        }
+
+        /* Rank number */
+        .rank-num {
+            font-size: 22px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.08);
+            min-width: 36px;
+            text-align: center;
+            flex-shrink: 0;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+        .rank-card:nth-child(1) .rank-num { color: #c8a84b; }
+        .rank-card:nth-child(2) .rank-num { color: #9aa0ad; }
+        .rank-card:nth-child(3) .rank-num { color: #b07348; }
+
+        /* Cover thumbnail */
+        .rank-cover {
+            width: 58px;
+            height: 80px;
+            border-radius: 10px;
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .rank-cover.no-cover {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.12);
+        }
+
+        /* Info */
+        .rank-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .rank-badges {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+        }
+        .rank-source-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+        .rank-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #edf0f5;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 3px;
+        }
+        .rank-author {
+            font-size: 13px;
+            color: #606880;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 6px;
+        }
+        .rank-meta {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .rank-rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #c8a84b;
+        }
+        .rank-rating-bar {
+            height: 4px;
+            width: 80px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.06);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .rank-rating-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #c8a84b, #f0c050);
+        }
+        .rank-year {
+            font-size: 12px;
+            color: #404558;
+        }
+
+        /* Add button */
+        .rank-add-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(59,125,243,0.08);
+            color: #3b7df3;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.15s, color 0.15s;
+            touch-action: manipulation;
+        }
+        .rank-add-btn:hover { background: rgba(59,125,243,0.22); color: #7aabff; }
+        .rank-add-btn.added { background: rgba(80,200,120,0.15); color: #60d090; border-color: rgba(80,200,120,0.2); }
+
+        /* ── Skeleton ──────────────────────────────────────────────── */
+        @keyframes shimmer {
+            0%   { background-position: -600px 0; }
+            100% { background-position:  600px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 75%);
+            background-size: 600px 100%;
+            animation: shimmer 1.4s infinite linear;
+            border-radius: 10px;
+        }
+        .skeleton-rank {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 16px 20px;
+            background: #14171d;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 20px;
+        }
+        .skel-num  { width: 36px; height: 28px; border-radius: 6px; flex-shrink: 0; }
+        .skel-img  { width: 58px; height: 80px; border-radius: 10px; flex-shrink: 0; }
+        .skel-body { flex: 1; display: flex; flex-direction: column; gap: 9px; }
+        .skel-line { height: 12px; border-radius: 6px; }
+
+        /* ── Empty / error states ──────────────────────────────────── */
+        .list-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #404558;
+            font-size: 14px;
+        }
+        .list-empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.5; }
+
+        /* ── Add popup & toast (copied from home) ──────────────────── */
+        .add-popup {
+            position: fixed; z-index: 200;
+            background: #1a1d26;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            width: 260px; overflow: hidden;
+            animation: popIn 0.15s ease;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.94) translateY(-6px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .add-popup-title { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #505870; padding: 12px 16px 8px; }
+        .add-popup-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0 16px; }
+        .popup-option { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; transition: background 0.12s; border: none; background: none; width: 100%; text-align: left; color: #d0d5de; font-size: 14px; font-weight: 500; font-family: inherit; }
+        .popup-option:hover { background: rgba(255,255,255,0.05); }
+        .popup-option-icon { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+        .poi-bookmark { background: rgba(59,125,243,0.15); }
+        .poi-list     { background: rgba(125,92,255,0.15); }
+        .popup-option-text strong { display: block; font-size: 13px; font-weight: 600; color: #e0e5f0; }
+        .popup-option-text span   { font-size: 11px; color: #505870; }
+        .popup-status-wrap { padding: 8px 16px 12px; }
+        .popup-status-select { width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #c0c8d8; font-size: 13px; cursor: pointer; font-family: inherit; }
+        .popup-status-select:focus { outline: none; border-color: rgba(59,125,243,0.4); }
+        .popup-save-btn { width: calc(100% - 32px); margin: 0 16px 12px; padding: 10px; border-radius: 10px; border: none; background: #3b7df3; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+        .popup-save-btn:hover { background: #5a93f7; }
+        .popup-lists-wrap { padding: 6px 8px 10px; max-height: 180px; overflow-y: auto; scrollbar-width: thin; }
+        .popup-list-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; cursor: pointer; transition: background 0.12s; border: none; background: none; width: 100%; text-align: left; color: #c0c8d8; font-size: 13px; font-family: inherit; }
+        .popup-list-item:hover { background: rgba(255,255,255,0.06); }
+        .popup-list-icon { font-size: 14px; flex-shrink: 0; }
+        .popup-empty { font-size: 12px; color: #404558; text-align: center; padding: 16px 12px; }
+        .popup-back { display: flex; align-items: center; gap: 6px; padding: 10px 16px 6px; font-size: 12px; color: #606880; cursor: pointer; border: none; background: none; font-family: inherit; transition: color 0.12s; }
+        .popup-back:hover { color: #9aa0ad; }
+        .toast {
+            position: fixed; bottom: 28px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #1f2430; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 12px 22px; font-size: 14px; color: #d0d5de;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0;
+            transition: opacity 0.22s, transform 0.22s;
+            pointer-events: none; white-space: nowrap; z-index: 99;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── Search modal (same as home) ───────────────────────────── */
+        .result-card { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); transition: background 0.15s; position: relative; }
+        .result-card:hover { background: rgba(255,255,255,0.05); }
+        .result-cover { width: 52px; height: 72px; border-radius: 10px; background-size: cover; background-position: center; flex-shrink: 0; }
+        .result-cover-placeholder { background: linear-gradient(135deg,#1e2435,#151925); display: flex; align-items: center; justify-content: center; color: #404860; font-size: 16px; font-weight: 700; }
+        .result-info { flex: 1; min-width: 0; }
+        .result-badges { display: flex; gap: 6px; margin-bottom: 5px; flex-wrap: wrap; }
+        .result-source-badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; font-weight: 600; }
+        .result-title { font-size: 15px; font-weight: 600; color: #e8ecf2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0 0 3px; }
+        .result-author { font-size: 13px; color: #6a7280; margin: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .result-rating { font-size: 12px; color: #c0a060; margin: 0; }
+        .result-desc { font-size: 12px; color: #505870; margin: 4px 0 0; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; line-clamp: 2; -webkit-line-clamp: 2; }
+        .result-add { width: 40px; height: 40px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(59,125,243,0.08); color: #3b7df3; font-size: 20px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; touch-action: manipulation; }
+        .result-add:hover { background: rgba(59,125,243,0.22); color: #7aabff; }
+        .result-add.added { background: rgba(80,200,120,0.15); color: #60d090; border-color: rgba(80,200,120,0.2); }
+
+        /* ── Mobile ────────────────────────────────────────────────── */
+        @media (max-width: 600px) {
+            .page-hero h1 { font-size: 24px; }
+            .rank-card { gap: 12px; padding: 12px 14px; }
+            .rank-num { font-size: 18px; min-width: 28px; }
+            .rank-cover { width: 48px; height: 66px; }
+            .rank-title { font-size: 14px; }
+            .rank-author { font-size: 12px; }
+            .rank-rating-bar { width: 56px; }
+        }
+    </style>
+</head>
+<body class="dashboard">
+<div class="page-shell">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+        <a class="brand" href="home.html" style="text-decoration:none;color:inherit;">
+            <span class="brand-mark">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                    <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                </svg>
+            </span>
+            <span>PageSync</span>
+        </a>
+        <div class="search-box">
+            <button class="search-trigger" id="search-trigger" aria-label="Open search">
+                <span class="search-icon">⌕</span>
+                <span class="search-placeholder">Search books, manga, classics…</span>
+                <span class="search-hint">NLP ✦</span>
+            </button>
+        </div>
+        <div class="profile-actions">
+            <button class="menu-button" id="menu-btn" aria-label="Open menu">☰</button>
+            <a class="avatar" id="user-avatar" href="profile.html" title="View profile">PS</a>
+        </div>
+    </header>
+
+    <!-- SEARCH MODAL -->
+    <div class="search-layer" id="search-layer" role="dialog" aria-modal="true">
+        <div class="search-modal">
+            <div class="search-modal-header">
+                <div class="search-input-row">
+                    <span class="search-modal-icon">⌕</span>
+                    <input type="text" id="search-input" class="search-modal-input"
+                        placeholder='Try "harry potter" or "romance manhwa"…'
+                        autocomplete="off" spellcheck="false">
+                    <button class="search-close" id="search-close">✕</button>
+                </div>
+                <div class="search-filters">
+                    <button class="filter-chip active" data-source="books">Books</button>
+                    <button class="filter-chip" data-source="manga">Manga</button>
+                    <button class="filter-chip" data-source="classics">Classics</button>
+                    <button class="filter-chip" data-source="all">All</button>
+                </div>
+            </div>
+            <div class="search-modal-body">
+                <div class="search-empty" id="search-empty">
+                    <div class="search-empty-icon">✦</div>
+                    <p>Ask anything — try <em>"slow burn romance manga"</em> or <em>"1984 by Orwell"</em></p>
+                </div>
+                <div class="search-loading" id="search-loading" hidden>
+                    <div class="search-spinner"></div>
+                    <p id="search-loading-text">Searching…</p>
+                </div>
+                <div class="search-parsed" id="search-parsed" hidden>
+                    <span class="parsed-label">Results for:</span>
+                    <span class="parsed-keywords" id="parsed-keywords"></span>
+                    <span class="parsed-source" id="parsed-source"></span>
+                </div>
+                <div class="search-results" id="search-results" hidden></div>
+                <div class="search-no-results" id="search-no-results" hidden>
+                    <p>No results found. Try a different query or source.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIDE MENU -->
+    <div class="menu-layer" id="menu-panel">
+        <div class="menu-card">
+            <div class="menu-header">
+                <div class="menu-profile">
+                    <div class="menu-avatar" id="menu-avatar-display">PS</div>
+                    <div>
+                        <p class="menu-name" id="menu-display-name">PageSync</p>
+                        <p class="menu-sub" id="menu-email">Personal dashboard</p>
+                    </div>
+                </div>
+                <button class="menu-close" id="menu-close">✕</button>
+            </div>
+            <div class="menu-list">
+                <a class="menu-item" href="home.html">Home</a>
+                <a class="menu-item" href="profile.html">Profile</a>
+                <a class="menu-item" href="#">Popular</a>
+                <a class="menu-item active" href="top-rated.html">Top Rated</a>
+                <a class="menu-item" href="#">Bookmarks</a>
+                <a class="menu-item" href="#">Settings</a>
+                <button class="menu-signout" id="menu-signout">Sign Out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE CONTENT -->
+    <div class="page-hero">
+        <h1>⭐ Top Rated</h1>
+        <p>Highest-rated books, manga, and classics across all sources</p>
+    </div>
+
+    <!-- FILTER TABS -->
+    <div class="tab-row" id="tab-row">
+        <button class="tab-btn active" data-tab="all">All</button>
+        <button class="tab-btn" data-tab="books">Books</button>
+        <button class="tab-btn" data-tab="manga">Manga</button>
+        <button class="tab-btn" data-tab="classics">Classics</button>
+    </div>
+
+    <!-- RANKED LIST -->
+    <div class="ranked-list" id="ranked-list"></div>
+
+</div>
+
+<div class="add-popup" id="add-popup" style="display:none"></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+    import { onAuthStateChange, signOutUser, auth, addBook, db } from './firebase.js';
+    import { clientSearch } from './search-client.js';
+    import { collection, getDocs, doc, updateDoc, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const esc     = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const escAttr = s => (s||'').replace(/'/g,'&#39;');
+    const BG      = i => `bg-${(i % 14) + 1}`;
+    const cap     = s => s ? s[0].toUpperCase() + s.slice(1) : '';
+
+    // ── Toast ────────────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg; t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    // ── Book URL ─────────────────────────────────────────────────────
+    function bookUrl(book) {
+        const p = new URLSearchParams({
+            id: book.externalId, source: book.source,
+            title: book.title,   author: book.author,
+            cover: book.cover||'', rating: book.rating||'', year: book.year||'',
+        });
+        return `book.html?${p.toString()}`;
+    }
+
+    // ── Skeletons ────────────────────────────────────────────────────
+    function renderSkeletons(n = 15) {
+        document.getElementById('ranked-list').innerHTML = Array.from({length: n}, () => `
+            <div class="skeleton-rank">
+                <div class="skeleton skel-num"></div>
+                <div class="skeleton skel-img"></div>
+                <div class="skel-body">
+                    <div class="skeleton skel-line" style="width:65%"></div>
+                    <div class="skeleton skel-line" style="width:40%"></div>
+                    <div class="skeleton skel-line" style="width:28%"></div>
+                </div>
+            </div>`).join('');
+    }
+
+    // ── Render ranked list ───────────────────────────────────────────
+    function renderList(items) {
+        const list = document.getElementById('ranked-list');
+        if (!items.length) {
+            list.innerHTML = `
+                <div class="list-empty">
+                    <div class="list-empty-icon">📚</div>
+                    <p>No results found — try a different filter.</p>
+                </div>`;
+            return;
+        }
+
+        list.innerHTML = items.map((b, i) => {
+            const hasCover   = !!b.cover;
+            const coverStyle = hasCover
+                ? `background-image:url('${esc(b.cover)}');`
+                : '';
+            const coverCls   = `rank-cover${hasCover ? '' : ' no-cover ' + BG(i)}`;
+            const rating     = b.rating ? Number(b.rating) : null;
+            const fillPct    = rating ? Math.min((rating / 10) * 100, 100) : 0;
+
+            return `
+            <a class="rank-card" href="${bookUrl(b)}" data-book='${escAttr(JSON.stringify(b))}'>
+                <span class="rank-num">${i + 1}</span>
+                <div class="${coverCls}" style="${coverStyle}">
+                    ${!hasCover ? `<span>${esc((b.title||'?').slice(0,2).toUpperCase())}</span>` : ''}
+                </div>
+                <div class="rank-info">
+                    <div class="rank-badges">
+                        <span class="rank-source-badge ${getBadgeClass(b.source)}">${esc(b.sourceLabel || 'Book')}</span>
+                        ${b.year ? `<span class="rank-year">${esc(String(b.year))}</span>` : ''}
+                    </div>
+                    <div class="rank-title">${esc(b.title)}</div>
+                    <div class="rank-author">${esc(b.author)}</div>
+                    <div class="rank-meta">
+                        ${rating ? `
+                        <div class="rank-rating">
+                            <span>★</span>
+                            <span>${rating.toFixed(1)}</span>
+                        </div>
+                        <div class="rank-rating-bar">
+                            <div class="rank-rating-fill" style="width:${fillPct}%"></div>
+                        </div>` : `<span style="font-size:12px;color:#404558;">No rating</span>`}
+                    </div>
+                </div>
+                <button class="rank-add-btn" title="Add to library">+</button>
+            </a>`;
+        }).join('');
+
+        list.querySelectorAll('.rank-card').forEach(card => {
+            const book = JSON.parse(card.dataset.book);
+            card.querySelector('.rank-add-btn').addEventListener('click', e => {
+                e.preventDefault(); e.stopPropagation();
+                openAddPopup(book, e.currentTarget);
+            });
+        });
+    }
+
+    function getBadgeClass(source) {
+        const map = {
+            'open-library':    'source-open-library',
+            'hardcover':       'source-hardcover',
+            'jikan':           'source-manga-eden',
+            'mangadex':        'source-mangadex',
+            'gutenberg':       'source-gutenberg',
+            'standard-ebooks': 'source-standard-ebooks',
+            'internet-archive':'source-internet-archive',
+        };
+        return map[source] || 'source-open-library';
+    }
+
+    // ── Data loading ─────────────────────────────────────────────────
+    // Store all fetched results so tab switching doesn't re-fetch
+    let allResults = { all: [], books: [], manga: [], classics: [] };
+    let loaded     = { books: false, manga: false, classics: false };
+    let activeTab  = 'all';
+
+    async function loadAll() {
+        renderSkeletons(15);
+
+        const [books, manga, classics] = await Promise.allSettled([
+            clientSearch('top rated bestselling fiction', 'books',    25),
+            clientSearch('top rated manga',               'manga',    25),
+            clientSearch('classic literature',            'classics', 25),
+        ]);
+
+        const bookResults    = books.status    === 'fulfilled' ? books.value.results    : [];
+        const mangaResults   = manga.status    === 'fulfilled' ? manga.value.results    : [];
+        const classicResults = classics.status === 'fulfilled' ? classics.value.results : [];
+
+        // Sort each category by rating desc, filter to only rated items first
+        const sortByRating = arr => [...arr].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+
+        allResults.books    = sortByRating(bookResults);
+        allResults.manga    = sortByRating(mangaResults);
+        allResults.classics = sortByRating(classicResults);
+
+        // Merge all, interleave sources so it's not just all books first
+        const merged = interleave(
+            allResults.books.slice(0, 15),
+            allResults.manga.slice(0, 15),
+            allResults.classics.slice(0, 10)
+        );
+        allResults.all = sortByRating(merged);
+
+        renderList(allResults[activeTab]);
+    }
+
+    // Round-robin interleave across arrays
+    function interleave(...arrays) {
+        const result = [];
+        const max    = Math.max(...arrays.map(a => a.length));
+        for (let i = 0; i < max; i++) {
+            arrays.forEach(arr => { if (arr[i]) result.push(arr[i]); });
+        }
+        return result;
+    }
+
+    // ── Tab switching ────────────────────────────────────────────────
+    document.getElementById('tab-row').addEventListener('click', e => {
+        const btn = e.target.closest('.tab-btn');
+        if (!btn) return;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeTab = btn.dataset.tab;
+        renderList(allResults[activeTab] || []);
+    });
+
+    // ── Add popup (same logic as home) ──────────────────────────────
+    const popup   = document.getElementById('add-popup');
+    let popupOpen = false;
+
+    function closePopup() { popup.style.display = 'none'; popupOpen = false; }
+
+    document.addEventListener('click', e => {
+        if (popupOpen && !popup.contains(e.target) && !e.target.classList.contains('rank-add-btn'))
+            closePopup();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup(); });
+
+    function positionPopup(btn) {
+        const rect = btn.getBoundingClientRect();
+        const pw   = 260;
+        let left   = rect.right - pw;
+        let top    = rect.bottom + 8;
+        if (left < 8) left = 8;
+        if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+        if (top + 300 > window.innerHeight) top = rect.top - 8 - Math.min(300, top + 300 - window.innerHeight);
+        popup.style.left = `${left}px`;
+        popup.style.top  = `${top + window.scrollY}px`;
+    }
+
+    function openAddPopup(book, btn) {
+        const user = auth.currentUser;
+        if (!user) { showToast('Sign in to save books'); return; }
+        popupOpen = true;
+        popup.style.display = 'block';
+        positionPopup(btn);
+        showMainMenu(book, btn, user);
+    }
+
+    function showMainMenu(book, btn, user) {
+        popup.innerHTML = `
+            <div class="add-popup-title">Add "${esc(book.title?.slice(0,28) || 'book')}"</div>
+            <div class="add-popup-divider"></div>
+            <button class="popup-option" id="opt-bookmark">
+                <span class="popup-option-icon poi-bookmark">🔖</span>
+                <span class="popup-option-text">
+                    <strong>Add to Bookmarks</strong>
+                    <span>Save to your reading library</span>
+                </span>
+            </button>
+            <button class="popup-option" id="opt-list">
+                <span class="popup-option-icon poi-list">📋</span>
+                <span class="popup-option-text">
+                    <strong>Add to a List</strong>
+                    <span>Save to a custom collection</span>
+                </span>
+            </button>`;
+        popup.querySelector('#opt-bookmark').addEventListener('click', () => showBookmarkMenu(book, btn, user));
+        popup.querySelector('#opt-list').addEventListener('click', () => showListMenu(book, user));
+    }
+
+    function showBookmarkMenu(book, btn, user) {
+        popup.innerHTML = `
+            <button class="popup-back" id="popup-back">← Back</button>
+            <div class="add-popup-divider"></div>
+            <div class="popup-status-wrap">
+                <select class="popup-status-select" id="status-select">
+                    <option value="planned">Plan to Read</option>
+                    <option value="reading">Currently Reading</option>
+                    <option value="completed">Completed</option>
+                    <option value="paused">On Hold</option>
+                    <option value="dropped">Dropped</option>
+                </select>
+            </div>
+            <button class="popup-save-btn" id="popup-save">Save to Bookmarks</button>`;
+        popup.querySelector('#popup-back').addEventListener('click', () => showMainMenu(book, btn, user));
+        popup.querySelector('#popup-save').addEventListener('click', async () => {
+            const status  = popup.querySelector('#status-select').value;
+            const saveBtn = popup.querySelector('#popup-save');
+            saveBtn.textContent = 'Saving…'; saveBtn.disabled = true;
+            try {
+                await addBook(user.uid, {
+                    title: book.title, author: book.author, status,
+                    externalId: book.externalId, source: book.source,
+                    sourceLabel: book.sourceLabel, coverUrl: book.cover || '',
+                    rating: book.rating || null, year: book.year || null,
+                });
+                btn.textContent = '✓'; btn.classList.add('added');
+                showToast(`"${book.title}" added to bookmarks`);
+                closePopup();
+            } catch {
+                saveBtn.textContent = 'Save to Bookmarks'; saveBtn.disabled = false;
+                showToast('Could not save — try again');
+            }
+        });
+    }
+
+    async function showListMenu(book, user) {
+        popup.innerHTML = `
+            <button class="popup-back" id="popup-back">← Back</button>
+            <div class="add-popup-divider"></div>
+            <div class="popup-lists-wrap" id="lists-wrap">
+                <p class="popup-empty">Loading lists…</p>
+            </div>`;
+        popup.querySelector('#popup-back').addEventListener('click', () => showMainMenu(book, null, user));
+        try {
+            const snap  = await getDocs(collection(db, 'users', user.uid, 'lists'));
+            const lists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const wrap  = popup.querySelector('#lists-wrap');
+            if (!lists.length) { wrap.innerHTML = `<p class="popup-empty">No lists yet.<br>Create one in My Lists.</p>`; return; }
+            wrap.innerHTML = lists.map(l => `
+                <button class="popup-list-item" data-id="${esc(l.id)}" data-name="${esc(l.name||'')}">
+                    <span class="popup-list-icon">📋</span>
+                    <span>${esc(l.name || 'Untitled')}</span>
+                </button>`).join('');
+            wrap.querySelectorAll('.popup-list-item').forEach(item => {
+                item.addEventListener('click', async () => {
+                    item.textContent = 'Adding…';
+                    try {
+                        await updateDoc(doc(db, 'users', user.uid, 'lists', item.dataset.id), {
+                            books: arrayUnion({ title: book.title, author: book.author, externalId: book.externalId, source: book.source, sourceLabel: book.sourceLabel, cover: book.cover || '' }),
+                        });
+                        showToast(`Added to "${item.dataset.name}"`);
+                        closePopup();
+                    } catch { showToast('Could not add to list — try again'); item.textContent = item.dataset.name; }
+                });
+            });
+        } catch {
+            popup.querySelector('#lists-wrap').innerHTML = `<p class="popup-empty">Could not load lists.</p>`;
+        }
+    }
+
+    // ── Auth ──────────────────────────────────────────────────────────
+    const menuBtn     = document.getElementById('menu-btn');
+    const menuPanel   = document.getElementById('menu-panel');
+    const menuClose   = document.getElementById('menu-close');
+    const menuSignout = document.getElementById('menu-signout');
+
+    menuBtn.addEventListener('click',   () => menuPanel.classList.add('open'));
+    menuClose.addEventListener('click', () => menuPanel.classList.remove('open'));
+    menuPanel.addEventListener('click', e => { if (e.target === menuPanel) menuPanel.classList.remove('open'); });
+    menuSignout.addEventListener('click', async () => {
+        try { await signOutUser(); window.location.href = 'login.html'; } catch (err) { alert(err.message); }
+    });
+
+    onAuthStateChange(user => {
+        if (!user) { window.location.href = 'login.html'; return; }
+        const avatarEl     = document.getElementById('user-avatar');
+        const menuAvatarEl = document.getElementById('menu-avatar-display');
+        const photo        = localStorage.getItem(`ps_avatar_${user.uid}`);
+        if (photo) {
+            avatarEl.style.backgroundImage = `url('${photo}')`;
+            avatarEl.textContent = '';
+            menuAvatarEl.style.cssText = `background-image:url('${photo}');background-size:cover;background-position:center;`;
+            menuAvatarEl.textContent = '';
+        } else {
+            const initials = (user.displayName || user.email || 'PS').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+            avatarEl.textContent = initials;
+            menuAvatarEl.textContent = initials;
+        }
+        document.getElementById('menu-display-name').textContent = localStorage.getItem(`ps_username_${user.uid}`) || user.displayName || 'Reader';
+        document.getElementById('menu-email').textContent = user.email || '';
+    });
+
+    // ── Search modal (same as home) ──────────────────────────────────
+    const searchTrigger = document.getElementById('search-trigger');
+    const searchLayer   = document.getElementById('search-layer');
+    const searchClose   = document.getElementById('search-close');
+    const searchInput   = document.getElementById('search-input');
+    const elEmpty       = document.getElementById('search-empty');
+    const elLoading     = document.getElementById('search-loading');
+    const elParsed      = document.getElementById('search-parsed');
+    const elResults     = document.getElementById('search-results');
+    const elNoResults   = document.getElementById('search-no-results');
+
+    let activeSource = 'books', debounceTimer = null;
+
+    searchTrigger.addEventListener('click', () => openSearch());
+    searchClose.addEventListener('click', closeSearch);
+    searchLayer.addEventListener('click', e => { if (e.target === searchLayer) closeSearch(); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeSearch();
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+    });
+
+    function openSearch(prefill = '') {
+        searchLayer.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => {
+            searchInput.focus();
+            if (prefill && prefill !== searchInput.value) { searchInput.value = prefill; triggerSearch(); }
+        }, 80);
+    }
+    function closeSearch() { searchLayer.classList.remove('open'); document.body.style.overflow = ''; }
+
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active'); activeSource = chip.dataset.source;
+            if (searchInput.value.trim()) triggerSearch();
+        });
+    });
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        if (!searchInput.value.trim()) { showState('empty'); return; }
+        debounceTimer = setTimeout(triggerSearch, 500);
+    });
+    searchInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { clearTimeout(debounceTimer); if (searchInput.value.trim()) triggerSearch(); }
+    });
+
+    async function triggerSearch() {
+        const q = searchInput.value.trim();
+        if (!q) return;
+        showState('loading');
+        try {
+            const { results, parsed } = await clientSearch(q, activeSource, 20);
+            if (parsed?.keywords) {
+                document.getElementById('parsed-keywords').textContent = `"${parsed.keywords}"`;
+                document.getElementById('parsed-source').textContent   = parsed.source ? `· ${cap(parsed.source)}` : '';
+            }
+            results.length ? (renderModalResults(results), showState('results')) : showState('no-results');
+        } catch { showState('no-results'); }
+    }
+
+    function renderModalResults(results) {
+        elResults.innerHTML = results.map(r => `
+            <a class="result-card" href="${bookUrl(r)}" style="text-decoration:none;color:inherit;">
+                <div class="result-cover ${r.cover ? '' : 'result-cover-placeholder'}"
+                     ${r.cover ? `style="background-image:url('${esc(r.cover)}')"` : ''}>
+                    ${r.cover ? '' : `<span>${esc(r.title).slice(0,2).toUpperCase()}</span>`}
+                </div>
+                <div class="result-info">
+                    <div class="result-badges">
+                        <span class="result-source-badge ${getBadgeClass(r.source)}">${esc(r.sourceLabel||'Book')}</span>
+                    </div>
+                    <h3 class="result-title">${esc(r.title)}</h3>
+                    <p class="result-author">${esc(r.author)}</p>
+                    ${r.rating ? `<p class="result-rating">★ ${Number(r.rating).toFixed(1)}</p>` : ''}
+                    ${r.description ? `<p class="result-desc">${esc(r.description).slice(0,120)}…</p>` : ''}
+                </div>
+                <button class="result-add" title="Add to library" data-book='${escAttr(JSON.stringify(r))}'>+</button>
+            </a>`).join('');
+
+        elResults.querySelectorAll('.result-add').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.preventDefault(); e.stopPropagation();
+                openAddPopup(JSON.parse(btn.dataset.book), btn);
+            });
+        });
+    }
+
+    function showState(s) {
+        elEmpty.hidden     = s !== 'empty';
+        elLoading.hidden   = s !== 'loading';
+        elParsed.hidden    = s !== 'results';
+        elResults.hidden   = s !== 'results';
+        elNoResults.hidden = s !== 'no-results';
+    }
+    showState('empty');
+
+    // ── Kick off ─────────────────────────────────────────────────────
+    loadAll();
+</script>
+</body>
+</html>
