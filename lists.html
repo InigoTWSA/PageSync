@@ -248,8 +248,8 @@
         .menu-item.active { background: rgba(59,125,243,0.18); color: #fff; }
         .menu-signout { justify-content: center; gap: 10px; font-weight: 700; color: #f5f7fa; }
 
-        .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1f2430; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 22px; font-size: 14px; color: #d0d5de; box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.22s, transform 0.22s; pointer-events: none; white-space: nowrap; z-index: 99; }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast { position: fixed; bottom: 28px; right: 28px; transform: translateY(20px); background: #1f2430; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 22px; font-size: 14px; color: #d0d5de; box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.22s, transform 0.22s; pointer-events: none; white-space: nowrap; z-index: 999; }
+        .toast.show { opacity: 1; transform: translateY(0); }
 
         /* ── Detail view ─────────────────────────────────────────── */
         .detail-view {
@@ -512,11 +512,11 @@
             <div class="menu-list">
                 <a class="menu-item" href="home.html">Home</a>
                 <a class="menu-item" href="profile.html">Profile</a>
-                <a class="menu-item" href="#">Popular</a>
-                <a class="menu-item" href="#">Top rated</a>
+                <a class="menu-item" href="popular.html">Popular</a>
+                <a class="menu-item" href="top-rated.html">Top rated</a>
                 <a class="menu-item" href="bookmarks.html">Bookmarks</a>
                 <a class="menu-item active" href="lists.html">My Lists</a>
-                <a class="menu-item" href="#">Settings</a>
+                <a class="menu-item" href="settings.html">Settings</a>
                 <button class="menu-signout" id="menu-signout">Sign Out</button>
             </div>
         </div>
@@ -614,7 +614,7 @@
     <div class="toast" id="toast"></div>
 
     <script type="module">
-        import { onAuthStateChange, signOutUser, db } from './firebase.js';
+        import { onAuthStateChange, signOutUser, auth, db } from './firebase.js';
         import { clientSearch } from './search-client.js';
         import {
             collection, doc, addDoc, getDocs, updateDoc, deleteDoc,
