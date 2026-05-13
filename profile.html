@@ -4,1478 +4,1204 @@
     <meta charset="UTF-8">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjM2I3ZGYzIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjN2Q1Y2ZmIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9InVybCgjZykiLz48cGF0aCBkPSJNMzIgMTR2LTVsLTggOCA4IDh2LTVjNi42MyAwIDEyIDUuMzcgMTIgMTIgMCAyLjAyLS41IDMuOTQtMS40IDUuNmwyLjkyIDIuOTJDNDcuMDggMzcuMDYgNDggMzQuNjMgNDggMzJjMC04Ljg0LTcuMTYtMTYtMTYtMTZ6bTAgMjhjLTYuNjMgMC0xMi01LjM3LTEyLTEyIDAtMi4wMi41LTMuOTQgMS40LTUuNmwtMi45Mi0yLjkyQzE2LjkyIDI2Ljk0IDE2IDI5LjM3IDE2IDMyYzAgOC44NCA3LjE2IDE2IDE2IDE2djVsOC04LTgtOHY1eiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Popular · PageSync</title>
-    <link rel="stylesheet" href="css/pagesync.css">
+    <title>Profile · PageSync</title>
+   <link rel="stylesheet" href="css/pagesync.css">
     <style>
-        /* ── Avatar (same as home) ─────────────────────────────────── */
-        .avatar {
-            cursor: pointer;
-            transition: opacity 0.18s, transform 0.18s, box-shadow 0.18s;
-            text-decoration: none;
-            overflow: hidden;
-            background-size: cover;
-            background-position: center;
+        /* ── Page layout ─────────────────────────────────────────── */
+        body.dashboard { padding: 0; }
+ 
+        .profile-shell {
+            max-width: 820px;
+            margin: 0 auto;
+            padding-bottom: 60px;
         }
-        .avatar:hover { opacity: 0.85; transform: scale(1.06); box-shadow: 0 0 0 2px #3b7df3; }
-
-        /* ── Page hero ─────────────────────────────────────────────── */
-        .page-hero {
-            margin: 32px 0 28px;
-        }
-        .page-hero h1 {
-            font-size: 30px;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            color: #f0f2f5;
-            margin-bottom: 6px;
-        }
-        .page-hero p {
-            font-size: 14px;
-            color: #606880;
-        }
-
-        /* ── Tab row ───────────────────────────────────────────────── */
-        .tab-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 32px;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            scrollbar-width: none;
-        }
-        .tab-row::-webkit-scrollbar { display: none; }
-
-        .tab-btn {
-            padding: 9px 20px;
-            border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(255,255,255,0.04);
-            color: #8f97a5;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.15s, border-color 0.15s, color 0.15s;
-            font-family: inherit;
-            white-space: nowrap;
-            min-height: 40px;
-            flex-shrink: 0;
-            touch-action: manipulation;
-        }
-        .tab-btn:hover { background: rgba(255,255,255,0.08); color: #d0d5de; }
-        .tab-btn.active {
-            background: rgba(59,125,243,0.18);
-            border-color: rgba(59,125,243,0.4);
-            color: #7aabff;
-        }
-
-        /* ── Filter button ─────────────────────────────────────────── */
-        .tab-row-spacer { flex: 1; }
-
-        .filter-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 8px 14px;
-            border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.10);
-            background: #1a1d24;
-            color: #9aa0ad;
-            font-size: 13px;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            white-space: nowrap;
-            flex-shrink: 0;
-            min-height: 40px;
-            transition: background 0.15s, border-color 0.15s, color 0.15s;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-            position: relative;
-        }
-        .filter-btn:hover {
-            background: #21252f;
-            border-color: rgba(255,255,255,0.16);
-            color: #d0d5de;
-        }
-        .filter-btn.has-filters {
-            border-color: rgba(59,125,243,0.4);
-            color: #7aabff;
-            background: rgba(59,125,243,0.1);
-        }
-        .filter-btn-icon {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            width: 14px;
-            flex-shrink: 0;
-        }
-        .filter-btn-icon span {
-            display: block;
-            height: 1.5px;
-            border-radius: 999px;
-            background: currentColor;
-            transition: width 0.15s;
-        }
-        .filter-btn-icon span:nth-child(1) { width: 100%; }
-        .filter-btn-icon span:nth-child(2) { width: 70%; }
-        .filter-btn-icon span:nth-child(3) { width: 40%; }
-
-        .filter-count {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 18px;
-            height: 18px;
-            padding: 0 5px;
-            border-radius: 999px;
-            background: #3b7df3;
-            color: #fff;
-            font-size: 10px;
-            font-weight: 800;
-            line-height: 1;
-        }
-
-        /* ── Filter panel (slide-in drawer) ────────────────────────── */
-        .filter-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            z-index: 40;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .filter-overlay.open {
-            display: block;
-            opacity: 1;
-        }
-
-        .filter-panel {
-            position: fixed;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: min(340px, 92vw);
-            background: #13161d;
-            border-left: 1px solid rgba(255,255,255,0.08);
-            z-index: 41;
-            display: flex;
-            flex-direction: column;
-            transform: translateX(100%);
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
-        }
-        .filter-panel.open {
-            transform: translateX(0);
-        }
-
-        /* Panel header */
-        .fp-header {
+ 
+        /* ── Top bar ─────────────────────────────────────────────── */
+        .profile-topbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 20px 20px 16px;
-            border-bottom: 1px solid rgba(255,255,255,0.07);
-            flex-shrink: 0;
+            padding: 20px 28px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(9,11,15,0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
         }
-        .fp-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #e8ecf2;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .fp-count-badge {
-            font-size: 11px;
-            font-weight: 700;
-            background: rgba(59,125,243,0.18);
-            color: #7aabff;
-            border-radius: 999px;
-            padding: 2px 9px;
-        }
-        .fp-close {
-            width: 32px;
-            height: 32px;
-            border-radius: 9px;
-            border: none;
-            background: rgba(255,255,255,0.06);
-            color: #9aa0ad;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.15s, color 0.15s;
-        }
-        .fp-close:hover { background: rgba(255,255,255,0.1); color: #e6e7e8; }
-
-        /* Scrollable body */
-        .fp-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 18px 20px;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255,255,255,0.1) transparent;
-            display: flex;
-            flex-direction: column;
-            gap: 22px;
-        }
-
-        /* Section label */
-        .fp-section-label {
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: #404860;
-            margin-bottom: 10px;
-        }
-
-        /* Chip groups */
-        .fp-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 7px;
-        }
-        .fp-chip {
-            padding: 7px 14px;
-            border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(255,255,255,0.03);
-            color: #8f97a5;
-            font-size: 12px;
-            font-weight: 500;
-            font-family: inherit;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: background 0.13s, border-color 0.13s, color 0.13s;
-            min-height: 34px;
-            touch-action: manipulation;
-        }
-        .fp-chip:hover {
-            background: rgba(255,255,255,0.07);
-            color: #d0d5de;
-        }
-        .fp-chip.active {
-            background: rgba(59,125,243,0.18);
-            border-color: rgba(59,125,243,0.4);
-            color: #7aabff;
-        }
-        /* 18+ chip — red accent */
-        .fp-chip.age-gate {
-            border-color: rgba(220,60,60,0.3);
-            color: #c07070;
-        }
-        .fp-chip.age-gate.active {
-            background: rgba(220,60,60,0.18);
-            border-color: rgba(220,60,60,0.5);
-            color: #f08080;
-        }
-
-        /* Genre chips — cycle include → exclude → off */
-        .fp-chip[data-state="include"] {
-            background: rgba(59,125,243,0.18);
-            border-color: rgba(59,125,243,0.4);
-            color: #7aabff;
-        }
-        .fp-chip[data-state="exclude"] {
-            background: rgba(220,60,60,0.12);
-            border-color: rgba(220,60,60,0.35);
-            color: #e08080;
-            text-decoration: line-through;
-            text-decoration-color: rgba(220,60,60,0.5);
-        }
-
-        /* Range inputs */
-        .fp-range-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .fp-input {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(255,255,255,0.03);
-            color: #c0c8d8;
-            font-size: 13px;
-            font-family: inherit;
-            outline: none;
-            transition: border-color 0.15s;
-            -webkit-appearance: none;
-        }
-        .fp-input:focus { border-color: rgba(59,125,243,0.45); }
-        .fp-input::placeholder { color: #404558; }
-
-        /* Panel footer */
-        .fp-footer {
-            padding: 14px 20px max(20px, env(safe-area-inset-bottom));
-            border-top: 1px solid rgba(255,255,255,0.07);
-            display: flex;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-        .fp-reset {
-            flex: 1;
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.09);
-            background: rgba(255,255,255,0.04);
-            color: #8f97a5;
-            font-size: 14px;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-            min-height: 46px;
-        }
-        .fp-reset:hover { background: rgba(255,255,255,0.08); color: #d0d5de; }
-        .fp-apply {
-            flex: 2;
-            padding: 12px;
-            border-radius: 12px;
-            border: none;
-            background: #3b7df3;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 700;
-            font-family: inherit;
-            cursor: pointer;
-            transition: background 0.15s;
-            min-height: 46px;
-        }
-        .fp-apply:hover { background: #5a93f7; }
-
-        /* Genre cycle hint */
-        .fp-genre-hint {
-            font-size: 11px;
-            color: #404558;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .fp-genre-hint span {
+ 
+        .profile-topbar .brand {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-        }
-        .fp-genre-hint .arrow { color: #303448; font-size: 10px; }
-
-        /* ── Popular grid ──────────────────────────────────────────── */
-        .popular-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-            gap: 18px;
-        }
-
-        @media (max-width: 600px) {
-            .popular-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-            }
-        }
-
-        /* ── Pop card ──────────────────────────────────────────────── */
-        .pop-card {
-            border-radius: 20px;
-            overflow: hidden;
-            background: #14171d;
-            border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 700;
             text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.18s, box-shadow 0.18s;
-            position: relative;
+            color: #e6e7e8;
+            letter-spacing: -0.02em;
         }
-        .pop-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 24px 60px rgba(0,0,0,0.4);
-        }
-
-        /* Cover */
-        .pop-cover {
-            height: 240px;
-            background-size: cover;
-            background-position: center top;
-            position: relative;
-            display: flex;
-            align-items: flex-end;
-        }
-        .pop-cover::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, transparent 55%);
-            pointer-events: none;
-        }
-        .pop-cover.no-cover {
+        .brand:visited, .brand:hover, .brand:active { color: #e6e7e8; }
+ 
+        .profile-topbar .brand-mark {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-        }
-        .pop-cover-initials {
-            font-size: 40px;
-            font-weight: 800;
-            color: rgba(255,255,255,0.12);
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -60%);
-            z-index: 0;
-            user-select: none;
-        }
-        .pop-cover-title {
-            position: relative;
-            z-index: 1;
-            padding: 12px 14px;
+            background: linear-gradient(135deg, #3b7df3, #7d5cff);
+            color: #fff;
+            font-weight: 700;
             font-size: 14px;
-            font-weight: 700;
-            color: #fff;
-            line-height: 1.25;
-            text-shadow: 0 1px 6px rgba(0,0,0,0.6);
-            word-break: break-word;
         }
-
-        /* Trending badge (top-left) */
-        .trending-badge {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 2;
-            display: flex;
+ 
+        .back-btn {
+            display: inline-flex;
             align-items: center;
-            gap: 4px;
-            background: rgba(255, 80, 60, 0.88);
-            backdrop-filter: blur(6px);
-            color: #fff;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            padding: 4px 9px;
-            border-radius: 999px;
-        }
-        .trending-badge.hot  { background: rgba(255, 80, 60, 0.88); }
-        .trending-badge.new  { background: rgba(59, 125, 243, 0.9); }
-        .trending-badge.hot::before  { content: '🔥'; font-size: 10px; }
-        .trending-badge.new::before  { content: '✦'; font-size: 9px; }
-
-        /* Add button (top-right) */
-        .pop-add-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 3;
-            width: 30px;
-            height: 30px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.18);
-            background: rgba(10,12,18,0.78);
-            color: #7aabff;
-            font-size: 18px;
+            gap: 8px;
+            font-size: 14px;
+            color: #8f97a5;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 8px 14px;
             cursor: pointer;
+            text-decoration: none;
+            transition: color 0.15s, background 0.15s;
+        }
+ 
+        .back-btn:hover { color: #e6e7e8; background: rgba(255,255,255,0.09); }
+ 
+        /* ── Banner ──────────────────────────────────────────────── */
+        .profile-banner {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #0f1628 0%, #1a0f2e 50%, #0d1520 100%);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+ 
+        .profile-banner img.banner-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+ 
+        .banner-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0);
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0;
-            transition: opacity 0.15s, background 0.15s;
-            backdrop-filter: blur(4px);
-        }
-        .pop-card:hover .pop-add-btn { opacity: 1; }
-        .pop-add-btn:hover { background: rgba(59,125,243,0.55); color: #fff; }
-        .pop-add-btn.added { background: rgba(50,170,90,0.55); color: #80ffb0; opacity: 1; }
-
-        @media (hover: none) {
-            .pop-add-btn { opacity: 1; }
-        }
-
-        /* Info block */
-        .pop-info {
-            padding: 12px 14px 14px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .pop-source-badge {
-            display: inline-block;
-            font-size: 10px;
-            padding: 2px 7px;
-            border-radius: 999px;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            align-self: flex-start;
-        }
-        .pop-title {
+            transition: background 0.2s, opacity 0.2s;
+            gap: 8px;
             font-size: 14px;
+            color: #fff;
+            font-weight: 600;
+        }
+ 
+        .profile-banner:hover .banner-overlay {
+            background: rgba(0,0,0,0.45);
+            opacity: 1;
+        }
+ 
+        .banner-overlay .cam-icon { font-size: 22px; }
+ 
+        /* ── Profile card under banner ───────────────────────────── */
+        .profile-card {
+            padding: 0 28px 28px;
+            position: relative;
+        }
+ 
+        /* ── Avatar ──────────────────────────────────────────────── */
+        .profile-avatar-wrap {
+            position: relative;
+            display: inline-block;
+            margin-top: -44px;
+            margin-bottom: 14px;
+        }
+ 
+        .profile-avatar {
+            width: 88px;
+            height: 88px;
+            border-radius: 22px;
+            border: 3px solid #090b0f;
+            background: #16191f;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f3f5f9;
+            font-size: 28px;
+            font-weight: 700;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.18s;
+        }
+ 
+        .profile-avatar:hover { box-shadow: 0 0 0 2px #3b7df3; }
+ 
+        .avatar-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: background 0.2s, opacity 0.2s;
+            font-size: 24px;
+        }
+ 
+        .profile-avatar:hover .avatar-overlay {
+            background: rgba(0,0,0,0.5);
+            opacity: 1;
+        }
+ 
+        /* ── Profile info area ───────────────────────────────────── */
+        .profile-info-row {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+ 
+        .profile-names h1 {
+            font-size: 22px;
             font-weight: 700;
             color: #f0f2f5;
-            line-height: 1.3;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
-            overflow: hidden;
-            margin: 0;
+            margin-bottom: 2px;
         }
-        .pop-author {
-            font-size: 12px;
+ 
+        .profile-names .username-handle {
+            font-size: 14px;
             color: #606880;
+        }
+ 
+        .edit-profile-btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.05);
+            color: #d4d8e2;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+ 
+        .edit-profile-btn:hover {
+            background: rgba(255,255,255,0.09);
+            border-color: rgba(255,255,255,0.2);
+        }
+ 
+        .edit-profile-btn.active {
+            background: #3b7df3;
+            border-color: #3b7df3;
+            color: #fff;
+        }
+ 
+        /* ── Bio ─────────────────────────────────────────────────── */
+        .profile-bio {
+            font-size: 14px;
+            color: #9aa0ad;
+            line-height: 1.7;
+            margin-bottom: 28px;
+            max-width: 560px;
+            white-space: pre-wrap;
+        }
+ 
+        .profile-bio.empty { color: #484f60; font-style: italic; }
+ 
+        /* ── Divider ─────────────────────────────────────────────── */
+        .section-divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            margin: 0 0 28px;
+        }
+ 
+        /* ── Section heading ─────────────────────────────────────── */
+        .profile-section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #e2e5ea;
+            margin-bottom: 16px;
+        }
+ 
+        /* ── Stats cards ─────────────────────────────────────────── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+ 
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px;
+            padding: 20px 16px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+ 
+        .stat-card:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.12);
+        }
+ 
+        .stat-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+ 
+        .stat-icon-chapters  { background: rgba(255,200,80,0.12);  color: #ffc840; }
+        .stat-icon-bookmarks { background: rgba(240,80,100,0.12);  color: #f05060; }
+        .stat-icon-series    { background: rgba(80,180,220,0.12);  color: #50b4dc; }
+ 
+        .stat-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: #e8ecf2;
+            letter-spacing: -0.03em;
+            line-height: 1;
+        }
+ 
+        .stat-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #505870;
+        }
+ 
+        @media (max-width: 480px) {
+            .stats-row { gap: 8px; }
+            .stat-card  { padding: 16px 10px; }
+            .stat-number { font-size: 22px; }
+            .stat-icon  { width: 36px; height: 36px; font-size: 16px; border-radius: 10px; }
+        }
+ 
+        /* ── Favourite books grid ────────────────────────────────── */
+        .fav-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+ 
+        @media (max-width: 720px) {
+            .fav-grid { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        }
+ 
+        @media (max-width: 480px) {
+            .fav-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        }
+ 
+        @media (max-width: 340px) {
+            .fav-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+ 
+        .fav-slot {
+            aspect-ratio: 2/3;
+            border-radius: 12px;
+            border: 2px dashed rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.025);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+ 
+        .fav-slot:hover {
+            border-color: rgba(59,125,243,0.4);
+            background: rgba(59,125,243,0.06);
+        }
+ 
+        .fav-slot.filled {
+            border-style: solid;
+            border-color: rgba(255,255,255,0.08);
+        }
+ 
+        .fav-slot .slot-cover {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            border-radius: 10px;
+        }
+ 
+        .fav-slot .slot-label {
+            font-size: 11px;
+            color: #404860;
+            text-align: center;
+            padding: 0 6px;
+            line-height: 1.4;
+            transition: color 0.15s;
+        }
+ 
+        .fav-slot:hover .slot-label { color: #6070a0; }
+ 
+        .fav-slot .slot-plus { font-size: 20px; color: #303550; transition: color 0.15s; }
+        .fav-slot:hover .slot-plus { color: #3b7df3; }
+ 
+        /* Filled slot overlay on hover */
+        .fav-slot .slot-hover-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0);
+            display: flex;
+            align-items: flex-end;
+            padding: 8px;
+            border-radius: 10px;
+            opacity: 0;
+            transition: background 0.2s, opacity 0.2s;
+        }
+ 
+        .fav-slot.filled:hover .slot-hover-overlay {
+            background: rgba(0,0,0,0.55);
+            opacity: 1;
+        }
+ 
+        .slot-hover-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+ 
+        .slot-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.7);
+            border: none;
+            color: #ccc;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            transition: background 0.15s;
+        }
+ 
+        .fav-slot.filled:hover .slot-remove {
+            display: flex;
+        }
+ 
+        .slot-remove:hover { background: rgba(220,60,60,0.85); color: #fff; }
+ 
+        /* ── Edit panel ──────────────────────────────────────────── */
+        .edit-panel {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.4s ease, opacity 0.3s ease;
+        }
+ 
+        .edit-panel.open {
+            max-height: 700px;
+            opacity: 1;
+        }
+ 
+        .edit-inner {
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+ 
+        .edit-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #606880;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+ 
+        .edit-group input[type="text"],
+        .edit-group textarea {
+            width: 100%;
+            background: #0e1016;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 13px 16px;
+            color: #eceeef;
+            font-size: 16px; /* 16px prevents iOS auto-zoom */
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.6;
+            transition: border-color 0.15s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+ 
+        .edit-group input[type="text"]:focus,
+        .edit-group textarea:focus {
+            outline: none;
+            border-color: rgba(59,125,243,0.45);
+        }
+ 
+        .edit-group textarea { min-height: 90px; }
+ 
+        .edit-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+ 
+        .btn-save {
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: none;
+            background: #3b7df3;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.15s;
+        }
+ 
+        .btn-save:hover { background: #5a93f7; }
+ 
+        .btn-cancel {
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: #9aa0ad;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.15s;
+        }
+ 
+        .btn-cancel:hover { background: rgba(255,255,255,0.08); color: #cdd0d8; }
+ 
+        /* ── Book picker modal ───────────────────────────────────── */
+        .picker-layer {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 60;
+            padding: 60px 20px 20px;
+            overflow-y: auto;
+        }
+ 
+        .picker-layer.open { display: flex; animation: fadeIn 0.15s ease; }
+ 
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+ 
+        .picker-card {
+            width: min(600px, 100%);
+            background: #13161c;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.55);
+            overflow: hidden;
+            animation: slideDown 0.18s ease;
+        }
+ 
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+ 
+        .picker-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+ 
+        .picker-search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #f0f2f5;
+            font-size: 16px;
+            caret-color: #3b7df3;
+        }
+ 
+        .picker-search-input::placeholder { color: #4a5060; }
+ 
+        .picker-close {
+            background: none;
+            border: none;
+            color: #606570;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 8px;
+            transition: color 0.15s;
+        }
+ 
+        .picker-close:hover { color: #c0c5cc; }
+ 
+        .picker-body {
+            max-height: 55vh;
+            overflow-y: auto;
+            padding: 12px 16px 16px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+ 
+        .picker-hint {
+            text-align: center;
+            padding: 32px 20px;
+            color: #404860;
+            font-size: 14px;
+        }
+ 
+        .picker-result {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border: 1px solid transparent;
+        }
+ 
+        .picker-result:hover {
+            background: rgba(59,125,243,0.08);
+            border-color: rgba(59,125,243,0.15);
+        }
+ 
+        .picker-cover {
+            width: 40px;
+            height: 56px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #1e2435, #151925);
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #404860;
+            font-size: 13px;
+            font-weight: 700;
+        }
+ 
+        .picker-info { flex: 1; min-width: 0; }
+ 
+        .picker-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e0e4ee;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            margin: 0;
         }
-        .pop-meta-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 2px;
-        }
-        .pop-rating {
+ 
+        .picker-author {
             font-size: 12px;
-            color: #c0a060;
-        }
-        .pop-reads {
-            font-size: 11px;
-            color: #404558;
-        }
-
-        /* ── Skeleton ──────────────────────────────────────────────── */
-        @keyframes shimmer {
-            0%   { background-position: -600px 0; }
-            100% { background-position:  600px 0; }
-        }
-        .skeleton {
-            background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 75%);
-            background-size: 600px 100%;
-            animation: shimmer 1.4s infinite linear;
-            border-radius: 10px;
-        }
-        .skeleton-pop {
-            border-radius: 20px;
+            color: #606880;
+            margin-top: 2px;
+            white-space: nowrap;
             overflow: hidden;
-            background: #14171d;
-            border: 1px solid rgba(255,255,255,0.06);
+            text-overflow: ellipsis;
         }
-        .skel-cover { height: 240px; border-radius: 0; }
-        .skel-info  { padding: 14px; display: flex; flex-direction: column; gap: 9px; }
-        .skel-line  { height: 11px; border-radius: 6px; }
-
-        /* ── Empty / error ─────────────────────────────────────────── */
-        .list-empty {
-            text-align: center;
-            padding: 60px 20px;
-            color: #404558;
-            font-size: 14px;
-            grid-column: 1 / -1;
+ 
+        .picker-badge {
+            font-size: 11px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: rgba(59,125,243,0.12);
+            color: #7aabff;
+            flex-shrink: 0;
         }
-        .list-empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.5; }
-
-        /* ── Add popup & toast ─────────────────────────────────────── */
-        .add-popup {
-            position: fixed; z-index: 200;
-            background: #1a1d26;
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-            width: 260px; overflow: hidden;
-            animation: popIn 0.15s ease;
+ 
+        .picker-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255,255,255,0.08);
+            border-top-color: #3b7df3;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 32px auto;
         }
-        @keyframes popIn {
-            from { opacity: 0; transform: scale(0.94) translateY(-6px); }
-            to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .add-popup-title { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #505870; padding: 12px 16px 8px; }
-        .add-popup-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0 16px; }
-        .popup-option { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; transition: background 0.12s; border: none; background: none; width: 100%; text-align: left; color: #d0d5de; font-size: 14px; font-weight: 500; font-family: inherit; }
-        .popup-option:hover { background: rgba(255,255,255,0.05); }
-        .popup-option-icon { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
-        .poi-bookmark { background: rgba(59,125,243,0.15); }
-        .poi-list     { background: rgba(125,92,255,0.15); }
-        .popup-option-text strong { display: block; font-size: 13px; font-weight: 600; color: #e0e5f0; }
-        .popup-option-text span   { font-size: 11px; color: #505870; }
-        .popup-status-wrap { padding: 8px 16px 12px; }
-        .popup-status-select { width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #c0c8d8; font-size: 13px; cursor: pointer; font-family: inherit; }
-        .popup-status-select:focus { outline: none; border-color: rgba(59,125,243,0.4); }
-        .popup-save-btn { width: calc(100% - 32px); margin: 0 16px 12px; padding: 10px; border-radius: 10px; border: none; background: #3b7df3; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.15s; }
-        .popup-save-btn:hover { background: #5a93f7; }
-        .popup-lists-wrap { padding: 6px 8px 10px; max-height: 180px; overflow-y: auto; scrollbar-width: thin; }
-        .popup-list-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; cursor: pointer; transition: background 0.12s; border: none; background: none; width: 100%; text-align: left; color: #c0c8d8; font-size: 13px; font-family: inherit; }
-        .popup-list-item:hover { background: rgba(255,255,255,0.06); }
-        .popup-list-icon { font-size: 14px; flex-shrink: 0; }
-        .popup-empty { font-size: 12px; color: #404558; text-align: center; padding: 16px 12px; }
-        .popup-back { display: flex; align-items: center; gap: 6px; padding: 10px 16px 6px; font-size: 12px; color: #606880; cursor: pointer; border: none; background: none; font-family: inherit; transition: color 0.12s; }
-        .popup-back:hover { color: #9aa0ad; }
+ 
+        @keyframes spin { to { transform: rotate(360deg); } }
+ 
+        /* ── Toast ───────────────────────────────────────────────── */
         .toast {
-            position: fixed; bottom: 28px; left: 50%;
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
             transform: translateX(-50%) translateY(20px);
-            background: #1f2430; border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px; padding: 12px 22px; font-size: 14px; color: #d0d5de;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0;
+            background: #1f2430;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 12px 22px;
+            font-size: 14px;
+            color: #d0d5de;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            opacity: 0;
             transition: opacity 0.22s, transform 0.22s;
-            pointer-events: none; white-space: nowrap; z-index: 99;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 99;
         }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        /* ── Search modal result styles ────────────────────────────── */
-        .result-card { display: flex; align-items: center; gap: 14px; padding: 12px; border-radius: 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); transition: background 0.15s; position: relative; }
-        .result-card:hover { background: rgba(255,255,255,0.05); }
-        .result-cover { width: 52px; height: 72px; border-radius: 10px; background-size: cover; background-position: center; flex-shrink: 0; }
-        .result-cover-placeholder { background: linear-gradient(135deg,#1e2435,#151925); display: flex; align-items: center; justify-content: center; color: #404860; font-size: 16px; font-weight: 700; }
-        .result-info { flex: 1; min-width: 0; }
-        .result-badges { display: flex; gap: 6px; margin-bottom: 5px; flex-wrap: wrap; }
-        .result-source-badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; font-weight: 600; }
-        .result-title { font-size: 15px; font-weight: 600; color: #e8ecf2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0 0 3px; }
-        .result-author { font-size: 13px; color: #6a7280; margin: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .result-rating { font-size: 12px; color: #c0a060; margin: 0; }
-        .result-desc { font-size: 12px; color: #505870; margin: 4px 0 0; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; line-clamp: 2; -webkit-line-clamp: 2; }
-        .result-add { width: 40px; height: 40px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(59,125,243,0.08); color: #3b7df3; font-size: 20px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; touch-action: manipulation; }
-        .result-add:hover { background: rgba(59,125,243,0.22); color: #7aabff; }
-        .result-add.added { background: rgba(80,200,120,0.15); color: #60d090; border-color: rgba(80,200,120,0.2); }
-
-        /* ── Mobile ────────────────────────────────────────────────── */
-        @media (max-width: 600px) {
-            .page-hero { margin: 20px 0 20px; }
-            .page-hero h1 { font-size: 24px; }
-            .pop-cover { height: 200px; }
-            .skel-cover { height: 200px; }
-            .pop-title { font-size: 13px; }
-            .pop-author { font-size: 11px; }
+ 
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
         }
+ 
+        /* hidden file inputs */
+        #avatar-file-input,
+        #banner-file-input { display: none; }
     </style>
 </head>
 <body class="dashboard">
-<div class="page-shell">
-
-    <!-- TOPBAR -->
-    <header class="topbar">
-        <a class="brand" href="home.html" style="text-decoration:none;color:inherit;">
-            <span class="brand-mark">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                    <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
-                </svg>
-            </span>
+ 
+    <!-- Top bar -->
+    <header class="profile-topbar">
+        <a class="brand" href="home.html">
+            <span class="brand-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg></span>
             <span>PageSync</span>
         </a>
-        <div class="search-box">
-            <button class="search-trigger" id="search-trigger" aria-label="Open search">
-                <span class="search-icon">⌕</span>
-                <span class="search-placeholder">Search books, manga, classics…</span>
-                <span class="search-hint">NLP ✦</span>
-            </button>
-        </div>
-        <div class="profile-actions">
-            <button class="menu-button" id="menu-btn" aria-label="Open menu">☰</button>
-            <a class="avatar" id="user-avatar" href="profile.html" title="View profile">PS</a>
-        </div>
+        <a class="back-btn" href="home.html">← Back to home</a>
     </header>
-
-    <!-- SEARCH MODAL -->
-    <div class="search-layer" id="search-layer" role="dialog" aria-modal="true">
-        <div class="search-modal">
-            <div class="search-modal-header">
-                <div class="search-input-row">
-                    <span class="search-modal-icon">⌕</span>
-                    <input type="text" id="search-input" class="search-modal-input"
-                        placeholder='Try "harry potter" or "romance manhwa"…'
-                        autocomplete="off" spellcheck="false">
-                    <button class="search-close" id="search-close">✕</button>
-                </div>
-                <div class="search-filters">
-                    <button class="filter-chip active" data-source="books">Books</button>
-                    <button class="filter-chip" data-source="manga">Manga</button>
-                    <button class="filter-chip" data-source="classics">Classics</button>
-                    <button class="filter-chip" data-source="all">All</button>
-                </div>
-            </div>
-            <div class="search-modal-body">
-                <div class="search-empty" id="search-empty">
-                    <div class="search-empty-icon">✦</div>
-                    <p>Ask anything — try <em>"slow burn romance manga"</em> or <em>"1984 by Orwell"</em></p>
-                </div>
-                <div class="search-loading" id="search-loading" hidden>
-                    <div class="search-spinner"></div>
-                    <p id="search-loading-text">Searching…</p>
-                </div>
-                <div class="search-parsed" id="search-parsed" hidden>
-                    <span class="parsed-label">Results for:</span>
-                    <span class="parsed-keywords" id="parsed-keywords"></span>
-                    <span class="parsed-source" id="parsed-source"></span>
-                </div>
-                <div class="search-results" id="search-results" hidden></div>
-                <div class="search-no-results" id="search-no-results" hidden>
-                    <p>No results found. Try a different query or source.</p>
-                </div>
+ 
+    <div class="profile-shell">
+ 
+        <!-- Banner -->
+        <div class="profile-banner" id="banner-zone" title="Click to change banner">
+            <img class="banner-img" id="banner-img" src="" alt="" style="display:none">
+            <div class="banner-overlay">
+                <span class="cam-icon">🖼️</span>
+                Change banner
             </div>
         </div>
-    </div>
-
-    <!-- SIDE MENU -->
-    <div class="menu-layer" id="menu-panel">
-        <div class="menu-card">
-            <div class="menu-header">
-                <div class="menu-profile">
-                    <div class="menu-avatar" id="menu-avatar-display">PS</div>
-                    <div>
-                        <p class="menu-name" id="menu-display-name">PageSync</p>
-                        <p class="menu-sub" id="menu-email">Personal dashboard</p>
+ 
+        <div class="profile-card">
+ 
+            <!-- Avatar -->
+            <div class="profile-avatar-wrap">
+                <div class="profile-avatar" id="profile-avatar" title="Click to change profile picture">
+                    <span id="avatar-initials">PS</span>
+                    <div class="avatar-overlay">📷</div>
+                </div>
+            </div>
+ 
+            <!-- Name + Edit button -->
+            <div class="profile-info-row">
+                <div class="profile-names">
+                    <h1 id="display-name-view">Reader</h1>
+                    <span class="username-handle" id="username-view">@username</span>
+                </div>
+                <button class="edit-profile-btn" id="edit-toggle-btn">Edit profile</button>
+            </div>
+ 
+            <!-- Bio -->
+            <p class="profile-bio empty" id="bio-view">No bio yet.</p>
+ 
+            <!-- ── Edit panel ── -->
+            <div class="edit-panel" id="edit-panel">
+                <div class="edit-inner">
+                    <div class="edit-group">
+                        <label>Display name</label>
+                        <input type="text" id="edit-display-name" placeholder="Your name" maxlength="40">
+                    </div>
+                    <div class="edit-group">
+                        <label>Username</label>
+                        <input type="text" id="edit-username" placeholder="username" maxlength="30">
+                    </div>
+                    <div class="edit-group">
+                        <label>Bio</label>
+                        <textarea id="edit-bio" placeholder="Tell the world a little about yourself…" maxlength="200"></textarea>
+                    </div>
+                    <div class="edit-actions">
+                        <button class="btn-cancel" id="edit-cancel-btn">Cancel</button>
+                        <button class="btn-save" id="edit-save-btn">Save changes</button>
                     </div>
                 </div>
-                <button class="menu-close" id="menu-close">✕</button>
             </div>
-            <div class="menu-list">
-                <a class="menu-item" href="home.html">Home</a>
-                <a class="menu-item" href="profile.html">Profile</a>
-                <a class="menu-item active" href="popular.html">Popular</a>
-                <a class="menu-item" href="top-rated.html">Top Rated</a>
-                <a class="menu-item" href="bookmarks.html">Bookmarks</a>
-                <a class="menu-item" href="settings.html">Settings</a>
-                <button class="menu-signout" id="menu-signout">Sign Out</button>
+ 
+            <hr class="section-divider">
+ 
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-chapters">📖</div>
+                    <div class="stat-number" id="stat-chapters">0</div>
+                    <div class="stat-label">Chapters</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-bookmarks">♥</div>
+                    <div class="stat-number" id="stat-bookmarks">0</div>
+                    <div class="stat-label">Bookmarks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-series">◎</div>
+                    <div class="stat-number" id="stat-series">0</div>
+                    <div class="stat-label">Series</div>
+                </div>
+            </div>
+ 
+            <!-- Favourite books -->
+            <p class="profile-section-title">Favourite books</p>
+ 
+            <div class="fav-grid" id="fav-grid">
+                <!-- 5 slots, filled by JS -->
+            </div>
+ 
+        </div>
+    </div>
+ 
+    <!-- Book picker modal -->
+    <div class="picker-layer" id="picker-layer">
+        <div class="picker-card">
+            <div class="picker-header">
+                <span style="font-size:20px;color:#5a6070;flex-shrink:0">⌕</span>
+                <input class="picker-search-input" id="picker-input" placeholder="Search for a book, manga or comic…" autocomplete="off">
+                <button class="picker-close" id="picker-close">✕</button>
+            </div>
+            <div class="picker-body" id="picker-body">
+                <p class="picker-hint">Start typing to search</p>
             </div>
         </div>
     </div>
-
-    <!-- PAGE CONTENT -->
-    <div class="page-hero">
-        <h1>🔥 Popular</h1>
-        <p>What readers are picking up right now — books, manga, and classics</p>
-    </div>
-
-    <!-- FILTER TABS -->
-    <div class="tab-row" id="tab-row">
-        <button class="tab-btn active" data-tab="all">All</button>
-        <button class="tab-btn" data-tab="books">Books</button>
-        <button class="tab-btn" data-tab="manga">Manga</button>
-        <button class="tab-btn" data-tab="classics">Classics</button>
-        <div class="tab-row-spacer"></div>
-        <button class="filter-btn" id="filter-btn" aria-label="Open filters">
-            <span class="filter-btn-icon" aria-hidden="true">
-                <span></span><span></span><span></span>
-            </span>
-            Filters
-        </button>
-    </div>
-
-    <!-- FILTER PANEL -->
-    <div class="filter-overlay" id="filter-overlay"></div>
-    <aside class="filter-panel" id="filter-panel" aria-label="Filters">
-        <div class="fp-header">
-            <span class="fp-title">
-                Filters
-                <span class="fp-count-badge" id="fp-count-badge" style="display:none"></span>
-            </span>
-            <button class="fp-close" id="fp-close">✕</button>
-        </div>
-
-        <div class="fp-body">
-            <!-- 18+ toggle -->
-            <div>
-                <div class="fp-chips">
-                    <button class="fp-chip age-gate" data-filter="adult" data-group="adult">18+</button>
-                </div>
-            </div>
-
-            <!-- Type -->
-            <div>
-                <div class="fp-section-label">Type</div>
-                <div class="fp-chips">
-                    <button class="fp-chip" data-filter="manhwa"  data-group="type">Manhwa</button>
-                    <button class="fp-chip" data-filter="manhua"  data-group="type">Manhua</button>
-                    <button class="fp-chip" data-filter="manga"   data-group="type">Manga</button>
-                    <button class="fp-chip" data-filter="other"   data-group="type">Other</button>
-                </div>
-            </div>
-
-            <!-- Status -->
-            <div>
-                <div class="fp-section-label">Status</div>
-                <div class="fp-chips">
-                    <button class="fp-chip" data-filter="ongoing"       data-group="status">Ongoing</button>
-                    <button class="fp-chip" data-filter="completed"     data-group="status">Completed</button>
-                    <button class="fp-chip" data-filter="on-hiatus"     data-group="status">On Hiatus</button>
-                    <button class="fp-chip" data-filter="discontinued"  data-group="status">Discontinued</button>
-                </div>
-            </div>
-
-            <!-- Demographic -->
-            <div>
-                <div class="fp-section-label">Demographic</div>
-                <div class="fp-chips">
-                    <button class="fp-chip" data-filter="shounen" data-group="demo">Shounen</button>
-                    <button class="fp-chip" data-filter="seinen"  data-group="demo">Seinen</button>
-                    <button class="fp-chip" data-filter="shoujo"  data-group="demo">Shoujo</button>
-                    <button class="fp-chip" data-filter="josei"   data-group="demo">Josei</button>
-                </div>
-            </div>
-
-            <!-- Genres -->
-            <div>
-                <div class="fp-section-label">Genres</div>
-                <div class="fp-genre-hint">
-                    Tap to cycle:
-                    <span><span style="color:#7aabff">Include</span> <span class="arrow">→</span> <span style="color:#e08080;text-decoration:line-through">Exclude</span> <span class="arrow">→</span> Off</span>
-                </div>
-                <div class="fp-chips" id="genre-chips">
-                    <button class="fp-chip" data-filter="action"         data-group="genre" data-state="off">Action</button>
-                    <button class="fp-chip" data-filter="adventure"      data-group="genre" data-state="off">Adventure</button>
-                    <button class="fp-chip" data-filter="boys-love"      data-group="genre" data-state="off">Boys Love</button>
-                    <button class="fp-chip" data-filter="comedy"         data-group="genre" data-state="off">Comedy</button>
-                    <button class="fp-chip" data-filter="crime"          data-group="genre" data-state="off">Crime</button>
-                    <button class="fp-chip" data-filter="drama"          data-group="genre" data-state="off">Drama</button>
-                    <button class="fp-chip" data-filter="fantasy"        data-group="genre" data-state="off">Fantasy</button>
-                    <button class="fp-chip" data-filter="girls-love"     data-group="genre" data-state="off">Girls Love</button>
-                    <button class="fp-chip" data-filter="historical"     data-group="genre" data-state="off">Historical</button>
-                    <button class="fp-chip" data-filter="horror"         data-group="genre" data-state="off">Horror</button>
-                    <button class="fp-chip" data-filter="isekai"         data-group="genre" data-state="off">Isekai</button>
-                    <button class="fp-chip" data-filter="magical-girls"  data-group="genre" data-state="off">Magical Girls</button>
-                    <button class="fp-chip" data-filter="mature"         data-group="genre" data-state="off">Mature</button>
-                    <button class="fp-chip" data-filter="mecha"          data-group="genre" data-state="off">Mecha</button>
-                    <button class="fp-chip" data-filter="medical"        data-group="genre" data-state="off">Medical</button>
-                    <button class="fp-chip" data-filter="mystery"        data-group="genre" data-state="off">Mystery</button>
-                    <button class="fp-chip" data-filter="philosophical"  data-group="genre" data-state="off">Philosophical</button>
-                    <button class="fp-chip" data-filter="psychological"  data-group="genre" data-state="off">Psychological</button>
-                    <button class="fp-chip" data-filter="romance"        data-group="genre" data-state="off">Romance</button>
-                    <button class="fp-chip" data-filter="sci-fi"         data-group="genre" data-state="off">Sci-Fi</button>
-                    <button class="fp-chip" data-filter="slice-of-life"  data-group="genre" data-state="off">Slice of Life</button>
-                    <button class="fp-chip" data-filter="sports"         data-group="genre" data-state="off">Sports</button>
-                    <button class="fp-chip" data-filter="superhero"      data-group="genre" data-state="off">Superhero</button>
-                    <button class="fp-chip" data-filter="thriller"       data-group="genre" data-state="off">Thriller</button>
-                    <button class="fp-chip" data-filter="tragedy"        data-group="genre" data-state="off">Tragedy</button>
-                    <button class="fp-chip" data-filter="wuxia"          data-group="genre" data-state="off">Wuxia</button>
-                    <button class="fp-chip" data-filter="harem"          data-group="genre" data-state="off">Harem</button>
-                    <button class="fp-chip" data-filter="martial-arts"   data-group="genre" data-state="off">Martial Arts</button>
-                    <button class="fp-chip" data-filter="school-life"    data-group="genre" data-state="off">School Life</button>
-                    <button class="fp-chip" data-filter="supernatural"   data-group="genre" data-state="off">Supernatural</button>
-                    <button class="fp-chip" data-filter="villainess"     data-group="genre" data-state="off">Villainess</button>
-                    <button class="fp-chip" data-filter="reincarnation"  data-group="genre" data-state="off">Reincarnation</button>
-                    <button class="fp-chip" data-filter="system"         data-group="genre" data-state="off">System</button>
-                    <button class="fp-chip" data-filter="regression"     data-group="genre" data-state="off">Regression</button>
-                    <button class="fp-chip" data-filter="cultivation"    data-group="genre" data-state="off">Cultivation</button>
-                    <button class="fp-chip" data-filter="murim"          data-group="genre" data-state="off">Murim</button>
-                    <button class="fp-chip" data-filter="dungeons"       data-group="genre" data-state="off">Dungeons</button>
-                    <button class="fp-chip" data-filter="game"           data-group="genre" data-state="off">Game</button>
-                    <button class="fp-chip" data-filter="monsters"       data-group="genre" data-state="off">Monsters</button>
-                    <button class="fp-chip" data-filter="post-apocalyptic" data-group="genre" data-state="off">Post-Apocalyptic</button>
-                    <button class="fp-chip" data-filter="survival"       data-group="genre" data-state="off">Survival</button>
-                </div>
-            </div>
-
-            <!-- Min chapters -->
-            <div>
-                <div class="fp-section-label">Min Chapters</div>
-                <input class="fp-input" type="number" id="fp-min-chapters" placeholder="e.g. 50" min="0">
-            </div>
-
-            <!-- Year range -->
-            <div>
-                <div class="fp-section-label">Year Range</div>
-                <div class="fp-range-row">
-                    <input class="fp-input" type="number" id="fp-year-from" placeholder="From" min="1900" max="2099">
-                    <input class="fp-input" type="number" id="fp-year-to"   placeholder="To"   min="1900" max="2099">
-                </div>
-            </div>
-        </div>
-
-        <div class="fp-footer">
-            <button class="fp-reset" id="fp-reset">Reset</button>
-            <button class="fp-apply" id="fp-apply">Apply Filters</button>
-        </div>
-    </aside>
-
-    <!-- POPULAR GRID -->
-    <div class="popular-grid" id="popular-grid"></div>
-
-</div>
-
-<div class="add-popup" id="add-popup" style="display:none"></div>
-<div class="toast" id="toast"></div>
-
-<script type="module">
-    import { onAuthStateChange, signOutUser, auth, addBook, db } from './firebase.js';
-    import { clientSearch } from './search-client.js';
-    import { collection, getDocs, doc, updateDoc, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
-    const esc     = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    const escAttr = s => (s||'').replace(/'/g,'&#39;');
-    const BG      = i => `bg-${(i % 14) + 1}`;
-    const cap     = s => s ? s[0].toUpperCase() + s.slice(1) : '';
-
-    // ── Toast ──────────────────────────────────────────────────────
-    let toastTimer;
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.textContent = msg; t.classList.add('show');
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
-    }
-
-    // ── Book URL ───────────────────────────────────────────────────
-    function bookUrl(book) {
-        const p = new URLSearchParams({
-            id: book.externalId, source: book.source,
-            title: book.title,   author: book.author,
-            cover: book.cover||'', rating: book.rating||'', year: book.year||'',
-        });
-        return `book.html?${p.toString()}`;
-    }
-
-    // ── Badge class ────────────────────────────────────────────────
-    function getBadgeClass(source) {
-        const map = {
-            'open-library':     'source-open-library',
-            'hardcover':        'source-hardcover',
-            'jikan':            'source-manga-eden',
-            'mangadex':         'source-mangadex',
-            'gutenberg':        'source-gutenberg',
-            'standard-ebooks':  'source-standard-ebooks',
-            'internet-archive': 'source-internet-archive',
-        };
-        return map[source] || 'source-open-library';
-    }
-
-    // ── Skeletons ──────────────────────────────────────────────────
-    function renderSkeletons(n = 24) {
-        document.getElementById('popular-grid').innerHTML = Array.from({length: n}, () => `
-            <div class="skeleton-pop">
-                <div class="skeleton skel-cover"></div>
-                <div class="skel-info">
-                    <div class="skeleton skel-line" style="width:42%"></div>
-                    <div class="skeleton skel-line" style="width:80%"></div>
-                    <div class="skeleton skel-line" style="width:55%"></div>
-                </div>
-            </div>`).join('');
-    }
-
-    // ── Render grid ────────────────────────────────────────────────
-    function renderGrid(items) {
-        const grid = document.getElementById('popular-grid');
-        if (!items.length) {
-            grid.innerHTML = `
-                <div class="list-empty">
-                    <div class="list-empty-icon">📚</div>
-                    <p>No results found — try a different filter.</p>
-                </div>`;
-            return;
-        }
-
-        grid.innerHTML = items.map((b, i) => {
-            const hasCover   = !!b.cover;
-            const coverStyle = hasCover ? `background-image:url('${esc(b.cover)}');` : '';
-            const coverCls   = `pop-cover${hasCover ? '' : ' no-cover ' + BG(i)}`;
-
-            // First 8 items get a 🔥 hot badge; 9–16 get a ✦ new badge
-            const badgeCls  = i < 8 ? 'hot' : i < 16 ? 'new' : '';
-            const badgeText = i < 8 ? 'Trending' : i < 16 ? 'Popular' : '';
-
-            return `
-            <a class="pop-card" href="${bookUrl(b)}" data-book='${escAttr(JSON.stringify(b))}'>
-                <div class="${coverCls}" style="${coverStyle}">
-                    ${!hasCover ? `<span class="pop-cover-initials">${esc((b.title||'?').slice(0,2).toUpperCase())}</span>` : ''}
-                    ${badgeCls ? `<span class="trending-badge ${badgeCls}">${badgeText}</span>` : ''}
-                    <span class="pop-cover-title">${esc(b.title)}</span>
-                </div>
-                <div class="pop-info">
-                    <span class="pop-source-badge ${getBadgeClass(b.source)}">${esc(b.sourceLabel || 'Book')}</span>
-                    <h3 class="pop-title">${esc(b.title)}</h3>
-                    <p class="pop-author">${esc(b.author)}</p>
-                    <div class="pop-meta-row">
-                        ${b.rating ? `<span class="pop-rating">★ ${Number(b.rating).toFixed(1)}</span>` : ''}
-                        ${b.year   ? `<span class="pop-reads">${esc(String(b.year))}</span>` : ''}
-                    </div>
-                </div>
-                <button class="pop-add-btn" title="Add to library">+</button>
-            </a>`;
-        }).join('');
-
-        grid.querySelectorAll('.pop-card').forEach(card => {
-            const book = JSON.parse(card.dataset.book);
-            card.querySelector('.pop-add-btn').addEventListener('click', e => {
-                e.preventDefault(); e.stopPropagation();
-                openAddPopup(book, e.currentTarget);
-            });
-        });
-    }
-
-    // ── Data ───────────────────────────────────────────────────────
-    let allResults = { all: [], books: [], manga: [], classics: [] };
-    let activeTab  = 'all';
-
-    async function loadAll() {
-        renderSkeletons(24);
-
-        const [books, manga, classics] = await Promise.allSettled([
-            clientSearch('popular fiction bestseller',    'books',    25),
-            clientSearch('popular manga',                 'manga',    25),
-            clientSearch('classic literature popular',    'classics', 20),
-        ]);
-
-        allResults.books    = books.status    === 'fulfilled' ? books.value.results    : [];
-        allResults.manga    = manga.status    === 'fulfilled' ? manga.value.results    : [];
-        allResults.classics = classics.status === 'fulfilled' ? classics.value.results : [];
-
-        // Interleave for "all" tab — round-robin across categories
-        allResults.all = interleave(
-            allResults.books.slice(0, 20),
-            allResults.manga.slice(0, 20),
-            allResults.classics.slice(0, 14)
-        ).slice(0, 36);
-
-        renderGrid(allResults[activeTab]);
-    }
-
-    function interleave(...arrays) {
-        const result = [];
-        const max    = Math.max(...arrays.map(a => a.length));
-        for (let i = 0; i < max; i++) {
-            arrays.forEach(arr => { if (arr[i]) result.push(arr[i]); });
-        }
-        return result;
-    }
-
-    // ── Tab switching ──────────────────────────────────────────────
-    document.getElementById('tab-row').addEventListener('click', e => {
-        const btn = e.target.closest('.tab-btn');
-        if (!btn) return;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeTab = btn.dataset.tab;
-        renderGrid(allResults[activeTab] || []);
-    });
-
-    // ── Add popup ──────────────────────────────────────────────────
-    const popup   = document.getElementById('add-popup');
-    let popupOpen = false;
-
-    function closePopup() { popup.style.display = 'none'; popupOpen = false; }
-
-    document.addEventListener('click', e => {
-        if (popupOpen && !popup.contains(e.target) && !e.target.classList.contains('pop-add-btn'))
-            closePopup();
-    });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup(); });
-
-    function positionPopup(btn) {
-        const rect = btn.getBoundingClientRect();
-        const pw   = 260;
-        let left   = rect.right - pw;
-        let top    = rect.bottom + 8;
-        if (left < 8) left = 8;
-        if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
-        if (top + 300 > window.innerHeight) top = rect.top - 8 - Math.min(300, top + 300 - window.innerHeight);
-        popup.style.left = `${left}px`;
-        popup.style.top  = `${top + window.scrollY}px`;
-    }
-
-    function openAddPopup(book, btn) {
-        const user = auth.currentUser;
-        if (!user) { showToast('Sign in to save books'); return; }
-        popupOpen = true;
-        popup.style.display = 'block';
-        positionPopup(btn);
-        showMainMenu(book, btn, user);
-    }
-
-    function showMainMenu(book, btn, user) {
-        popup.innerHTML = `
-            <div class="add-popup-title">Add "${esc(book.title?.slice(0,28) || 'book')}"</div>
-            <div class="add-popup-divider"></div>
-            <button class="popup-option" id="opt-bookmark">
-                <span class="popup-option-icon poi-bookmark">🔖</span>
-                <span class="popup-option-text">
-                    <strong>Add to Bookmarks</strong>
-                    <span>Save to your reading library</span>
-                </span>
-            </button>
-            <button class="popup-option" id="opt-list">
-                <span class="popup-option-icon poi-list">📋</span>
-                <span class="popup-option-text">
-                    <strong>Add to a List</strong>
-                    <span>Save to a custom collection</span>
-                </span>
-            </button>`;
-        popup.querySelector('#opt-bookmark').addEventListener('click', () => showBookmarkMenu(book, btn, user));
-        popup.querySelector('#opt-list').addEventListener('click', () => showListMenu(book, user));
-    }
-
-    function showBookmarkMenu(book, btn, user) {
-        popup.innerHTML = `
-            <button class="popup-back" id="popup-back">← Back</button>
-            <div class="add-popup-divider"></div>
-            <div class="popup-status-wrap">
-                <select class="popup-status-select" id="status-select">
-                    <option value="planned">Plan to Read</option>
-                    <option value="reading">Currently Reading</option>
-                    <option value="completed">Completed</option>
-                    <option value="paused">On Hold</option>
-                    <option value="dropped">Dropped</option>
-                </select>
-            </div>
-            <button class="popup-save-btn" id="popup-save">Save to Bookmarks</button>`;
-        popup.querySelector('#popup-back').addEventListener('click', () => showMainMenu(book, btn, user));
-        popup.querySelector('#popup-save').addEventListener('click', async () => {
-            const status  = popup.querySelector('#status-select').value;
-            const saveBtn = popup.querySelector('#popup-save');
-            saveBtn.textContent = 'Saving…'; saveBtn.disabled = true;
+ 
+    <!-- Hidden file inputs -->
+    <input type="file" id="avatar-file-input" accept="image/*">
+    <input type="file" id="banner-file-input" accept="image/*">
+ 
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+ 
+    <script type="module">
+        import { onAuthStateChange, db } from './firebase.js';
+        import { clientSearch } from './search-client.js';
+        import {
+            collection, getDocs, query, doc, getDoc, setDoc
+        } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+ 
+        async function loadStats(uid) {
             try {
-                await addBook(user.uid, {
-                    title: book.title, author: book.author, status,
-                    externalId: book.externalId, source: book.source,
-                    sourceLabel: book.sourceLabel, coverUrl: book.cover || '',
-                    rating: book.rating || null, year: book.year || null,
-                });
-                btn.textContent = '✓'; btn.classList.add('added');
-                showToast(`"${book.title}" added to bookmarks`);
-                closePopup();
-            } catch {
-                saveBtn.textContent = 'Save to Bookmarks'; saveBtn.disabled = false;
-                showToast('Could not save — try again');
+                const [booksSnap, listsSnap] = await Promise.allSettled([
+                    getDocs(collection(db, 'users', uid, 'books')),
+                    getDocs(collection(db, 'users', uid, 'lists')),
+                ]);
+ 
+                const books = booksSnap.status === 'fulfilled' ? booksSnap.value.docs : [];
+                const lists = listsSnap.status === 'fulfilled' ? listsSnap.value.docs : [];
+ 
+                // Chapters = completed books
+                const chapters  = books.filter(d => d.data().status === 'completed').length;
+                // Bookmarks = all saved books
+                const bookmarks = books.length;
+                // Series = number of custom lists
+                const series    = lists.length;
+ 
+                document.getElementById('stat-chapters').textContent  = chapters;
+                document.getElementById('stat-bookmarks').textContent = bookmarks;
+                document.getElementById('stat-series').textContent    = series;
+            } catch (err) {
+                console.error('Failed to load stats:', err);
             }
-        });
-    }
-
-    async function showListMenu(book, user) {
-        popup.innerHTML = `
-            <button class="popup-back" id="popup-back">← Back</button>
-            <div class="add-popup-divider"></div>
-            <div class="popup-lists-wrap" id="lists-wrap">
-                <p class="popup-empty">Loading lists…</p>
-            </div>`;
-        popup.querySelector('#popup-back').addEventListener('click', () => showMainMenu(book, null, user));
-        try {
-            const snap  = await getDocs(collection(db, 'users', user.uid, 'lists'));
-            const lists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            const wrap  = popup.querySelector('#lists-wrap');
-            if (!lists.length) { wrap.innerHTML = `<p class="popup-empty">No lists yet.<br>Create one in My Lists.</p>`; return; }
-            wrap.innerHTML = lists.map(l => `
-                <button class="popup-list-item" data-id="${esc(l.id)}" data-name="${esc(l.name||'')}">
-                    <span class="popup-list-icon">📋</span>
-                    <span>${esc(l.name || 'Untitled')}</span>
-                </button>`).join('');
-            wrap.querySelectorAll('.popup-list-item').forEach(item => {
-                item.addEventListener('click', async () => {
-                    item.textContent = 'Adding…';
-                    try {
-                        await updateDoc(doc(db, 'users', user.uid, 'lists', item.dataset.id), {
-                            books: arrayUnion({ title: book.title, author: book.author, externalId: book.externalId, source: book.source, sourceLabel: book.sourceLabel, cover: book.cover || '' }),
-                        });
-                        showToast(`Added to "${item.dataset.name}"`);
-                        closePopup();
-                    } catch { showToast('Could not add to list — try again'); item.textContent = item.dataset.name; }
-                });
-            });
-        } catch {
-            popup.querySelector('#lists-wrap').innerHTML = `<p class="popup-empty">Could not load lists.</p>`;
         }
-    }
+ 
+        /* ── State ──────────────────────────────────────────────── */
+        let currentUser = null;
+        let activeSlotIndex = null;
+ 
+        const MAX_SLOTS = 5;
 
-    // ── Auth ───────────────────────────────────────────────────────
-    const menuBtn     = document.getElementById('menu-btn');
-    const menuPanel   = document.getElementById('menu-panel');
-    const menuClose   = document.getElementById('menu-close');
-    const menuSignout = document.getElementById('menu-signout');
-
-    menuBtn.addEventListener('click',   () => menuPanel.classList.add('open'));
-    menuClose.addEventListener('click', () => menuPanel.classList.remove('open'));
-    menuPanel.addEventListener('click', e => { if (e.target === menuPanel) menuPanel.classList.remove('open'); });
-    menuSignout.addEventListener('click', async () => {
-        try { await signOutUser(); window.location.href = 'login.html'; } catch (err) { alert(err.message); }
-    });
-
-    onAuthStateChange(user => {
-        if (!user) { window.location.href = 'login.html'; return; }
-        const avatarEl     = document.getElementById('user-avatar');
-        const menuAvatarEl = document.getElementById('menu-avatar-display');
-        const photo        = localStorage.getItem(`ps_avatar_${user.uid}`);
-        if (photo) {
-            avatarEl.style.backgroundImage = `url('${photo}')`;
-            avatarEl.textContent = '';
-            menuAvatarEl.style.cssText = `background-image:url('${photo}');background-size:cover;background-position:center;`;
-            menuAvatarEl.textContent = '';
-        } else {
-            const initials = (user.displayName || user.email || 'PS').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-            avatarEl.textContent = initials;
-            menuAvatarEl.textContent = initials;
+        async function loadProfile(uid) {
+            try {
+                const snap = await getDoc(doc(db, 'users', uid));
+                return snap.exists() ? (snap.data().profile || {}) : {};
+            } catch { return {}; }
         }
-        document.getElementById('menu-display-name').textContent = localStorage.getItem(`ps_username_${user.uid}`) || user.displayName || 'Reader';
-        document.getElementById('menu-email').textContent = user.email || '';
-    });
 
-    // ── Search modal ───────────────────────────────────────────────
-    const searchTrigger = document.getElementById('search-trigger');
-    const searchLayer   = document.getElementById('search-layer');
-    const searchClose   = document.getElementById('search-close');
-    const searchInput   = document.getElementById('search-input');
-    const elEmpty       = document.getElementById('search-empty');
-    const elLoading     = document.getElementById('search-loading');
-    const elParsed      = document.getElementById('search-parsed');
-    const elResults     = document.getElementById('search-results');
-    const elNoResults   = document.getElementById('search-no-results');
-
-    let activeSource = 'books', debounceTimer = null;
-
-    searchTrigger.addEventListener('click', () => openSearch());
-    searchClose.addEventListener('click', closeSearch);
-    searchLayer.addEventListener('click', e => { if (e.target === searchLayer) closeSearch(); });
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closeSearch();
-        if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
-    });
-
-    function openSearch(prefill = '') {
-        searchLayer.classList.add('open');
-        document.body.style.overflow = 'hidden';
-        setTimeout(() => {
-            searchInput.focus();
-            if (prefill && prefill !== searchInput.value) { searchInput.value = prefill; triggerSearch(); }
-        }, 80);
-    }
-    function closeSearch() { searchLayer.classList.remove('open'); document.body.style.overflow = ''; }
-
-    document.querySelectorAll('.filter-chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-            chip.classList.add('active'); activeSource = chip.dataset.source;
-            if (searchInput.value.trim()) triggerSearch();
-        });
-    });
-
-    searchInput.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        if (!searchInput.value.trim()) { showState('empty'); return; }
-        debounceTimer = setTimeout(triggerSearch, 500);
-    });
-    searchInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { clearTimeout(debounceTimer); if (searchInput.value.trim()) triggerSearch(); }
-    });
-
-    async function triggerSearch() {
-        const q = searchInput.value.trim();
-        if (!q) return;
-        showState('loading');
-        try {
-            const { results, parsed } = await clientSearch(q, activeSource, 20);
-            if (parsed?.keywords) {
-                document.getElementById('parsed-keywords').textContent = `"${parsed.keywords}"`;
-                document.getElementById('parsed-source').textContent   = parsed.source ? `· ${cap(parsed.source)}` : '';
-            }
-            results.length ? (renderModalResults(results), showState('results')) : showState('no-results');
-        } catch { showState('no-results'); }
-    }
-
-    function renderModalResults(results) {
-        elResults.innerHTML = results.map(r => `
-            <a class="result-card" href="${bookUrl(r)}" style="text-decoration:none;color:inherit;">
-                <div class="result-cover ${r.cover ? '' : 'result-cover-placeholder'}"
-                     ${r.cover ? `style="background-image:url('${esc(r.cover)}')"` : ''}>
-                    ${r.cover ? '' : `<span>${esc(r.title).slice(0,2).toUpperCase()}</span>`}
-                </div>
-                <div class="result-info">
-                    <div class="result-badges">
-                        <span class="result-source-badge ${getBadgeClass(r.source)}">${esc(r.sourceLabel||'Book')}</span>
-                    </div>
-                    <h3 class="result-title">${esc(r.title)}</h3>
-                    <p class="result-author">${esc(r.author)}</p>
-                    ${r.rating ? `<p class="result-rating">★ ${Number(r.rating).toFixed(1)}</p>` : ''}
-                    ${r.description ? `<p class="result-desc">${esc(r.description).slice(0,120)}…</p>` : ''}
-                </div>
-                <button class="result-add" title="Add to library" data-book='${escAttr(JSON.stringify(r))}'>+</button>
-            </a>`).join('');
-
-        elResults.querySelectorAll('.result-add').forEach(btn => {
-            btn.addEventListener('click', e => {
-                e.preventDefault(); e.stopPropagation();
-                openAddPopup(JSON.parse(btn.dataset.book), btn);
-            });
-        });
-    }
-
-    function showState(s) {
-        elEmpty.hidden     = s !== 'empty';
-        elLoading.hidden   = s !== 'loading';
-        elParsed.hidden    = s !== 'results';
-        elResults.hidden   = s !== 'results';
-        elNoResults.hidden = s !== 'no-results';
-    }
-    showState('empty');
-
-    // ── Filter panel ───────────────────────────────────────────────
-    const filterBtn     = document.getElementById('filter-btn');
-    const filterOverlay = document.getElementById('filter-overlay');
-    const filterPanel   = document.getElementById('filter-panel');
-    const fpClose       = document.getElementById('fp-close');
-    const fpReset       = document.getElementById('fp-reset');
-    const fpApply       = document.getElementById('fp-apply');
-    const fpCountBadge  = document.getElementById('fp-count-badge');
-
-    // Active filter state
-    const activeFilters = {
-        adult:  false,
-        type:   new Set(),
-        status: new Set(),
-        demo:   new Set(),
-        genre:  new Map(), // value → 'include' | 'exclude'
-        minChapters: '',
-        yearFrom: '',
-        yearTo: '',
-    };
-
-    function openFilterPanel() {
-        filterOverlay.classList.add('open');
-        filterPanel.classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeFilterPanel() {
-        filterOverlay.classList.remove('open');
-        filterPanel.classList.remove('open');
-        document.body.style.overflow = '';
-    }
-
-    filterBtn.addEventListener('click', openFilterPanel);
-    filterOverlay.addEventListener('click', closeFilterPanel);
-    fpClose.addEventListener('click', closeFilterPanel);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFilterPanel(); });
-
-    function countActiveFilters() {
-        return (activeFilters.adult ? 1 : 0) +
-               activeFilters.type.size +
-               activeFilters.status.size +
-               activeFilters.demo.size +
-               activeFilters.genre.size +
-               (activeFilters.minChapters ? 1 : 0) +
-               (activeFilters.yearFrom || activeFilters.yearTo ? 1 : 0);
-    }
-
-    function updateFilterBadge() {
-        const n = countActiveFilters();
-        // Update panel header badge
-        fpCountBadge.style.display = n ? '' : 'none';
-        fpCountBadge.textContent = n;
-        // Update topbar filter button
-        if (n > 0) {
-            filterBtn.classList.add('has-filters');
-            filterBtn.innerHTML = `
-                <span class="filter-btn-icon" aria-hidden="true">
-                    <span></span><span></span><span></span>
-                </span>
-                Filters
-                <span class="filter-count">${n}</span>`;
-        } else {
-            filterBtn.classList.remove('has-filters');
-            filterBtn.innerHTML = `
-                <span class="filter-btn-icon" aria-hidden="true">
-                    <span></span><span></span><span></span>
-                </span>
-                Filters`;
+        async function saveProfile(uid, data) {
+            await setDoc(doc(db, 'users', uid), { profile: data }, { merge: true });
         }
-        // Re-attach click listener since we replaced innerHTML
-        filterBtn.onclick = openFilterPanel;
-    }
+ 
+        /* ── DOM refs ───────────────────────────────────────────── */
+        const avatarEl        = document.getElementById('profile-avatar');
+        const avatarInitials  = document.getElementById('avatar-initials');
+        const bannerZone      = document.getElementById('banner-zone');
+        const bannerImg       = document.getElementById('banner-img');
+        const displayNameView = document.getElementById('display-name-view');
+        const usernameView    = document.getElementById('username-view');
+        const bioView         = document.getElementById('bio-view');
+ 
+        const editToggleBtn   = document.getElementById('edit-toggle-btn');
+        const editPanel       = document.getElementById('edit-panel');
+        const editDisplayName = document.getElementById('edit-display-name');
+        const editUsername    = document.getElementById('edit-username');
+        const editBio         = document.getElementById('edit-bio');
+        const editSaveBtn     = document.getElementById('edit-save-btn');
+        const editCancelBtn   = document.getElementById('edit-cancel-btn');
+ 
+        const favGrid         = document.getElementById('fav-grid');
+ 
+        const pickerLayer     = document.getElementById('picker-layer');
+        const pickerInput     = document.getElementById('picker-input');
+        const pickerBody      = document.getElementById('picker-body');
+        const pickerClose     = document.getElementById('picker-close');
+ 
+        const avatarFileInput = document.getElementById('avatar-file-input');
+        const bannerFileInput = document.getElementById('banner-file-input');
+        const toastEl         = document.getElementById('toast');
+ 
+        /* ── Auth ───────────────────────────────────────────────── */
+        onAuthStateChange(async user => {
+            if (!user) { window.location.href = 'login.html'; return; }
+            currentUser = user;
+            await renderFromStorage();
+            loadStats(user.uid);
+        });
+ 
+        async function renderFromStorage() {
+            const uid = currentUser.uid;
+            const p   = await loadProfile(uid);
+ 
+            // Display name / username
+            const displayName = p.displayName || currentUser.displayName || 'Reader';
+            const username    = p.username    || currentUser.email?.split('@')[0] || 'username';
+            displayNameView.textContent = displayName;
+            usernameView.textContent    = `@${username}`;
 
-    // Regular chips (type, status, demo, adult) — toggle active
-    document.querySelectorAll('.fp-chip:not([data-state])').forEach(chip => {
-        chip.addEventListener('click', () => {
-            const group  = chip.dataset.group;
-            const filter = chip.dataset.filter;
-            if (group === 'adult') {
-                activeFilters.adult = !activeFilters.adult;
-                chip.classList.toggle('active', activeFilters.adult);
+            // Sync to localStorage so all other pages pick up latest avatar and username
+            localStorage.setItem(`ps_username_${uid}`, username);
+            if (p.avatarDataUrl) {
+                localStorage.setItem(`ps_avatar_${uid}`, p.avatarDataUrl);
             } else {
-                const set = activeFilters[group];
-                if (set.has(filter)) { set.delete(filter); chip.classList.remove('active'); }
-                else                 { set.add(filter);    chip.classList.add('active'); }
+                localStorage.removeItem(`ps_avatar_${uid}`);
             }
-            updateFilterBadge();
-        });
-    });
 
-    // Genre chips — cycle: off → include → exclude → off
-    document.querySelectorAll('.fp-chip[data-state]').forEach(chip => {
-        chip.addEventListener('click', () => {
-            const filter   = chip.dataset.filter;
-            const current  = chip.dataset.state;
-            const next     = current === 'off' ? 'include' : current === 'include' ? 'exclude' : 'off';
-            chip.dataset.state = next;
-            if (next === 'off')     { activeFilters.genre.delete(filter); }
-            else                    { activeFilters.genre.set(filter, next); }
-            updateFilterBadge();
-        });
-    });
+            // Bio
+            if (p.bio) {
+                bioView.textContent = p.bio;
+                bioView.classList.remove('empty');
+            } else {
+                bioView.textContent = 'No bio yet.';
+                bioView.classList.add('empty');
+            }
+ 
+            // Avatar
+            if (p.avatarDataUrl) {
+                avatarEl.style.backgroundImage = `url('${p.avatarDataUrl}')`;
+                avatarInitials.style.display = 'none';
 
-    // Range inputs
-    document.getElementById('fp-min-chapters').addEventListener('input', e => {
-        activeFilters.minChapters = e.target.value.trim();
-        updateFilterBadge();
-    });
-    document.getElementById('fp-year-from').addEventListener('input', e => {
-        activeFilters.yearFrom = e.target.value.trim();
-        updateFilterBadge();
-    });
-    document.getElementById('fp-year-to').addEventListener('input', e => {
-        activeFilters.yearTo = e.target.value.trim();
-        updateFilterBadge();
-    });
+            } else {
+                const initials = displayName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'PS';
+                avatarInitials.textContent   = initials;
+                avatarInitials.style.display = '';
+                avatarEl.style.backgroundImage = '';
+            }
+ 
 
-    // Reset
-    fpReset.addEventListener('click', () => {
-        activeFilters.adult = false;
-        activeFilters.type.clear();
-        activeFilters.status.clear();
-        activeFilters.demo.clear();
-        activeFilters.genre.clear();
-        activeFilters.minChapters = '';
-        activeFilters.yearFrom = '';
-        activeFilters.yearTo = '';
-        document.querySelectorAll('.fp-chip').forEach(c => {
-            c.classList.remove('active');
-            if (c.dataset.state) c.dataset.state = 'off';
-        });
-        document.getElementById('fp-min-chapters').value = '';
-        document.getElementById('fp-year-from').value = '';
-        document.getElementById('fp-year-to').value = '';
-        updateFilterBadge();
-    });
-
-    // Apply — filter the already-loaded results and close
-    fpApply.addEventListener('click', () => {
-        const n = countActiveFilters();
-        if (n === 0) {
-            // No filters — just show unfiltered current tab
-            renderGrid(allResults[activeTab] || []);
-        } else {
-            const filtered = applyFilters(allResults[activeTab] || []);
-            renderGrid(filtered);
+ 
+            // Banner
+            if (p.bannerDataUrl) {
+                bannerImg.src = p.bannerDataUrl;
+                bannerImg.style.display = 'block';
+            }
+ 
+            // Fav books
+            renderFavGrid(p.favBooks || []);
         }
-        closeFilterPanel();
-    });
-
-    function applyFilters(items) {
-        return items.filter(b => {
-            // Year range
-            if (activeFilters.yearFrom && b.year && Number(b.year) < Number(activeFilters.yearFrom)) return false;
-            if (activeFilters.yearTo   && b.year && Number(b.year) > Number(activeFilters.yearTo))   return false;
-
-            // Genre includes/excludes — match against title/sourceLabel loosely
-            for (const [genre, state] of activeFilters.genre) {
-                const haystack = (b.title + ' ' + (b.sourceLabel||'')).toLowerCase();
-                const matches  = haystack.includes(genre.replace(/-/g, ' '));
-                if (state === 'include' && !matches) return false;
-                if (state === 'exclude' &&  matches) return false;
+ 
+        /* ── Edit panel toggle ──────────────────────────────────── */
+        editToggleBtn.addEventListener('click', async () => {
+            const isOpen = editPanel.classList.toggle('open');
+            editToggleBtn.textContent = isOpen ? 'Done' : 'Edit profile';
+            editToggleBtn.classList.toggle('active', isOpen);
+ 
+            if (isOpen) {
+                const p = await loadProfile(currentUser.uid);
+                editDisplayName.value = p.displayName || currentUser.displayName || '';
+                editUsername.value    = p.username    || currentUser.email?.split('@')[0] || '';
+                editBio.value         = p.bio || '';
             }
-
-            return true;
         });
-    }
-
-    // ── Kick off ───────────────────────────────────────────────────
-    loadAll();
-</script>
+ 
+        editCancelBtn.addEventListener('click', () => {
+            editPanel.classList.remove('open');
+            editToggleBtn.textContent = 'Edit profile';
+            editToggleBtn.classList.remove('active');
+        });
+ 
+        editSaveBtn.addEventListener('click', async () => {
+            const uid = currentUser.uid;
+            const p   = await loadProfile(uid);
+            p.displayName = editDisplayName.value.trim() || p.displayName;
+            p.username    = editUsername.value.trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'') || p.username;
+            p.bio         = editBio.value.trim();
+            await saveProfile(uid, p);
+            await renderFromStorage();
+            editPanel.classList.remove('open');
+            editToggleBtn.textContent = 'Edit profile';
+            editToggleBtn.classList.remove('active');
+            showToast('Profile saved ✓');
+        });
+ 
+        /* ── Avatar upload ──────────────────────────────────────── */
+        avatarEl.addEventListener('click', () => avatarFileInput.click());
+        avatarFileInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async ev => {
+                const uid = currentUser.uid;
+                const p   = await loadProfile(uid);
+                p.avatarDataUrl = ev.target.result;
+                await saveProfile(uid, p);
+                await renderFromStorage();
+                showToast('Profile picture updated ✓');
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        });
+ 
+        /* ── Banner upload ──────────────────────────────────────── */
+        bannerZone.addEventListener('click', () => bannerFileInput.click());
+        bannerFileInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async ev => {
+                const uid = currentUser.uid;
+                const p   = await loadProfile(uid);
+                p.bannerDataUrl = ev.target.result;
+                await saveProfile(uid, p);
+                bannerImg.src = ev.target.result;
+                bannerImg.style.display = 'block';
+                showToast('Banner updated ✓');
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        });
+ 
+        /* ── Favourite books grid ───────────────────────────────── */
+        function renderFavGrid(favBooks) {
+            favGrid.innerHTML = '';
+            for (let i = 0; i < MAX_SLOTS; i++) {
+                const book = favBooks[i] || null;
+                const slot = document.createElement('div');
+                slot.className = 'fav-slot' + (book ? ' filled' : '');
+                slot.dataset.index = i;
+ 
+                if (book) {
+                    if (book.cover) {
+                        const cover = document.createElement('div');
+                        cover.className = 'slot-cover';
+                        cover.style.backgroundImage = `url('${book.cover}')`;
+                        slot.appendChild(cover);
+                    } else {
+                        // Colour placeholder
+                        const colours = ['#1a2040','#201528','#0f2018','#201a0a','#1a1020'];
+                        slot.style.background = colours[i % colours.length];
+                        const lbl = document.createElement('span');
+                        lbl.className = 'slot-label';
+                        lbl.style.zIndex = 1;
+                        lbl.style.position = 'relative';
+                        lbl.textContent = book.title.slice(0, 18);
+                        slot.appendChild(lbl);
+                    }
+ 
+                    // Hover overlay with title
+                    const hov = document.createElement('div');
+                    hov.className = 'slot-hover-overlay';
+                    const hovTitle = document.createElement('span');
+                    hovTitle.className = 'slot-hover-title';
+                    hovTitle.textContent = book.title;
+                    hov.appendChild(hovTitle);
+                    slot.appendChild(hov);
+ 
+                    // Remove button
+                    const rem = document.createElement('button');
+                    rem.className = 'slot-remove';
+                    rem.textContent = '✕';
+                    rem.title = 'Remove';
+                    rem.addEventListener('click', e => {
+                        e.stopPropagation();
+                        removeFav(i);
+                    });
+                    slot.appendChild(rem);
+ 
+                    // Click filled slot → replace
+                    slot.addEventListener('click', () => openPicker(i));
+                } else {
+                    const plus = document.createElement('span');
+                    plus.className = 'slot-plus';
+                    plus.textContent = '+';
+                    const lbl = document.createElement('span');
+                    lbl.className = 'slot-label';
+                    lbl.textContent = 'Add book';
+                    slot.appendChild(plus);
+                    slot.appendChild(lbl);
+                    slot.addEventListener('click', () => openPicker(i));
+                }
+ 
+                favGrid.appendChild(slot);
+            }
+        }
+ 
+        async function removeFav(index) {
+            const uid = currentUser.uid;
+            const p   = await loadProfile(uid);
+            const favBooks = p.favBooks || [];
+            favBooks.splice(index, 1);
+            p.favBooks = favBooks;
+            await saveProfile(uid, p);
+            renderFavGrid(p.favBooks);
+            showToast('Removed from favourites');
+        }
+ 
+        /* ── Book picker ────────────────────────────────────────── */
+        function openPicker(slotIndex) {
+            activeSlotIndex = slotIndex;
+            pickerInput.value = '';
+            pickerBody.innerHTML = '<p class="picker-hint">Start typing to search</p>';
+            pickerLayer.classList.add('open');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => pickerInput.focus(), 80);
+        }
+ 
+        function closePicker() {
+            pickerLayer.classList.remove('open');
+            document.body.style.overflow = '';
+            activeSlotIndex = null;
+        }
+ 
+        pickerClose.addEventListener('click', closePicker);
+        pickerLayer.addEventListener('click', e => { if (e.target === pickerLayer) closePicker(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closePicker(); });
+ 
+        let pickerDebounce = null;
+        pickerInput.addEventListener('input', () => {
+            clearTimeout(pickerDebounce);
+            const q = pickerInput.value.trim();
+            if (!q) { pickerBody.innerHTML = '<p class="picker-hint">Start typing to search</p>'; return; }
+            pickerDebounce = setTimeout(() => runPickerSearch(q), 500);
+        });
+ 
+        async function runPickerSearch(q) {
+            pickerBody.innerHTML = '<div class="picker-spinner"></div>';
+            try {
+                const data = await clientSearch(q, 'all', 20);
+                const results = (data.results || []).slice(0, 20);
+                if (!results.length) {
+                    pickerBody.innerHTML = '<p class="picker-hint">No results found.</p>';
+                    return;
+                }
+                pickerBody.innerHTML = '';
+                results.forEach(r => {
+                    const row = document.createElement('div');
+                    row.className = 'picker-result';
+ 
+                    const cover = document.createElement('div');
+                    cover.className = 'picker-cover';
+                    if (r.cover) {
+                        cover.style.backgroundImage = `url('${r.cover}')`;
+                        cover.style.backgroundSize  = 'cover';
+                        cover.style.backgroundPosition = 'center';
+                    } else {
+                        cover.textContent = (r.title || '??').slice(0,2).toUpperCase();
+                    }
+ 
+                    const info = document.createElement('div');
+                    info.className = 'picker-info';
+                    const titleEl = document.createElement('div');
+                    titleEl.className = 'picker-title';
+                    titleEl.textContent = r.title;
+                    const authorEl = document.createElement('div');
+                    authorEl.className = 'picker-author';
+                    authorEl.textContent = r.author;
+                    info.appendChild(titleEl);
+                    info.appendChild(authorEl);
+ 
+                    const badge = document.createElement('span');
+                    badge.className = 'picker-badge';
+                    badge.textContent = r.sourceLabel || 'Book';
+ 
+                    row.appendChild(cover);
+                    row.appendChild(info);
+                    row.appendChild(badge);
+ 
+                    row.addEventListener('click', () => pickBook(r));
+                    pickerBody.appendChild(row);
+                });
+            } catch {
+                pickerBody.innerHTML = '<p class="picker-hint">Search failed. Check your connection.</p>';
+            }
+        }
+ 
+        async function pickBook(book) {
+            if (activeSlotIndex === null) return;
+            const uid = currentUser.uid;
+            const p   = await loadProfile(uid);
+            const favBooks = p.favBooks || [];
+            favBooks[activeSlotIndex] = { title: book.title, author: book.author, cover: book.cover || null };
+            p.favBooks = favBooks;
+            await saveProfile(uid, p);
+            renderFavGrid(p.favBooks);
+            closePicker();
+            showToast(`"${book.title}" added to favourites ✓`);
+        }
+ 
+        /* ── Toast helper ───────────────────────────────────────── */
+        let toastTimer;
+        function showToast(msg) {
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+        }
+    </script>
 </body>
 </html>
