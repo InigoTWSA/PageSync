@@ -1082,13 +1082,13 @@
             }
         }
  
-        function removeFav(index) {
+        async function removeFav(index) {
             const uid = currentUser.uid;
-            const p   = loadProfile(uid);
+            const p   = await loadProfile(uid);
             const favBooks = p.favBooks || [];
             favBooks.splice(index, 1);
             p.favBooks = favBooks;
-            saveProfile(uid, p);
+            await saveProfile(uid, p);
             renderFavGrid(p.favBooks);
             showToast('Removed from favourites');
         }
@@ -1172,14 +1172,14 @@
             }
         }
  
-        function pickBook(book) {
+        async function pickBook(book) {
             if (activeSlotIndex === null) return;
             const uid = currentUser.uid;
-            const p   = loadProfile(uid);
+            const p   = await loadProfile(uid);
             const favBooks = p.favBooks || [];
             favBooks[activeSlotIndex] = { title: book.title, author: book.author, cover: book.cover || null };
             p.favBooks = favBooks;
-            saveProfile(uid, p);
+            await saveProfile(uid, p);
             renderFavGrid(p.favBooks);
             closePicker();
             showToast(`"${book.title}" added to favourites ✓`);
