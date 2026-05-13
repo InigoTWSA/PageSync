@@ -372,14 +372,12 @@
         <div class="section-scroll" id="section-books"></div>
     </section>
 
-    <section class="section split-grid">
-        <div>
-            <div class="section-header">
-                <h2>Classic Literature</h2>
-                <a href="#" data-prefill="classic literature" data-source="classics">See more</a>
-            </div>
-            <div class="section-scroll" id="section-classics"></div>
+    <section class="section">
+        <div class="section-header">
+            <h2>Classic Literature</h2>
+            <a href="#" data-prefill="classic literature" data-source="classics">See more</a>
         </div>
+        <div class="section-scroll" id="section-classics"></div>
     </section>
 
     <section class="section">
@@ -646,8 +644,9 @@
         const grid    = document.getElementById('continue-grid');
         const section = document.getElementById('continue-reading-section');
 
-        // Hide immediately — only reveal once we know there's something to show
-        if (section) section.style.display = 'none';
+        // Show section with skeletons immediately — hide only if truly nothing to show
+        if (section) section.style.display = '';
+        if (grid) grid.innerHTML = skelContinue(2);
 
         let books = [];
         try { books = await getBooks(uid); } catch {}
@@ -665,9 +664,11 @@
                 .slice(0, 3);
         }
 
-        if (!candidates.length) return; // nothing saved at all — keep section hidden
-
-        if (section) section.style.display = '';
+        if (!candidates.length) {
+            // Nothing saved — hide section now that we know for sure
+            if (section) section.style.display = 'none';
+            return;
+        }
 
         const sorted = candidates.slice(0, 3);
 
