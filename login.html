@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Sign In · PageSync</title>
         <link rel="stylesheet" href="css/pagesync.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
         <style>
             .error-msg {
                 font-size: 13px; color: #e05555;
@@ -69,7 +70,7 @@
                 <div class="field password-wrapper">
                     <input type="password" id="password" name="password"
                         placeholder="Password" required autocomplete="current-password">
-                    <button type="button" class="password-toggle" id="password-toggle">👁️</button>
+                    <button type="button" class="password-toggle" id="password-toggle" aria-label="Toggle password visibility"><i class="fa-regular fa-eye" id="password-toggle-icon"></i></button>
                 </div>
 
                 <a class="forgot-link" href="forgotpass.html">Forgot password?</a>
@@ -131,8 +132,10 @@
             passwordToggle.addEventListener('click', e => {
                 e.preventDefault();
                 const show = passwordInput.type === 'password';
-                passwordInput.type         = show ? 'text' : 'password';
-                passwordToggle.textContent = show ? '👁️‍🗨️' : '👁️';
+                passwordInput.type = show ? 'text' : 'password';
+                const icon = document.getElementById('password-toggle-icon');
+                icon.classList.toggle('fa-eye',       !show);
+                icon.classList.toggle('fa-eye-slash',  show);
             });
 
             form.addEventListener('submit', async e => {

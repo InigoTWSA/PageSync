@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Sign Up · PageSync</title>
         <link rel="stylesheet" href="css/pagesync.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
         <style>
             /* ── Send Code button (standalone below email) ───────── */
             .send-code-btn {
@@ -261,7 +262,7 @@
                 <div class="field password-wrapper" style="margin-top:8px">
                     <input type="password" id="password" name="password"
                         placeholder="Password" required autocomplete="new-password">
-                    <button type="button" class="password-toggle" id="password-toggle">👁️</button>
+                    <button type="button" class="password-toggle" id="password-toggle" aria-label="Toggle password visibility"><i class="fa-regular fa-eye" id="password-toggle-icon"></i></button>
                 </div>
 
                 <!-- Live password requirements -->
@@ -276,7 +277,7 @@
                 <div class="field password-wrapper" style="margin-top:8px">
                     <input type="password" id="confirm-password" name="confirm-password"
                         placeholder="Confirm Password" required autocomplete="new-password">
-                    <button type="button" class="password-toggle" id="confirm-toggle">👁️</button>
+                    <button type="button" class="password-toggle" id="confirm-toggle" aria-label="Toggle confirm password visibility"><i class="fa-regular fa-eye" id="confirm-toggle-icon"></i></button>
                 </div>
                 <div class="pw-error" id="confirm-error"></div>
 
@@ -484,8 +485,10 @@
             passwordToggle.addEventListener('click', e => {
                 e.preventDefault();
                 const show = passwordInput.type === 'password';
-                passwordInput.type         = show ? 'text' : 'password';
-                passwordToggle.textContent = show ? '👁️‍🗨️' : '👁️';
+                passwordInput.type = show ? 'text' : 'password';
+                const icon = document.getElementById('password-toggle-icon');
+                icon.classList.toggle('fa-eye',        !show);
+                icon.classList.toggle('fa-eye-slash',   show);
             });
 
             // Show reqs on focus, hide on blur if empty
@@ -508,8 +511,10 @@
             confirmToggle.addEventListener('click', e => {
                 e.preventDefault();
                 const show = confirmInput.type === 'password';
-                confirmInput.type          = show ? 'text' : 'password';
-                confirmToggle.textContent  = show ? '👁️‍🗨️' : '👁️';
+                confirmInput.type = show ? 'text' : 'password';
+                const icon = document.getElementById('confirm-toggle-icon');
+                icon.classList.toggle('fa-eye',       !show);
+                icon.classList.toggle('fa-eye-slash',  show);
             });
 
             function validateConfirm() {
