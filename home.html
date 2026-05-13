@@ -427,7 +427,7 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-    import { onAuthStateChange, signOutUser, auth, getBooks, addBook, db } from './firebase.js';
+    import { onAuthStateChange, signOutUser, auth, getBooks, addBook, getBookByExternalId, db } from './firebase.js';
     import { clientSearch } from './search-client.js';
     import { collection, getDocs, doc, updateDoc, arrayUnion, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -608,7 +608,7 @@
             // Reset button back to + after 2s regardless of save outcome
             if (btn) setTimeout(() => { btn.textContent = '+'; btn.classList.remove('added'); }, 2000);
             try {
-                await addBook(user.uid, {
+                const result = await addBook(user.uid, {
                     title:       book.title,
                     author:      book.author,
                     status,
@@ -619,7 +619,12 @@
                     rating:      book.rating || null,
                     year:        book.year   || null,
                 });
-                showToast(`"${book.title}" added to bookmarks`);
+                const statusLabels = { planned: 'Plan to Read', reading: 'Currently Reading', completed: 'Completed', paused: 'On Hold', dropped: 'Dropped' };
+                if (result.existed) {
+                    showToast(`"${book.title}" already saved — status updated to "${statusLabels[status] || status}"`);
+                } else {
+                    showToast(`"${book.title}" added to bookmarks`);
+                }
                 // Refresh the Continue Reading section immediately so it reflects the new status
                 loadContinueReading(user.uid);
             } catch (err) {

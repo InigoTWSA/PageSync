@@ -1,7 +1,7 @@
 // firebase.js - Shared Firebase configuration and utilities
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, initializeFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, initializeFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs, query, where, serverTimestamp, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey:            "AIzaSyBEgkePSSuw1LkVOXLWL__pzcC11HGY_Ww",
@@ -103,12 +103,49 @@ export async function createUniqueUsername(base) {
 
 // ── Book helpers ──────────────────────────────────────────────────────────────
 
+/**
+ * Add a book to the user's library, or update it if already saved.
+ * Deduplication key: externalId + source.
+ * Returns { existed: boolean, id: string }
+ */
 export async function addBook(uid, bookData) {
   const booksRef = collection(db, 'users', uid, 'books');
-  await addDoc(booksRef, {
+
+  // Check for an existing entry with the same externalId + source
+  if (bookData.externalId && bookData.source) {
+    const q        = query(booksRef,
+                       where('externalId', '==', bookData.externalId),
+                       where('source',     '==', bookData.source));
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      // Already saved — update status only, preserve original addedAt
+      const existing = snapshot.docs[0];
+      await updateDoc(existing.ref, { status: bookData.status });
+      return { existed: true, id: existing.id };
+    }
+  }
+
+  // New book — create a fresh document
+  const docRef = await addDoc(booksRef, {
     ...bookData,
     addedAt: serverTimestamp(),
   });
+  return { existed: false, id: docRef.id };
+}
+
+/**
+ * Look up a saved book by its external API id and source.
+ * Returns the book object (with Firestore doc id) or null.
+ */
+export async function getBookByExternalId(uid, externalId, source) {
+  const booksRef = collection(db, 'users', uid, 'books');
+  const q        = query(booksRef,
+                     where('externalId', '==', externalId),
+                     where('source',     '==', source));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
 }
 
 export async function getBooks(uid, status = null) {
