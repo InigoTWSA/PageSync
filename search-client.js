@@ -38,7 +38,11 @@ async function parseQuery(query, forcedSource) {
   const cacheKey = `${query}::${forcedSource || ''}`;
   if (_parseCache.has(cacheKey)) return _parseCache.get(cacheKey);
 
-  if (!GEMINI_API_KEY) {
+  // Skip Gemini entirely when the source is already known (e.g. dashboard loads,
+  // user picks a filter chip). Gemini is only useful for freeform natural-language
+  // queries where we need to infer the source — calling it with a forced source
+  // wastes quota and hits 429s on the free tier.
+  if (!GEMINI_API_KEY || forcedSource) {
     const result = parseQueryRegex(query, forcedSource);
     _parseCache.set(cacheKey, result);
     return result;
