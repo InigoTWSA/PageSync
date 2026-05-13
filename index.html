@@ -627,6 +627,73 @@
             .stat-item    { padding: 24px 16px; }
             .stat-number  { font-size: 32px; }
         }
+
+        /* ── Scrolling book belt ─────────────────────────────────── */
+        .book-belt {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        /* dark overlay so hero text stays readable */
+        .book-belt::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(to bottom,
+                    rgba(8,10,14,0.72) 0%,
+                    rgba(8,10,14,0.45) 40%,
+                    rgba(8,10,14,0.45) 60%,
+                    rgba(8,10,14,0.72) 100%),
+                linear-gradient(to right,
+                    rgba(8,10,14,0.9) 0%,
+                    transparent 15%,
+                    transparent 85%,
+                    rgba(8,10,14,0.9) 100%);
+            z-index: 1;
+        }
+
+        .belt-track {
+            display: flex;
+            gap: 16px;
+            width: max-content;
+            will-change: transform;
+        }
+
+        .belt-row {
+            position: absolute;
+            left: 0;
+            display: flex;
+            gap: 16px;
+        }
+
+        .belt-row-1 { top: 8%; animation: beltScroll 55s linear infinite; }
+        .belt-row-2 { top: 45%; animation: beltScroll 42s linear infinite reverse; }
+        .belt-row-3 { top: 68%; animation: beltScroll 60s linear infinite; animation-delay: -18s; }
+
+        @keyframes beltScroll {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .belt-cover {
+            width: 90px;
+            height: 130px;
+            border-radius: 8px;
+            background-size: cover;
+            background-position: center;
+            background-color: #1a1d26;
+            flex-shrink: 0;
+            opacity: 0.55;
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+
+        /* make sure hero content sits above the belt */
+        .hero > *:not(.book-belt) { position: relative; z-index: 2; }
+
         /* ── QR code ─────────────────────────────────────────── */
         .qr-divider {
             display: flex; align-items: center; gap: 16px;
@@ -673,6 +740,13 @@
 
     <!-- Hero -->
     <section class="hero">
+        <!-- Scrolling book covers background -->
+        <div class="book-belt" id="book-belt" aria-hidden="true">
+            <div class="belt-row belt-row-1" id="belt-1"></div>
+            <div class="belt-row belt-row-2" id="belt-2"></div>
+            <div class="belt-row belt-row-3" id="belt-3"></div>
+        </div>
+
         <div class="hero-badge">
             <span class="badge-dot"></span>
             Your personal reading universe
@@ -889,6 +963,67 @@
         }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
         document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    </script>
+
+    <script>
+    // Scrolling book-cover belt — uses Open Library & MangaDex cover CDNs
+    (function() {
+        // Open Library cover IDs (OLID) for well-known books
+        const olCovers = [
+            'OL7353617M','OL27479W','OL7353617M','OL262584W','OL509183M',
+            'OL7984558M','OL2163649W','OL21586M','OL17860744W','OL24347578M',
+            'OL7353619M','OL7890W','OL24347580M','OL8993458M','OL7316438M',
+            'OL24347582M','OL15548874W','OL7226022M','OL24347574M','OL1428083M',
+            'OL7979038M','OL264801W','OL8406W','OL17861078W','OL7899148M',
+            'OL24952W','OL7984556M','OL17861080W','OL7890031M','OL24347576M',
+        ];
+
+        // MangaDex manga UUIDs with known covers
+        const mdxCovers = [
+            { id: '32d76d19-8a05-4db0-9fc2-e0b0648fe9d0', vol: '1' },
+            { id: 'e78a489b-6632-4d61-b00b-5206f0a2ed86', vol: '1' },
+            { id: 'c52b2ce3-7f95-469c-96b0-479524fb7a1a', vol: '1' },
+            { id: 'a1c7c817-4e59-43b7-9365-09675a149a6f', vol: '1' },
+            { id: '37f5cce0-8070-4ada-96e5-fa24b1bd4ff9', vol: '1' },
+        ];
+
+        function olUrl(olid) {
+            return `https://covers.openlibrary.org/b/olid/${olid}-M.jpg`;
+        }
+
+        // Build a flat list of cover URLs
+        const covers = [
+            ...olCovers.map(olUrl),
+            ...mdxCovers.map(m =>
+                `https://uploads.mangadex.org/covers/${m.id}/${m.id}.jpg`
+            ),
+        ];
+
+        // Shuffle for variety
+        for (let i = covers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [covers[i], covers[j]] = [covers[j], covers[i]];
+        }
+
+        // Split into 3 rows then double each for seamless loop
+        const chunk = Math.ceil(covers.length / 3);
+        const rows  = [
+            covers.slice(0, chunk),
+            covers.slice(chunk, chunk * 2),
+            covers.slice(chunk * 2),
+        ];
+
+        ['belt-1','belt-2','belt-3'].forEach((id, ri) => {
+            const el   = document.getElementById(id);
+            if (!el) return;
+            const set  = rows[ri].length ? rows[ri] : covers.slice(0, 10);
+            // Double the set so the CSS translateX(-50%) loop is seamless
+            const full = [...set, ...set];
+            el.innerHTML = full.map(url =>
+                `<div class="belt-cover" style="background-image:url('${url}')"></div>`
+            ).join('');
+        });
+    })();
     </script>
 </body>
 </html>
