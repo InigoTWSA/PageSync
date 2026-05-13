@@ -523,7 +523,7 @@
     }
 
     document.addEventListener('click', e => {
-        if (popupOpen && !popup.contains(e.target) && !e.target.classList.contains('card-add-btn')) {
+        if (popupOpen && !e.target.closest('.add-popup') && !e.target.classList.contains('card-add-btn')) {
             closePopup();
         }
     });
