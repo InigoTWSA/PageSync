@@ -515,6 +515,7 @@
 
     // ── Add popup ──────────────────────────────────────────────────
     const popup   = document.getElementById('add-popup');
+    popup.addEventListener('click', e => e.stopPropagation());
     let popupOpen = false;
 
     function closePopup() {
@@ -574,8 +575,8 @@
                 </span>
             </button>`;
 
-        popup.querySelector('#opt-bookmark').addEventListener('click', () => showBookmarkMenu(book, btn, user));
-        popup.querySelector('#opt-list').addEventListener('click', () => showListMenu(book, user));
+        popup.querySelector('#opt-bookmark').addEventListener('click', e => { e.stopPropagation(); showBookmarkMenu(book, btn, user); });
+        popup.querySelector('#opt-list').addEventListener('click', e => { e.stopPropagation(); showListMenu(book, user); });
     }
 
     function showBookmarkMenu(book, btn, user) {
@@ -593,8 +594,8 @@
             </div>
             <button class="popup-save-btn" id="popup-save">Save to Bookmarks</button>`;
 
-        popup.querySelector('#popup-back').addEventListener('click', () => showMainMenu(book, btn, user));
-        popup.querySelector('#popup-save').addEventListener('click', async () => {
+        popup.querySelector('#popup-back').addEventListener('click', e => { e.stopPropagation(); showMainMenu(book, btn, user); });
+        popup.querySelector('#popup-save').addEventListener('click', async e => { e.stopPropagation();
             const statusSelect = popup.querySelector('#status-select');
             const saveBtn      = popup.querySelector('#popup-save');
             if (!statusSelect || !saveBtn) return;
@@ -632,7 +633,7 @@
                 <p class="popup-empty">Loading lists…</p>
             </div>`;
 
-        popup.querySelector('#popup-back').addEventListener('click', () => showMainMenu(book, null, user));
+        popup.querySelector('#popup-back').addEventListener('click', e => { e.stopPropagation(); showMainMenu(book, null, user); });
 
         const wrap = popup.querySelector('#lists-wrap');
 
