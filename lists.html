@@ -720,9 +720,20 @@
         async function loadLists(uid) {
             showSkeletons();
             try {
-                const ref  = collection(db, 'users', uid, 'lists');
-                const snap = await getDocs(query(ref, orderBy('createdAt', 'desc')));
-                allLists   = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                const ref = collection(db, 'users', uid, 'lists');
+                let snap;
+                try {
+                    snap = await getDocs(query(ref, orderBy('createdAt', 'desc')));
+                } catch (indexErr) {
+                    console.warn('orderBy query failed, falling back:', indexErr);
+                    snap = await getDocs(ref);
+                }
+                allLists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                allLists.sort((a, b) => {
+                    const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt || 0).getTime();
+                    const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt || 0).getTime();
+                    return tb - ta;
+                });
             } catch (err) {
                 console.error('Failed to load lists:', err);
                 allLists = [];
@@ -1125,6 +1136,13 @@
             document.getElementById('menu-email').textContent = user.email || '';
 
             loadLists(user.uid);
+        });
+
+        // Re-fetch when tab regains focus (e.g. after creating a list from home.html)
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible" && currentUser) {
+                loadLists(currentUser.uid);
+            }
         });
     </script>
 </body>
