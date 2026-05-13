@@ -522,8 +522,14 @@
             try {
                 // Update Firebase Auth profile
                 await updateProfile(currentUser, { displayName });
-                // Update Firestore user doc
+                // Update Firestore user doc (top-level for settings, profile sub-object for profile.html)
                 await setDoc(doc(db, 'users', currentUser.uid), { displayName, username }, { merge: true });
+                // Also write into profile sub-object so profile.html picks it up
+                const profSnap = await getDoc(doc(db, 'users', currentUser.uid));
+                const existingProfile = profSnap.exists() ? (profSnap.data().profile || {}) : {};
+                await setDoc(doc(db, 'users', currentUser.uid), {
+                    profile: { ...existingProfile, displayName, username }
+                }, { merge: true });
                 // Update localStorage cache
                 localStorage.setItem('ps_username_' + currentUser.uid, username);
                 // Update menu
@@ -670,9 +676,10 @@
                 const snap = await getDoc(doc(db, 'users', user.uid));
                 if (snap.exists()) {
                     const data = snap.data();
-                    document.getElementById('display-name-input').value = data.displayName || user.displayName || '';
-                    document.getElementById('username-input').value     = data.username || localStorage.getItem('ps_username_' + user.uid) || '';
-                    document.getElementById('menu-display-name').textContent = data.displayName || user.displayName || 'Reader';
+                    const p = data.profile || {};
+                    document.getElementById('display-name-input').value = p.displayName || data.displayName || user.displayName || '';
+                    document.getElementById('username-input').value     = p.username    || data.username    || localStorage.getItem('ps_username_' + user.uid) || '';
+                    document.getElementById('menu-display-name').textContent = p.displayName || data.displayName || user.displayName || 'Reader';
                 }
             } catch {}
 
