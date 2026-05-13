@@ -278,15 +278,15 @@
         .popup-create-btn:disabled { opacity: 0.5; cursor: default; }
 
         .toast {
-            position: fixed; bottom: 28px; left: 50%;
-            transform: translateX(-50%) translateY(20px);
+            position: fixed; bottom: 28px; right: 28px;
+            transform: translateY(20px);
             background: #1f2430; border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px; padding: 12px 22px; font-size: 14px; color: #d0d5de;
             box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0;
             transition: opacity 0.22s, transform 0.22s;
-            pointer-events: none; white-space: nowrap; z-index: 99;
+            pointer-events: none; white-space: nowrap; z-index: 999;
         }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.show { opacity: 1; transform: translateY(0); }
     </style>
 </head>
 <body class="dashboard">
@@ -601,6 +601,9 @@
             if (!statusSelect || !saveBtn) return;
             const status = statusSelect.value;
             saveBtn.textContent = 'Saving…'; saveBtn.disabled = true;
+            // Close popup immediately — don't make the user wait for the Firestore write
+            if (btn) { btn.textContent = '✓'; btn.classList.add('added'); }
+            closePopup();
             try {
                 await addBook(user.uid, {
                     title:       book.title,
@@ -613,13 +616,10 @@
                     rating:      book.rating || null,
                     year:        book.year   || null,
                 });
-                // btn may be null if opened via the list-menu back button
-                if (btn) { btn.textContent = '✓'; btn.classList.add('added'); }
                 showToast(`"${book.title}" added to bookmarks`);
-                closePopup();
             } catch (err) {
                 console.error('[addBook] save failed:', err);
-                if (saveBtn) { saveBtn.textContent = 'Save to Bookmarks'; saveBtn.disabled = false; }
+                if (btn) { btn.textContent = '+'; btn.classList.remove('added'); }
                 showToast('Could not save — try again');
             }
         });
@@ -656,8 +656,8 @@
 
             wrap.querySelectorAll('.popup-list-item').forEach(item => {
                 item.addEventListener('click', async () => {
-                    const origHTML = item.innerHTML;
-                    item.textContent = 'Adding…';
+                    const name = item.dataset.name;
+                    closePopup();
                     try {
                         await updateDoc(doc(db, 'users', user.uid, 'lists', item.dataset.id), {
                             books: arrayUnion({
@@ -669,12 +669,10 @@
                                 cover:       book.cover || '',
                             }),
                         });
-                        showToast(`Added to "${item.dataset.name}"`);
-                        closePopup();
+                        showToast(`Added to "${name}"`);
                     } catch (err) {
                         console.error('[addToList] failed:', err);
                         showToast('Could not add to list — try again');
-                        item.innerHTML = origHTML;
                     }
                 });
             });
@@ -688,6 +686,7 @@
                 if (!name) { newInput.focus(); return; }
                 newBtn.disabled    = true;
                 newBtn.textContent = '…';
+                closePopup();
                 try {
                     const ref = await addDoc(collection(db, 'users', user.uid, 'lists'), {
                         name, description: '', books: [], createdAt: serverTimestamp(),
@@ -703,12 +702,9 @@
                         }),
                     });
                     showToast(`Created "${name}" and added book`);
-                    closePopup();
                 } catch (err) {
                     console.error('[createAndAdd] failed:', err);
                     showToast('Could not create list — try again');
-                    newBtn.disabled    = false;
-                    newBtn.textContent = 'Create';
                 }
             }
 
