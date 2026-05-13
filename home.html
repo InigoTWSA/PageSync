@@ -367,6 +367,7 @@
                 <a class="menu-item" href="profile.html">Profile</a>
                 <a class="menu-item" href="popular.html">Popular</a>
                 <a class="menu-item" href="top-rated.html">Top rated</a>
+                <a class="menu-item" href="lists.html">Saved Lists</a>
                 <a class="menu-item" href="bookmarks.html">Bookmarks</a>
                 <a class="menu-item" href="settings.html">Settings</a>
                 <button class="menu-signout" id="menu-signout">Sign Out</button>
@@ -618,6 +619,8 @@
                     year:        book.year   || null,
                 });
                 showToast(`"${book.title}" added to bookmarks`);
+                // Refresh the Continue Reading section immediately so it reflects the new status
+                loadContinueReading(user.uid);
             } catch (err) {
                 console.error('[addBook] save failed:', err);
                 showToast('Could not save — try again');
@@ -836,8 +839,10 @@
     });
 
     let dashboardLoaded = false;
+    let currentUid = null;
     onAuthStateChange(user => {
         if (!user) { window.location.href = 'login.html'; return; }
+        currentUid = user.uid;
         const avatarEl     = document.getElementById('user-avatar');
         const menuAvatarEl = document.getElementById('menu-avatar-display');
         const photo        = localStorage.getItem(`ps_avatar_${user.uid}`);
@@ -856,6 +861,14 @@
         loadContinueReading(user.uid);
         // Load dashboard only once — auth state can fire multiple times
         if (!dashboardLoaded) { dashboardLoaded = true; loadDashboard(); }
+    });
+
+    // Re-fetch Continue Reading when the user navigates back to this tab
+    // (e.g. after changing a status in bookmarks.html)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && currentUid) {
+            loadContinueReading(currentUid);
+        }
     });
 
     // ── See more links ─────────────────────────────────────────────
