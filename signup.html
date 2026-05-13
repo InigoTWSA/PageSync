@@ -131,7 +131,66 @@
             }
             .link-button:hover { color: #7aabff; }
 
-            /* ── T&C Modal ───────────────────────────────────────── */
+            /* ── Password requirements checklist ─────────────────── */
+            .pw-reqs {
+                list-style: none;
+                margin: 6px 0 0 2px;
+                padding: 0;
+                display: none; /* shown on focus */
+                flex-direction: column;
+                gap: 4px;
+            }
+            .pw-reqs.visible { display: flex; }
+            .pw-req {
+                font-size: 12px;
+                color: #606880;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                transition: color 0.18s;
+            }
+            .pw-req::before {
+                content: '✕';
+                font-size: 11px;
+                font-weight: 700;
+                color: #504060;
+                width: 14px;
+                text-align: center;
+                flex-shrink: 0;
+                transition: color 0.18s;
+            }
+            .pw-req.met {
+                color: #50c878;
+            }
+            .pw-req.met::before {
+                content: '✓';
+                color: #50c878;
+            }
+
+            /* ── Password field error msg ─────────────────────────── */
+            .pw-error {
+                font-size: 12px;
+                color: #e05555;
+                min-height: 16px;
+                margin: 4px 0 0 2px;
+            }
+
+            /* ── T&C locked hint ─────────────────────────────────── */
+            .terms-locked-hint {
+                font-size: 11px;
+                color: #504868;
+                margin-top: 4px;
+                transition: color 0.2s;
+            }
+            .terms-locked-hint.unlocked { color: #50c878; }
+
+            /* ── Checkbox locked state ───────────────────────────── */
+            .terms-checkbox input[type="checkbox"]:disabled {
+                opacity: 0.35;
+                cursor: not-allowed;
+            }
+            .terms-checkbox.locked { cursor: pointer; }
+        
             .terms-layer {
                 position: fixed; inset: 0; background: rgba(0,0,0,0.7);
                 backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
@@ -205,6 +264,22 @@
                     <button type="button" class="password-toggle" id="password-toggle">👁️</button>
                 </div>
 
+                <!-- Live password requirements -->
+                <ul class="pw-reqs" id="pw-reqs">
+                    <li class="pw-req" id="req-length">At least 8 characters</li>
+                    <li class="pw-req" id="req-number">At least one number</li>
+                    <li class="pw-req" id="req-special">At least one special character (!@#$%…)</li>
+                </ul>
+                <div class="pw-error" id="pw-error"></div>
+
+                <!-- Confirm password -->
+                <div class="field password-wrapper" style="margin-top:8px">
+                    <input type="password" id="confirm-password" name="confirm-password"
+                        placeholder="Confirm Password" required autocomplete="new-password">
+                    <button type="button" class="password-toggle" id="confirm-toggle">👁️</button>
+                </div>
+                <div class="pw-error" id="confirm-error"></div>
+
                 <div class="submit-row">
                     <button type="submit" class="button primary" id="submit-btn" disabled>Sign up</button>
                 </div>
@@ -215,10 +290,13 @@
                 </a>
 
                 <div class="checkbox-row">
-                    <label class="terms-checkbox">
-                        <input type="checkbox" id="terms-checkbox">
+                    <label class="terms-checkbox locked" id="terms-checkbox-label">
+                        <input type="checkbox" id="terms-checkbox" disabled>
                         <span>I agree to the Terms &amp; Conditions</span>
                     </label>
+                    <p class="terms-locked-hint" id="terms-locked-hint">
+                        Read the Terms &amp; Conditions first to enable this
+                    </p>
                     <button type="button" class="link-button" id="terms-link">
                         Read Terms &amp; Conditions
                     </button>
@@ -260,25 +338,35 @@
             const OTP_ENABLED = EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID';
 
             // ── DOM ────────────────────────────────────────────────
-            const form           = document.getElementById('signup-form');
-            const googleBtn      = document.getElementById('google-signup');
-            const emailInput     = document.getElementById('email');
-            const usernameInput  = document.getElementById('username');
-            const passwordInput  = document.getElementById('password');
-            const passwordToggle = document.getElementById('password-toggle');
-            const submitBtn      = document.getElementById('submit-btn');
-            const termsCheckbox  = document.getElementById('terms-checkbox');
-            const otpInline      = document.getElementById('otp-inline');
-            const otpCodeInput   = document.getElementById('otp-code');
-            const sendCodeBtn    = document.getElementById('send-code-btn');
-            const verifyBtn      = document.getElementById('verify-btn');
-            const resendBtn      = document.getElementById('resend-otp');
-            const otpHint        = document.getElementById('otp-hint');
-            const emailMsg       = document.getElementById('email-msg');
-            const termsLayer     = document.getElementById('terms-layer');
-            const termsClose     = document.getElementById('terms-close');
-            const termsAccept    = document.getElementById('terms-accept');
-            const termsLink      = document.getElementById('terms-link');
+            const form            = document.getElementById('signup-form');
+            const googleBtn       = document.getElementById('google-signup');
+            const emailInput      = document.getElementById('email');
+            const usernameInput   = document.getElementById('username');
+            const passwordInput   = document.getElementById('password');
+            const passwordToggle  = document.getElementById('password-toggle');
+            const confirmInput    = document.getElementById('confirm-password');
+            const confirmToggle   = document.getElementById('confirm-toggle');
+            const confirmError    = document.getElementById('confirm-error');
+            const pwError         = document.getElementById('pw-error');
+            const pwReqs          = document.getElementById('pw-reqs');
+            const reqLength       = document.getElementById('req-length');
+            const reqNumber       = document.getElementById('req-number');
+            const reqSpecial      = document.getElementById('req-special');
+            const submitBtn       = document.getElementById('submit-btn');
+            const termsCheckbox   = document.getElementById('terms-checkbox');
+            const otpInline       = document.getElementById('otp-inline');
+            const otpCodeInput    = document.getElementById('otp-code');
+            const sendCodeBtn     = document.getElementById('send-code-btn');
+            const verifyBtn       = document.getElementById('verify-btn');
+            const resendBtn       = document.getElementById('resend-otp');
+            const otpHint         = document.getElementById('otp-hint');
+            const emailMsg        = document.getElementById('email-msg');
+            const termsLayer      = document.getElementById('terms-layer');
+            const termsClose      = document.getElementById('terms-close');
+            const termsAccept     = document.getElementById('terms-accept');
+            const termsLink       = document.getElementById('terms-link');
+            const termsLockedHint = document.getElementById('terms-locked-hint');
+            const termsLabel      = document.getElementById('terms-checkbox-label');
 
             // ── State ──────────────────────────────────────────────
             let otpVerified = false;
@@ -375,6 +463,23 @@
                 return { ok: true };
             }
 
+            // ── Password rules ─────────────────────────────────────
+            const PW_RULES = {
+                length:  v => v.length >= 8,
+                number:  v => /\d/.test(v),
+                special: v => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v),
+            };
+
+            function checkPwReqs(val) {
+                reqLength.classList.toggle('met',  PW_RULES.length(val));
+                reqNumber.classList.toggle('met',  PW_RULES.number(val));
+                reqSpecial.classList.toggle('met', PW_RULES.special(val));
+            }
+
+            function pwAllMet(val) {
+                return PW_RULES.length(val) && PW_RULES.number(val) && PW_RULES.special(val);
+            }
+
             // ── Password toggle ────────────────────────────────────
             passwordToggle.addEventListener('click', e => {
                 e.preventDefault();
@@ -382,6 +487,41 @@
                 passwordInput.type         = show ? 'text' : 'password';
                 passwordToggle.textContent = show ? '👁️‍🗨️' : '👁️';
             });
+
+            // Show reqs on focus, hide on blur if empty
+            passwordInput.addEventListener('focus', () => pwReqs.classList.add('visible'));
+            passwordInput.addEventListener('blur',  () => {
+                if (!passwordInput.value) pwReqs.classList.remove('visible');
+            });
+
+            passwordInput.addEventListener('input', () => {
+                const val = passwordInput.value;
+                pwReqs.classList.add('visible');
+                checkPwReqs(val);
+                // Clear pw-level error once user starts fixing it
+                if (pwAllMet(val)) pwError.textContent = '';
+                // Re-validate confirm if already filled
+                if (confirmInput.value) validateConfirm();
+            });
+
+            // ── Confirm password toggle ────────────────────────────
+            confirmToggle.addEventListener('click', e => {
+                e.preventDefault();
+                const show = confirmInput.type === 'password';
+                confirmInput.type          = show ? 'text' : 'password';
+                confirmToggle.textContent  = show ? '👁️‍🗨️' : '👁️';
+            });
+
+            function validateConfirm() {
+                if (confirmInput.value && confirmInput.value !== passwordInput.value) {
+                    confirmError.textContent = 'Passwords do not match.';
+                } else {
+                    confirmError.textContent = '';
+                }
+            }
+
+            confirmInput.addEventListener('input',  validateConfirm);
+            confirmInput.addEventListener('blur',   validateConfirm);
 
             // ── Send Code ──────────────────────────────────────────
             sendCodeBtn.addEventListener('click', async () => {
@@ -491,16 +631,38 @@
             });
 
             // ── T&C ────────────────────────────────────────────────
+            let termsRead = false;
+
+            function openTerms() { termsLayer.classList.add('open'); }
+            function closeTerms() { termsLayer.classList.remove('open'); }
+
+            function unlockCheckbox() {
+                termsRead                    = true;
+                termsCheckbox.disabled       = false;
+                termsLabel.classList.remove('locked');
+                termsLockedHint.textContent  = '✓ Terms read — you can now agree below';
+                termsLockedHint.classList.add('unlocked');
+            }
+
+            // Clicking the label while locked → open modal instead of toggling
+            termsLabel.addEventListener('click', e => {
+                if (!termsRead) {
+                    e.preventDefault();
+                    openTerms();
+                }
+            });
+
             termsCheckbox.addEventListener('change', updateSubmitBtn);
-            termsLink.addEventListener('click',   () => termsLayer.classList.add('open'));
-            termsClose.addEventListener('click',  () => termsLayer.classList.remove('open'));
+            termsLink.addEventListener('click',   openTerms);
+            termsClose.addEventListener('click',  closeTerms);
             termsAccept.addEventListener('click', () => {
-                termsLayer.classList.remove('open');
+                closeTerms();
+                unlockCheckbox();
                 termsCheckbox.checked = true;
                 updateSubmitBtn();
             });
-            termsLayer.addEventListener('click', e => { if (e.target === termsLayer) termsLayer.classList.remove('open'); });
-            document.addEventListener('keydown', e => { if (e.key === 'Escape') termsLayer.classList.remove('open'); });
+            termsLayer.addEventListener('click', e => { if (e.target === termsLayer) closeTerms(); });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTerms(); });
 
             // ── Sign up ────────────────────────────────────────────
             form.addEventListener('submit', async e => {
@@ -511,19 +673,27 @@
                 const email    = emailInput.value.trim();
                 const username = usernameInput.value.trim();
                 const password = passwordInput.value;
+                const confirm  = confirmInput.value;
 
                 if (!username) { usernameInput.focus(); return; }
                 if (!password) { passwordInput.focus(); return; }
 
-                const pwRules = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
-                if (!pwRules.test(password)) {
-                    setEmailMsg(
-                        'Password must be at least 8 characters and include an uppercase letter, lowercase letter, number, and special character (e.g. !@#$%).',
-                        'error'
-                    );
-                        passwordInput.focus();
+                if (!pwAllMet(password)) {
+                    pwError.textContent = 'Please meet all password requirements above.';
+                    pwReqs.classList.add('visible');
+                    checkPwReqs(password);
+                    passwordInput.focus();
                     return;
                 }
+
+                if (password !== confirm) {
+                    confirmError.textContent = 'Passwords do not match.';
+                    confirmInput.focus();
+                    return;
+                }
+
+                pwError.textContent      = '';
+                confirmError.textContent = '';
 
                 submitBtn.disabled    = true;
                 submitBtn.textContent = 'Creating account…';

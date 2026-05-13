@@ -265,17 +265,6 @@
             border-color: rgba(59,125,243,0.4);
             color: #7aabff;
         }
-        /* 18+ chip — red accent */
-        .fp-chip.age-gate {
-            border-color: rgba(220,60,60,0.3);
-            color: #c07070;
-        }
-        .fp-chip.age-gate.active {
-            background: rgba(220,60,60,0.18);
-            border-color: rgba(220,60,60,0.5);
-            color: #f08080;
-        }
-
         /* Genre chips — cycle include → exclude → off */
         .fp-chip[data-state="include"] {
             background: rgba(59,125,243,0.18);
@@ -775,13 +764,6 @@
         </div>
 
         <div class="fp-body">
-            <!-- 18+ toggle -->
-            <div>
-                <div class="fp-chips">
-                    <button class="fp-chip age-gate" data-filter="adult" data-group="adult">18+</button>
-                </div>
-            </div>
-
             <!-- Type -->
             <div>
                 <div class="fp-section-label">Type</div>
@@ -1316,7 +1298,6 @@
 
     // Active filter state
     const activeFilters = {
-        adult:  false,
         type:   new Set(),
         status: new Set(),
         demo:   new Set(),
@@ -1344,8 +1325,7 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFilterPanel(); });
 
     function countActiveFilters() {
-        return (activeFilters.adult ? 1 : 0) +
-               activeFilters.type.size +
+        return activeFilters.type.size +
                activeFilters.status.size +
                activeFilters.demo.size +
                activeFilters.genre.size +
@@ -1379,19 +1359,14 @@
         filterBtn.onclick = openFilterPanel;
     }
 
-    // Regular chips (type, status, demo, adult) — toggle active
+    // Regular chips (type, status, demo) — toggle active
     document.querySelectorAll('.fp-chip:not([data-state])').forEach(chip => {
         chip.addEventListener('click', () => {
             const group  = chip.dataset.group;
             const filter = chip.dataset.filter;
-            if (group === 'adult') {
-                activeFilters.adult = !activeFilters.adult;
-                chip.classList.toggle('active', activeFilters.adult);
-            } else {
-                const set = activeFilters[group];
-                if (set.has(filter)) { set.delete(filter); chip.classList.remove('active'); }
-                else                 { set.add(filter);    chip.classList.add('active'); }
-            }
+            const set = activeFilters[group];
+            if (set.has(filter)) { set.delete(filter); chip.classList.remove('active'); }
+            else                 { set.add(filter);    chip.classList.add('active'); }
             updateFilterBadge();
         });
     });
@@ -1425,7 +1400,6 @@
 
     // Reset
     fpReset.addEventListener('click', () => {
-        activeFilters.adult = false;
         activeFilters.type.clear();
         activeFilters.status.clear();
         activeFilters.demo.clear();
@@ -1458,16 +1432,79 @@
 
     function applyFilters(items) {
         return items.filter(b => {
-            // Year range
-            if (activeFilters.yearFrom && b.year && Number(b.year) < Number(activeFilters.yearFrom)) return false;
-            if (activeFilters.yearTo   && b.year && Number(b.year) > Number(activeFilters.yearTo))   return false;
+            // ── Year range ─────────────────────────────────────────
+            const itemYear = b.year ? Number(b.year) : null;
+            if (activeFilters.yearFrom && itemYear && itemYear < Number(activeFilters.yearFrom)) return false;
+            if (activeFilters.yearTo   && itemYear && itemYear > Number(activeFilters.yearTo))   return false;
 
-            // Genre includes/excludes — match against title/sourceLabel loosely
-            for (const [genre, state] of activeFilters.genre) {
-                const haystack = (b.title + ' ' + (b.sourceLabel||'')).toLowerCase();
-                const matches  = haystack.includes(genre.replace(/-/g, ' '));
-                if (state === 'include' && !matches) return false;
-                if (state === 'exclude' &&  matches) return false;
+            // ── Min chapters ───────────────────────────────────────
+            if (activeFilters.minChapters) {
+                const chCount = Number(b.chapters) || 0;
+                if (chCount < Number(activeFilters.minChapters)) return false;
+            }
+
+            // ── Type (Manga / Manhwa / Manhua / Other) ─────────────
+            // sourceLabel from Jikan/MangaDex is 'Manga', 'Manhwa', 'Manhua', 'Novel', etc.
+            if (activeFilters.type.size > 0) {
+                const label = (b.sourceLabel || '').toLowerCase();
+                // 'other' matches anything that isn't manga/manhwa/manhua
+                const isOther = !['manga','manhwa','manhua'].includes(label);
+                const matched = [...activeFilters.type].some(t => {
+                    if (t === 'other') return isOther;
+                    return label === t;
+                });
+                if (!matched) return false;
+            }
+
+            // ── Status ─────────────────────────────────────────────
+            // Jikan returns: 'Publishing', 'Finished', 'On Hiatus', 'Discontinued'
+            // MangaDex returns: 'ongoing', 'completed', 'hiatus', 'cancelled'
+            if (activeFilters.status.size > 0) {
+                const rawStatus = (b.status || '').toLowerCase();
+                const statusMap = {
+                    'ongoing':       ['ongoing', 'publishing', 'currently publishing'],
+                    'completed':     ['completed', 'finished', 'finished airing'],
+                    'on-hiatus':     ['on hiatus', 'hiatus', 'on_hiatus'],
+                    'discontinued':  ['discontinued', 'cancelled', 'canceled'],
+                };
+                const matched = [...activeFilters.status].some(s => {
+                    const aliases = statusMap[s] || [s];
+                    return aliases.some(alias => rawStatus.includes(alias));
+                });
+                if (!matched) return false;
+            }
+
+            // ── Demographic (Shounen / Seinen / Shoujo / Josei) ────
+            // Jikan returns demographics as a separate array; MangaDex puts them in tags.
+            // We check genres[], themes[], subjects[], and sourceLabel together.
+            if (activeFilters.demo.size > 0) {
+                const allTags = [
+                    ...(b.genres   || []),
+                    ...(b.themes   || []),
+                    ...(b.subjects || []),
+                ].map(t => t.toLowerCase());
+                const matched = [...activeFilters.demo].some(d => allTags.some(t => t.includes(d)));
+                if (!matched) return false;
+            }
+
+            // ── Genres (include / exclude) ─────────────────────────
+            // genres[] and themes[] from Jikan/MangaDex are well-structured arrays.
+            // We also fall back to subjects[] and description for book sources.
+            if (activeFilters.genre.size > 0) {
+                const allTags = [
+                    ...(b.genres   || []),
+                    ...(b.themes   || []),
+                    ...(b.subjects || []),
+                    b.description || '',
+                ].join(' ').toLowerCase();
+
+                for (const [genre, state] of activeFilters.genre) {
+                    // Convert chip filter value to search-friendly string (e.g. 'slice-of-life' → 'slice of life')
+                    const needle  = genre.replace(/-/g, ' ');
+                    const matches = allTags.includes(needle);
+                    if (state === 'include' && !matches) return false;
+                    if (state === 'exclude' &&  matches) return false;
+                }
             }
 
             return true;
