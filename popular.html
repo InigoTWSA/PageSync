@@ -675,7 +675,6 @@
             <button class="menu-button" id="menu-btn" aria-label="Open menu">☰</button>
             <a class="avatar" id="user-avatar" href="profile.html" title="View profile">PS</a>
         </div>
-            <div id="theme-toggle-mount"></div>
     </header>
 
     <!-- SEARCH MODAL -->
@@ -900,12 +899,6 @@
 
 <script type="module">
     import { onAuthStateChange, signOutUser, auth, addBook, getBooks, deleteBook, db } from './firebase.js';
-        import { initTheme, renderThemeToggle } from './theme.js';
-        initTheme();
-        document.addEventListener('DOMContentLoaded', () => {
-            renderThemeToggle(document.getElementById('theme-toggle-mount'));
-        });
-
     import { clientSearch } from './search-client.js';
     import { collection, getDocs, doc, updateDoc, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 

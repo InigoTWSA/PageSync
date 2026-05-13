@@ -278,7 +278,6 @@
             <span>PageSync</span>
         </a>
         <div class="topbar-right">
-            <div id="theme-toggle-mount"></div>
             <button class="menu-button" id="menu-btn">☰</button>
             <a class="avatar" id="user-avatar" href="profile.html">PS</a>
         </div>
@@ -475,12 +474,6 @@
 
     <script type="module">
         import { onAuthStateChange, signOutUser, auth, db } from './firebase.js';
-        import { initTheme, renderThemeToggle } from './theme.js';
-        initTheme();
-        document.addEventListener('DOMContentLoaded', () => {
-            renderThemeToggle(document.getElementById('theme-toggle-mount'));
-        });
-
         import {
             updateProfile, updatePassword, reauthenticateWithCredential,
             EmailAuthProvider, deleteUser
