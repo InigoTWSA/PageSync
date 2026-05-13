@@ -820,6 +820,7 @@
  
     <script type="module">
         import { onAuthStateChange, db } from './firebase.js';
+        import { clientSearch } from './search-client.js';
         import {
             collection, getDocs, query, doc, getDoc, setDoc
         } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -1123,8 +1124,7 @@
         async function runPickerSearch(q) {
             pickerBody.innerHTML = '<div class="picker-spinner"></div>';
             try {
-                const res  = await fetch(`/api/search?q=${encodeURIComponent(q)}&source=all`);
-                const data = await res.json();
+                const data = await clientSearch(q, 'all', 20);
                 const results = (data.results || []).slice(0, 20);
                 if (!results.length) {
                     pickerBody.innerHTML = '<p class="picker-hint">No results found.</p>';
