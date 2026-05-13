@@ -253,6 +253,30 @@
 
         .popup-back:hover { color: #9aa0ad; }
 
+        /* Create new list row inside popup */
+        .popup-create-divider {
+            height: 1px; background: rgba(255,255,255,0.06); margin: 4px 16px;
+        }
+        .popup-create-row {
+            display: flex; gap: 6px; padding: 8px 10px 10px;
+        }
+        .popup-create-input {
+            flex: 1; padding: 8px 10px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04); color: #c0c8d8;
+            font-size: 12px; font-family: inherit; outline: none;
+        }
+        .popup-create-input:focus { border-color: rgba(59,125,243,0.5); }
+        .popup-create-input::placeholder { color: #404558; }
+        .popup-create-btn {
+            padding: 8px 12px; border-radius: 8px; border: none;
+            background: #3b7df3; color: #fff; font-size: 12px;
+            font-weight: 700; font-family: inherit; cursor: pointer;
+            white-space: nowrap; transition: background 0.15s;
+        }
+        .popup-create-btn:hover { background: #5a93f7; }
+        .popup-create-btn:disabled { opacity: 0.5; cursor: default; }
+
         .toast {
             position: fixed; bottom: 28px; left: 50%;
             transform: translateX(-50%) translateY(20px);
@@ -403,7 +427,7 @@
 <script type="module">
     import { onAuthStateChange, signOutUser, auth, getBooks, addBook, db } from './firebase.js';
     import { clientSearch } from './search-client.js';
-    import { collection, getDocs, doc, updateDoc, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    import { collection, getDocs, doc, updateDoc, arrayUnion, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
     const esc     = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const escAttr = s => (s||'').replace(/'/g,'&#39;');
@@ -515,7 +539,7 @@
         if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
         if (top + 300 > window.innerHeight) top = rect.top - 8 - Math.min(300, top + 300 - window.innerHeight);
         popup.style.left = `${left}px`;
-        popup.style.top  = `${top + window.scrollY}px`;
+        popup.style.top  = `${top}px`; // position:fixed is viewport-relative — do NOT add scrollY
     }
 
     async function saveBook(book, btn) {
@@ -524,6 +548,9 @@
 
         popupOpen = true;
         popup.style.display = 'block';
+        popup.style.animation = 'none';
+        popup.offsetHeight; // force reflow so animation replays each open
+        popup.style.animation = '';
         positionPopup(btn);
         showMainMenu(book, btn, user);
     }
@@ -607,51 +634,94 @@
 
         popup.querySelector('#popup-back').addEventListener('click', () => showMainMenu(book, null, user));
 
-        // Store wrap reference BEFORE any await — popup.innerHTML may change while Firestore fetches
         const wrap = popup.querySelector('#lists-wrap');
 
-        try {
-            const snap  = await getDocs(collection(db, 'users', user.uid, 'lists'));
-            const lists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-            // Guard: user may have closed or navigated the popup during the fetch
-            if (!popup.contains(wrap)) return;
-
-            if (!lists.length) {
-                wrap.innerHTML = `<p class="popup-empty">No lists yet.<br>Create one in My Lists.</p>`;
-                return;
-            }
-
-            wrap.innerHTML = lists.map(l => `
+        // Renders the list items + the always-visible "create new list" row
+        function renderListItems(lists) {
+            const listButtons = lists.map(l => `
                 <button class="popup-list-item" data-id="${esc(l.id)}" data-name="${esc(l.name||'')}">
                     <span class="popup-list-icon">📋</span>
                     <span>${esc(l.name || 'Untitled')}</span>
                 </button>`).join('');
 
+            wrap.innerHTML = `
+                ${listButtons}
+                <div class="popup-create-divider"></div>
+                <div class="popup-create-row">
+                    <input class="popup-create-input" id="new-list-input"
+                        placeholder="New list name…" maxlength="60" autocomplete="off">
+                    <button class="popup-create-btn" id="new-list-btn">Create</button>
+                </div>`;
+
             wrap.querySelectorAll('.popup-list-item').forEach(item => {
                 item.addEventListener('click', async () => {
+                    const origHTML = item.innerHTML;
                     item.textContent = 'Adding…';
                     try {
-                        const bookEntry = {
-                            title:       book.title,
-                            author:      book.author,
-                            externalId:  book.externalId,
-                            source:      book.source,
-                            sourceLabel: book.sourceLabel,
-                            cover:       book.cover || '',
-                        };
                         await updateDoc(doc(db, 'users', user.uid, 'lists', item.dataset.id), {
-                            books: arrayUnion(bookEntry),
+                            books: arrayUnion({
+                                title:       book.title,
+                                author:      book.author,
+                                externalId:  book.externalId,
+                                source:      book.source,
+                                sourceLabel: book.sourceLabel,
+                                cover:       book.cover || '',
+                            }),
                         });
                         showToast(`Added to "${item.dataset.name}"`);
                         closePopup();
                     } catch (err) {
                         console.error('[addToList] failed:', err);
                         showToast('Could not add to list — try again');
-                        item.textContent = item.dataset.name;
+                        item.innerHTML = origHTML;
                     }
                 });
             });
+
+            // Create new list inline
+            const newInput = wrap.querySelector('#new-list-input');
+            const newBtn   = wrap.querySelector('#new-list-btn');
+
+            async function createAndAdd() {
+                const name = newInput.value.trim();
+                if (!name) { newInput.focus(); return; }
+                newBtn.disabled    = true;
+                newBtn.textContent = '…';
+                try {
+                    const ref = await addDoc(collection(db, 'users', user.uid, 'lists'), {
+                        name, description: '', books: [], createdAt: serverTimestamp(),
+                    });
+                    await updateDoc(doc(db, 'users', user.uid, 'lists', ref.id), {
+                        books: arrayUnion({
+                            title:       book.title,
+                            author:      book.author,
+                            externalId:  book.externalId,
+                            source:      book.source,
+                            sourceLabel: book.sourceLabel,
+                            cover:       book.cover || '',
+                        }),
+                    });
+                    showToast(`Created "${name}" and added book`);
+                    closePopup();
+                } catch (err) {
+                    console.error('[createAndAdd] failed:', err);
+                    showToast('Could not create list — try again');
+                    newBtn.disabled    = false;
+                    newBtn.textContent = 'Create';
+                }
+            }
+
+            newBtn.addEventListener('click', createAndAdd);
+            newInput.addEventListener('keydown', e => { if (e.key === 'Enter') createAndAdd(); });
+        }
+
+        try {
+            const snap  = await getDocs(collection(db, 'users', user.uid, 'lists'));
+            const lists = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+            if (!popup.contains(wrap)) return;
+
+            renderListItems(lists);
         } catch (err) {
             console.error('[showListMenu] Firestore fetch failed:', err);
             if (popup.contains(wrap)) {
@@ -768,6 +838,7 @@
         try { await signOutUser(); window.location.href = 'login.html'; } catch (err) { alert(err.message); }
     });
 
+    let dashboardLoaded = false;
     onAuthStateChange(user => {
         if (!user) { window.location.href = 'login.html'; return; }
         const avatarEl     = document.getElementById('user-avatar');
@@ -786,9 +857,9 @@
         document.getElementById('menu-display-name').textContent = localStorage.getItem(`ps_username_${user.uid}`) || user.displayName || 'Reader';
         document.getElementById('menu-email').textContent = user.email || '';
         loadContinueReading(user.uid);
+        // Load dashboard only once — auth state can fire multiple times
+        if (!dashboardLoaded) { dashboardLoaded = true; loadDashboard(); }
     });
-
-    loadDashboard();
 
     // ── See more links ─────────────────────────────────────────────
     document.querySelectorAll('[data-prefill]').forEach(link => {
