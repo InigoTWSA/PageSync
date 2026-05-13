@@ -833,14 +833,14 @@
             color: rgba(255,255,255,0.18);
         }
 
-        /* Progress bar at bottom */
+        /* Progress bar — vertical, left edge */
         #snap-progress {
             position: fixed;
-            bottom: 0; left: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--blue), var(--purple));
+            top: 0; left: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--blue), var(--purple));
             z-index: 60;
-            transition: width 0.5s cubic-bezier(0.16,1,0.3,1);
+            transition: height 0.5s cubic-bezier(0.16,1,0.3,1);
         }
 
         /* Remove old reveal class behaviour inside snap */
@@ -905,7 +905,7 @@
     </nav>
 
     <!-- Progress bar -->
-    <div id="snap-progress" style="width:20%"></div>
+    <div id="snap-progress" style="height:20%"></div>
 
     <!-- ════════ SNAP WRAPPER ════════ -->
     <div class="snap-wrap">
@@ -1074,9 +1074,9 @@
             current = idx;
             setActive(idx);
             accDelta = 0;
-            // Update progress bar
+            // Update progress bar (vertical — left edge)
             const prog = document.getElementById('snap-progress');
-            if (prog) prog.style.width = ((idx + 1) / sections.length * 100) + '%';
+            if (prog) prog.style.height = ((idx + 1) / sections.length * 100) + '%';
             // Show/hide footer on last section
             const footer = document.getElementById('snap-footer');
             if (footer) footer.classList.toggle('footer-visible', idx === sections.length - 1);
