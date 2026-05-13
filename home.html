@@ -601,9 +601,10 @@
             if (!statusSelect || !saveBtn) return;
             const status = statusSelect.value;
             saveBtn.textContent = 'Saving…'; saveBtn.disabled = true;
-            // Close popup immediately — don't make the user wait for the Firestore write
             if (btn) { btn.textContent = '✓'; btn.classList.add('added'); }
             closePopup();
+            // Reset button back to + after 2s regardless of save outcome
+            if (btn) setTimeout(() => { btn.textContent = '+'; btn.classList.remove('added'); }, 2000);
             try {
                 await addBook(user.uid, {
                     title:       book.title,
@@ -619,7 +620,6 @@
                 showToast(`"${book.title}" added to bookmarks`);
             } catch (err) {
                 console.error('[addBook] save failed:', err);
-                if (btn) { btn.textContent = '+'; btn.classList.remove('added'); }
                 showToast('Could not save — try again');
             }
         });
