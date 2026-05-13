@@ -265,6 +265,17 @@
             border-color: rgba(59,125,243,0.4);
             color: #7aabff;
         }
+        /* 18+ chip — red accent */
+        .fp-chip.age-gate {
+            border-color: rgba(220,60,60,0.3);
+            color: #c07070;
+        }
+        .fp-chip.age-gate.active {
+            background: rgba(220,60,60,0.18);
+            border-color: rgba(220,60,60,0.5);
+            color: #f08080;
+        }
+
         /* Genre chips — cycle include → exclude → off */
         .fp-chip[data-state="include"] {
             background: rgba(59,125,243,0.18);
@@ -764,6 +775,13 @@
         </div>
 
         <div class="fp-body">
+            <!-- 18+ toggle -->
+            <div>
+                <div class="fp-chips">
+                    <button class="fp-chip age-gate" data-filter="adult" data-group="adult">18+</button>
+                </div>
+            </div>
+
             <!-- Type -->
             <div>
                 <div class="fp-section-label">Type</div>
@@ -880,7 +898,7 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-    import { onAuthStateChange, signOutUser, auth, addBook, db } from './firebase.js';
+    import { onAuthStateChange, signOutUser, auth, addBook, getBooks, deleteBook, db } from './firebase.js';
     import { clientSearch } from './search-client.js';
     import { collection, getDocs, doc, updateDoc, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
@@ -978,11 +996,33 @@
 
         grid.querySelectorAll('.pop-card').forEach(card => {
             const book = JSON.parse(card.dataset.book);
-            card.querySelector('.pop-add-btn').addEventListener('click', e => {
+            const addBtn = card.querySelector('.pop-add-btn');
+            // Reflect existing bookmark state visually
+            if (bookmarkedIds.has(String(book.externalId))) {
+                addBtn.textContent = '✓';
+                addBtn.classList.add('added');
+            }
+            addBtn.addEventListener('click', e => {
                 e.preventDefault(); e.stopPropagation();
                 openAddPopup(book, e.currentTarget);
             });
         });
+    }
+
+    // ── Bookmark state ─────────────────────────────────────────────
+    // Maps externalId → Firestore docId so we can delete without re-fetching
+    const bookmarkedIds = new Map();
+
+    async function loadBookmarkedIds(uid) {
+        try {
+            const books = await getBooks(uid);
+            bookmarkedIds.clear();
+            books.forEach(b => {
+                if (b.externalId) bookmarkedIds.set(String(b.externalId), b.id);
+            });
+        } catch (err) {
+            console.warn('[popular] could not load bookmarks:', err.message);
+        }
     }
 
     // ── Data ───────────────────────────────────────────────────────
@@ -1061,7 +1101,46 @@
         popupOpen = true;
         popup.style.display = 'block';
         positionPopup(btn);
-        showMainMenu(book, btn, user);
+
+        const alreadyBookmarked = bookmarkedIds.has(String(book.externalId));
+        if (alreadyBookmarked) {
+            showRemoveMenu(book, btn, user);
+        } else {
+            showMainMenu(book, btn, user);
+        }
+    }
+
+    function showRemoveMenu(book, btn, user) {
+        popup.innerHTML = `
+            <div class="add-popup-title" style="color:#e08080">Already in Bookmarks</div>
+            <div class="add-popup-divider"></div>
+            <div style="padding:14px 16px 6px;font-size:13px;color:#9aa0ad;line-height:1.5">
+                Remove <strong style="color:#e0e5f0">"${esc(book.title?.slice(0,28) || 'this book')}"</strong> from your bookmarks?
+            </div>
+            <div style="display:flex;gap:8px;padding:8px 16px 14px">
+                <button id="popup-cancel" style="flex:1;padding:9px;border-radius:10px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.04);color:#8f97a5;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cancel</button>
+                <button id="popup-remove" style="flex:2;padding:9px;border-radius:10px;border:none;background:rgba(220,60,60,0.18);color:#f08080;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:1px solid rgba(220,60,60,0.3)">Remove from Bookmarks</button>
+            </div>`;
+
+        popup.querySelector('#popup-cancel').addEventListener('click', closePopup);
+        popup.querySelector('#popup-remove').addEventListener('click', async () => {
+            const removeBtn = popup.querySelector('#popup-remove');
+            removeBtn.textContent = 'Removing…';
+            removeBtn.disabled    = true;
+            try {
+                const docId = bookmarkedIds.get(String(book.externalId));
+                await deleteBook(user.uid, docId);
+                bookmarkedIds.delete(String(book.externalId));
+                // Reset the card button back to +
+                if (btn) { btn.textContent = '+'; btn.classList.remove('added'); }
+                showToast(`"${book.title}" removed from bookmarks`);
+                closePopup();
+            } catch {
+                removeBtn.textContent = 'Remove from Bookmarks';
+                removeBtn.disabled    = false;
+                showToast('Could not remove — try again');
+            }
+        });
     }
 
     function showMainMenu(book, btn, user) {
@@ -1112,6 +1191,8 @@
                     sourceLabel: book.sourceLabel, coverUrl: book.cover || '',
                     rating: book.rating || null, year: book.year || null,
                 });
+                // Refresh bookmarked map so the button reflects the new state immediately
+                await loadBookmarkedIds(user.uid);
                 btn.textContent = '✓'; btn.classList.add('added');
                 showToast(`"${book.title}" added to bookmarks`);
                 closePopup();
@@ -1172,6 +1253,8 @@
 
     onAuthStateChange(user => {
         if (!user) { window.location.href = 'login.html'; return; }
+        // Pre-load the user's bookmarks so we can detect duplicates immediately
+        loadBookmarkedIds(user.uid);
         const avatarEl     = document.getElementById('user-avatar');
         const menuAvatarEl = document.getElementById('menu-avatar-display');
         const photo        = localStorage.getItem(`ps_avatar_${user.uid}`);
@@ -1298,6 +1381,7 @@
 
     // Active filter state
     const activeFilters = {
+        adult:  false,
         type:   new Set(),
         status: new Set(),
         demo:   new Set(),
@@ -1325,7 +1409,8 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFilterPanel(); });
 
     function countActiveFilters() {
-        return activeFilters.type.size +
+        return (activeFilters.adult ? 1 : 0) +
+               activeFilters.type.size +
                activeFilters.status.size +
                activeFilters.demo.size +
                activeFilters.genre.size +
@@ -1359,14 +1444,19 @@
         filterBtn.onclick = openFilterPanel;
     }
 
-    // Regular chips (type, status, demo) — toggle active
+    // Regular chips (type, status, demo, adult) — toggle active
     document.querySelectorAll('.fp-chip:not([data-state])').forEach(chip => {
         chip.addEventListener('click', () => {
             const group  = chip.dataset.group;
             const filter = chip.dataset.filter;
-            const set = activeFilters[group];
-            if (set.has(filter)) { set.delete(filter); chip.classList.remove('active'); }
-            else                 { set.add(filter);    chip.classList.add('active'); }
+            if (group === 'adult') {
+                activeFilters.adult = !activeFilters.adult;
+                chip.classList.toggle('active', activeFilters.adult);
+            } else {
+                const set = activeFilters[group];
+                if (set.has(filter)) { set.delete(filter); chip.classList.remove('active'); }
+                else                 { set.add(filter);    chip.classList.add('active'); }
+            }
             updateFilterBadge();
         });
     });
@@ -1400,6 +1490,7 @@
 
     // Reset
     fpReset.addEventListener('click', () => {
+        activeFilters.adult = false;
         activeFilters.type.clear();
         activeFilters.status.clear();
         activeFilters.demo.clear();
@@ -1432,79 +1523,16 @@
 
     function applyFilters(items) {
         return items.filter(b => {
-            // ── Year range ─────────────────────────────────────────
-            const itemYear = b.year ? Number(b.year) : null;
-            if (activeFilters.yearFrom && itemYear && itemYear < Number(activeFilters.yearFrom)) return false;
-            if (activeFilters.yearTo   && itemYear && itemYear > Number(activeFilters.yearTo))   return false;
+            // Year range
+            if (activeFilters.yearFrom && b.year && Number(b.year) < Number(activeFilters.yearFrom)) return false;
+            if (activeFilters.yearTo   && b.year && Number(b.year) > Number(activeFilters.yearTo))   return false;
 
-            // ── Min chapters ───────────────────────────────────────
-            if (activeFilters.minChapters) {
-                const chCount = Number(b.chapters) || 0;
-                if (chCount < Number(activeFilters.minChapters)) return false;
-            }
-
-            // ── Type (Manga / Manhwa / Manhua / Other) ─────────────
-            // sourceLabel from Jikan/MangaDex is 'Manga', 'Manhwa', 'Manhua', 'Novel', etc.
-            if (activeFilters.type.size > 0) {
-                const label = (b.sourceLabel || '').toLowerCase();
-                // 'other' matches anything that isn't manga/manhwa/manhua
-                const isOther = !['manga','manhwa','manhua'].includes(label);
-                const matched = [...activeFilters.type].some(t => {
-                    if (t === 'other') return isOther;
-                    return label === t;
-                });
-                if (!matched) return false;
-            }
-
-            // ── Status ─────────────────────────────────────────────
-            // Jikan returns: 'Publishing', 'Finished', 'On Hiatus', 'Discontinued'
-            // MangaDex returns: 'ongoing', 'completed', 'hiatus', 'cancelled'
-            if (activeFilters.status.size > 0) {
-                const rawStatus = (b.status || '').toLowerCase();
-                const statusMap = {
-                    'ongoing':       ['ongoing', 'publishing', 'currently publishing'],
-                    'completed':     ['completed', 'finished', 'finished airing'],
-                    'on-hiatus':     ['on hiatus', 'hiatus', 'on_hiatus'],
-                    'discontinued':  ['discontinued', 'cancelled', 'canceled'],
-                };
-                const matched = [...activeFilters.status].some(s => {
-                    const aliases = statusMap[s] || [s];
-                    return aliases.some(alias => rawStatus.includes(alias));
-                });
-                if (!matched) return false;
-            }
-
-            // ── Demographic (Shounen / Seinen / Shoujo / Josei) ────
-            // Jikan returns demographics as a separate array; MangaDex puts them in tags.
-            // We check genres[], themes[], subjects[], and sourceLabel together.
-            if (activeFilters.demo.size > 0) {
-                const allTags = [
-                    ...(b.genres   || []),
-                    ...(b.themes   || []),
-                    ...(b.subjects || []),
-                ].map(t => t.toLowerCase());
-                const matched = [...activeFilters.demo].some(d => allTags.some(t => t.includes(d)));
-                if (!matched) return false;
-            }
-
-            // ── Genres (include / exclude) ─────────────────────────
-            // genres[] and themes[] from Jikan/MangaDex are well-structured arrays.
-            // We also fall back to subjects[] and description for book sources.
-            if (activeFilters.genre.size > 0) {
-                const allTags = [
-                    ...(b.genres   || []),
-                    ...(b.themes   || []),
-                    ...(b.subjects || []),
-                    b.description || '',
-                ].join(' ').toLowerCase();
-
-                for (const [genre, state] of activeFilters.genre) {
-                    // Convert chip filter value to search-friendly string (e.g. 'slice-of-life' → 'slice of life')
-                    const needle  = genre.replace(/-/g, ' ');
-                    const matches = allTags.includes(needle);
-                    if (state === 'include' && !matches) return false;
-                    if (state === 'exclude' &&  matches) return false;
-                }
+            // Genre includes/excludes — match against title/sourceLabel loosely
+            for (const [genre, state] of activeFilters.genre) {
+                const haystack = (b.title + ' ' + (b.sourceLabel||'')).toLowerCase();
+                const matches  = haystack.includes(genre.replace(/-/g, ' '));
+                if (state === 'include' && !matches) return false;
+                if (state === 'exclude' &&  matches) return false;
             }
 
             return true;
