@@ -966,63 +966,91 @@
     </script>
 
     <script>
-    // Scrolling book-cover belt — uses Open Library & MangaDex cover CDNs
+    // Scrolling book-cover belt — fetches real covers from MangaDex API + Open Library search
     (function() {
-        // Open Library cover IDs (OLID) for well-known books
-        const olCovers = [
-            'OL7353617M','OL27479W','OL7353617M','OL262584W','OL509183M',
-            'OL7984558M','OL2163649W','OL21586M','OL17860744W','OL24347578M',
-            'OL7353619M','OL7890W','OL24347580M','OL8993458M','OL7316438M',
-            'OL24347582M','OL15548874W','OL7226022M','OL24347574M','OL1428083M',
-            'OL7979038M','OL264801W','OL8406W','OL17861078W','OL7899148M',
-            'OL24952W','OL7984556M','OL17861080W','OL7890031M','OL24347576M',
-        ];
 
-        // MangaDex manga UUIDs with known covers
-        const mdxCovers = [
-            { id: '32d76d19-8a05-4db0-9fc2-e0b0648fe9d0', vol: '1' },
-            { id: 'e78a489b-6632-4d61-b00b-5206f0a2ed86', vol: '1' },
-            { id: 'c52b2ce3-7f95-469c-96b0-479524fb7a1a', vol: '1' },
-            { id: 'a1c7c817-4e59-43b7-9365-09675a149a6f', vol: '1' },
-            { id: '37f5cce0-8070-4ada-96e5-fa24b1bd4ff9', vol: '1' },
-        ];
-
-        function olUrl(olid) {
-            return `https://covers.openlibrary.org/b/olid/${olid}-M.jpg`;
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
         }
 
-        // Build a flat list of cover URLs
-        const covers = [
-            ...olCovers.map(olUrl),
-            ...mdxCovers.map(m =>
-                `https://uploads.mangadex.org/covers/${m.id}/${m.id}.jpg`
-            ),
-        ];
-
-        // Shuffle for variety
-        for (let i = covers.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [covers[i], covers[j]] = [covers[j], covers[i]];
+        function populateBelt(covers) {
+            if (!covers.length) return;
+            shuffle(covers);
+            const chunk = Math.ceil(covers.length / 3);
+            const rows  = [
+                covers.slice(0, chunk),
+                covers.slice(chunk, chunk * 2),
+                covers.slice(chunk * 2),
+            ];
+            ['belt-1', 'belt-2', 'belt-3'].forEach((id, ri) => {
+                const el  = document.getElementById(id);
+                if (!el) return;
+                const set  = rows[ri].length ? rows[ri] : covers.slice(0, 8);
+                // Double for seamless CSS loop
+                const full = [...set, ...set];
+                el.innerHTML = full.map(url =>
+                    `<div class="belt-cover" style="background-image:url('${url}')"></div>`
+                ).join('');
+            });
         }
 
-        // Split into 3 rows then double each for seamless loop
-        const chunk = Math.ceil(covers.length / 3);
-        const rows  = [
-            covers.slice(0, chunk),
-            covers.slice(chunk, chunk * 2),
-            covers.slice(chunk * 2),
-        ];
+        // ── Fetch MangaDex covers via the local proxy ─────────────
+        // Uses three different search terms for variety
+        const mdxQueries = ['action', 'romance', 'fantasy'];
 
-        ['belt-1','belt-2','belt-3'].forEach((id, ri) => {
-            const el   = document.getElementById(id);
-            if (!el) return;
-            const set  = rows[ri].length ? rows[ri] : covers.slice(0, 10);
-            // Double the set so the CSS translateX(-50%) loop is seamless
-            const full = [...set, ...set];
-            el.innerHTML = full.map(url =>
-                `<div class="belt-cover" style="background-image:url('${url}')"></div>`
-            ).join('');
-        });
+        async function fetchMangaDexCovers() {
+            const urls = [];
+            await Promise.allSettled(mdxQueries.map(async q => {
+                try {
+                    const res  = await fetch(`/api/manga/search?q=${encodeURIComponent(q)}&limit=12`);
+                    const data = await res.json();
+                    (data.data || []).forEach(manga => {
+                        const coverRel = manga.relationships?.find(r => r.type === 'cover_art');
+                        if (!coverRel?.attributes?.fileName) return;
+                        urls.push(
+                            `https://uploads.mangadex.org/covers/${manga.id}/${coverRel.attributes.fileName}.256.jpg`
+                        );
+                    });
+                } catch {}
+            }));
+            return urls;
+        }
+
+        // ── Fetch Open Library covers via their search API ────────
+        const olQueries = ['fantasy novel', 'romance fiction', 'thriller mystery'];
+
+        async function fetchOpenLibraryCovers() {
+            const urls = [];
+            await Promise.allSettled(olQueries.map(async q => {
+                try {
+                    const res  = await fetch(
+                        `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=12&fields=cover_i`
+                    );
+                    const data = await res.json();
+                    (data.docs || []).forEach(doc => {
+                        if (doc.cover_i) {
+                            urls.push(`https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`);
+                        }
+                    });
+                } catch {}
+            }));
+            return urls;
+        }
+
+        // Fetch both in parallel, merge, then populate
+        Promise.allSettled([fetchMangaDexCovers(), fetchOpenLibraryCovers()])
+            .then(([mdx, ol]) => {
+                const all = [
+                    ...(mdx.status === 'fulfilled' ? mdx.value : []),
+                    ...(ol.status  === 'fulfilled' ? ol.value  : []),
+                ];
+                if (all.length >= 6) populateBelt(all);
+            });
+
     })();
     </script>
 </body>
