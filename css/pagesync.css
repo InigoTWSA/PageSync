@@ -229,20 +229,24 @@ body.dashboard {
 .page-shell {
     max-width: 1440px;
     margin: 0 auto;
-    padding: 28px 24px 60px;
+    padding: 28px 24px 80px;
 }
 
-@media (max-width: 600px) {
-    .page-shell { padding: 20px 14px 60px; }
+@media (max-width: 768px) {
+    .page-shell { padding: 20px 16px 80px; }
+}
+
+@media (max-width: 480px) {
+    .page-shell { padding: 16px 12px 80px; }
 }
 
 .topbar {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
+    gap: 10px;
+    padding: 12px 20px;
     position: sticky;
     top: 0;
     z-index: 20;
@@ -253,7 +257,7 @@ body.dashboard {
 }
 
 @media (max-width: 600px) {
-    .topbar { padding: 12px 16px; gap: 8px; }
+    .topbar { padding: 10px 14px; gap: 8px; }
 }
 
 .brand {
@@ -278,9 +282,12 @@ body.dashboard {
 }
 
 .search-box {
-    flex: 1 1 260px;
+    flex: 1 1 0;
     min-width: 0;
-    width: 100%;
+}
+
+@media (max-width: 480px) {
+    .search-box { flex: 1 1 0; min-width: 0; }
 }
 
 .search-box input {
@@ -298,19 +305,25 @@ body.dashboard {
 .profile-actions {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
+    flex-shrink: 0;
 }
 
 .avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
     background: #16191f;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #f3f5f9;
     font-weight: 700;
+    flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+    .avatar { width: 36px; height: 36px; border-radius: 10px; font-size: 13px; }
 }
 
 .button.secondary {
@@ -320,9 +333,9 @@ body.dashboard {
 }
 
 .menu-button {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.08);
     background: #101318;
     color: #e6e7e8;
@@ -331,6 +344,13 @@ body.dashboard {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 480px) {
+    .menu-button { width: 38px; height: 38px; border-radius: 10px; font-size: 16px; }
 }
 
 .menu-layer {
@@ -501,7 +521,8 @@ body.dashboard {
     .continue-title { font-size: 12px; }
 }
 
-@media (max-width: 720px) {
+/* ── Tablet/mobile layout consolidation ──────────────────────────────────── */
+@media (max-width: 768px) {
     .topbar { flex-direction: row; align-items: center; flex-wrap: nowrap; }
     .section-scroll { grid-auto-columns: minmax(155px, 200px); }
     .split-grid { grid-template-columns: 1fr; gap: 16px; }
@@ -644,10 +665,9 @@ body.dashboard {
     .section-scroll { grid-auto-columns: minmax(180px, 1fr); }
 }
 
-@media (max-width: 720px) {
-    .topbar { flex-direction: row; align-items: center; }
+@media (max-width: 768px) {
+    .split-grid { grid-template-columns: 1fr; gap: 16px; }
     .section-scroll { grid-auto-columns: minmax(155px, 200px); }
-    .split-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
@@ -658,20 +678,26 @@ body.dashboard {
 .search-trigger {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
     background: #101318;
     border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    padding: 13px 18px;
+    border-radius: 12px;
+    padding: 11px 14px;
     color: #7f8490;
-    font-size: 15px;
+    font-size: 14px;
     cursor: pointer;
     text-align: left;
     transition: border-color 0.2s, background 0.2s;
-    min-height: 48px;
+    min-height: 44px;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
+}
+
+@media (max-width: 480px) {
+    .search-trigger { padding: 10px 12px; font-size: 13px; border-radius: 10px; gap: 6px; }
+    .search-placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 
 .search-trigger:hover {
@@ -1089,7 +1115,46 @@ body.dashboard {
     .result-title { font-size: 14px; }
 }
 
-/* ── Global mobile fixes ─────────────────────────────────────────────────── */
+/* ── Book hero responsive ────────────────────────────────────────────────── */
+
+/* Tablet — compress padding */
+@media (max-width: 768px) {
+    /* Targets .hero-content inside book.html */
+    .hero-content {
+        gap: 24px;
+        padding: 32px 24px 28px;
+    }
+    .book-poster {
+        width: 130px;
+        min-width: 130px;
+        height: 196px;
+    }
+}
+
+/* Mobile — stack poster above text */
+@media (max-width: 560px) {
+    .hero-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 24px 18px 22px;
+    }
+    .book-poster {
+        width: 110px;
+        min-width: 110px;
+        height: 165px;
+        border-radius: 14px;
+    }
+    .hero-title { font-size: clamp(20px, 5.5vw, 28px); }
+    .hero-actions { gap: 8px; }
+    .btn-primary, .btn-secondary { padding: 12px 18px; font-size: 14px; }
+    .book-body { padding: 28px 18px 0; }
+}
+
+@media (max-width: 400px) {
+    .hero-actions { flex-direction: column; }
+    .btn-primary, .btn-secondary, .status-select { width: 100%; justify-content: center; }
+}
 
 /* Prevent text inflation on mobile */
 * { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -1111,17 +1176,17 @@ html { scroll-behavior: smooth; }
     body:not(.dashboard) {
         padding: 12px;
         align-items: flex-start;
-        padding-top: 24px;
+        padding-top: max(env(safe-area-inset-top), 20px);
     }
 
     .card {
-        padding: 24px 16px;
+        padding: 24px 16px 28px;
         border-radius: 18px;
     }
 
     .field input {
         padding: 13px 14px;
-        font-size: 16px;
+        font-size: 16px; /* must stay 16px to prevent iOS zoom */
         border-radius: 12px;
     }
 
@@ -1135,6 +1200,7 @@ html { scroll-behavior: smooth; }
         padding: 12px 16px;
         font-size: 14px;
         border-radius: 12px;
+        gap: 10px;
     }
 
     .secondary-link {
@@ -1155,7 +1221,7 @@ html { scroll-behavior: smooth; }
     .book-meta  { font-size: 12px; }
 
     /* Menu card full width on mobile */
-    .menu-card { border-radius: 20px; }
+    .menu-card { border-radius: 20px; width: 100%; max-width: 100%; }
     .menu-item, .menu-signout { padding: 16px 20px; font-size: 14px; }
     .menu-header { padding: 18px 20px; }
 
@@ -1167,7 +1233,89 @@ html { scroll-behavior: smooth; }
     .continue-title { font-size: 13px; }
 }
 
-/* ── Password wrapper mobile ─────────────────────────────────────────────── */
+/* Toast — account for mobile safe area at bottom */
+@media (max-width: 600px) {
+    .toast {
+        bottom: max(20px, env(safe-area-inset-bottom));
+        left: 16px;
+        right: 16px;
+        text-align: center;
+        white-space: normal;
+        font-size: 13px;
+    }
+}
+
+/* ── Inner-page topbars (bookmarks, lists, settings, profile) ─────────────── */
+@media (max-width: 600px) {
+    /* These pages define their own topbar classes; tighten padding universally */
+    .bookmarks-topbar,
+    .lists-topbar,
+    .settings-topbar,
+    .profile-topbar,
+    .book-topbar {
+        padding: 12px 16px;
+    }
+
+    /* Inner page shells */
+    .bookmarks-shell,
+    .lists-shell,
+    .settings-shell,
+    .profile-shell,
+    .book-shell {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .bookmarks-topbar,
+    .lists-topbar,
+    .settings-topbar,
+    .profile-topbar,
+    .book-topbar {
+        padding: 10px 14px;
+    }
+
+    .bookmarks-shell,
+    .lists-shell,
+    .settings-shell,
+    .profile-shell,
+    .book-shell {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 20px;
+    }
+}
+
+/* ── Page header (title + action button) on narrow screens ───────────────── */
+@media (max-width: 500px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .page-title-group h1 { font-size: 24px; }
+    /* Make create/action buttons full-width */
+    .create-btn, .sort-select { width: 100%; justify-content: center; }
+}
+
+/* ── Settings shell padding on tablet ───────────────────────────────────── */
+@media (max-width: 768px) {
+    .settings-shell  { padding: 28px 20px 80px; }
+    .bookmarks-shell { padding: 28px 20px 80px; }
+    .lists-shell     { padding: 28px 20px 80px; }
+}
+
+/* ── Profile banner height on mobile ────────────────────────────────────── */
+@media (max-width: 480px) {
+    .profile-banner { height: 150px; }
+    .profile-card   { padding: 0 16px 24px; }
+    .profile-avatar { width: 72px; height: 72px; border-radius: 18px; font-size: 22px; }
+    .profile-avatar-wrap { margin-top: -36px; }
+    .profile-names h1 { font-size: 18px; }
+    .edit-profile-btn { padding: 9px 16px; font-size: 13px; }
+}
 .password-wrapper { position: relative; }
 
 .password-toggle {
@@ -1188,7 +1336,55 @@ html { scroll-behavior: smooth; }
     min-height: 36px;
 }
 
-/* ── Card source badges ──────────────────────────────────────────────────── */
+/* ── Safe-area insets (notch / home bar) ─────────────────────────────────── */
+.topbar,
+.bookmarks-topbar,
+.lists-topbar,
+.settings-topbar,
+.profile-topbar,
+.book-topbar {
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+}
+
+@media (max-width: 600px) {
+    .topbar,
+    .bookmarks-topbar,
+    .lists-topbar,
+    .settings-topbar,
+    .profile-topbar,
+    .book-topbar {
+        padding-left: max(14px, env(safe-area-inset-left));
+        padding-right: max(14px, env(safe-area-inset-right));
+    }
+}
+
+/* ── Search modal — tablet improvements ──────────────────────────────────── */
+@media (min-width: 601px) and (max-width: 900px) {
+    .search-layer { padding: 40px 24px 20px; }
+    .search-modal { border-radius: 20px; }
+    .search-modal-body { max-height: 58vh; }
+}
+
+/* ── Card source badge — prevent overflow on very small cards ─────────────── */
+@media (max-width: 380px) {
+    .card-source-badge { font-size: 9px; padding: 2px 6px; }
+    .book-cover { min-height: 145px; }
+    .section-scroll { grid-auto-columns: minmax(130px, 170px); gap: 8px; }
+}
+
+/* ── Add popup — full-width bottom sheet on mobile ───────────────────────── */
+@media (max-width: 480px) {
+    .add-popup {
+        position: fixed !important;
+        left: 12px !important;
+        right: 12px !important;
+        bottom: max(16px, env(safe-area-inset-bottom)) !important;
+        top: auto !important;
+        width: auto !important;
+        border-radius: 20px;
+    }
+}
 .card-source-badge {
     display: inline-block;
     font-size: 10px;
