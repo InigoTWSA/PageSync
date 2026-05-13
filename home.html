@@ -351,7 +351,7 @@
     </div>
 
     <!-- SECTIONS -->
-    <section class="section" id="continue-reading-section">
+    <section class="section" id="continue-reading-section" style="display:none">
         <div class="section-header"><h2>Continue Reading</h2><a href="bookmarks.html">See all</a></div>
         <div class="continue-grid" id="continue-grid"></div>
     </section>
@@ -643,35 +643,46 @@
 
     // ── Continue Reading ───────────────────────────────────────────
     async function loadContinueReading(uid) {
-        const grid = document.getElementById('continue-grid');
+        const grid    = document.getElementById('continue-grid');
         const section = document.getElementById('continue-reading-section');
-        grid.innerHTML = skelContinue(3);
+
+        // Hide immediately — only reveal once we know there's something to show
+        if (section) section.style.display = 'none';
 
         let books = [];
         try { books = await getBooks(uid); } catch {}
 
-        // Only show books the user has actually saved and is reading
-        const reading = books.filter(b => b.status === 'reading');
-
-        if (!reading.length) {
-            // Hide the whole section if nothing is being read
-            if (section) section.style.display = 'none';
-            return;
+        // Show "reading" first, then fall back to any recently added book
+        let candidates = books.filter(b => b.status === 'reading');
+        if (!candidates.length) {
+            // Show up to 3 most-recently-added books of any status as fallback
+            candidates = [...books]
+                .sort((a, b) => {
+                    const ta = a.addedAt?.toMillis ? a.addedAt.toMillis() : new Date(a.addedAt || 0).getTime();
+                    const tb = b.addedAt?.toMillis ? b.addedAt.toMillis() : new Date(b.addedAt || 0).getTime();
+                    return tb - ta;
+                })
+                .slice(0, 3);
         }
+
+        if (!candidates.length) return; // nothing saved at all — keep section hidden
 
         if (section) section.style.display = '';
 
-        const sorted = reading.slice(0, 3);
+        const sorted = candidates.slice(0, 3);
 
         grid.innerHTML = sorted.map((b, i) => {
             const url      = b.coverUrl || b.cover || '';
             const hasCover = !!url;
             const thumbStyle = hasCover ? `background-image:url('${esc(url)}');background-size:cover;background-position:center;` : '';
+            const statusLabel = b.status === 'reading' ? 'Reading' :
+                                b.status === 'completed' ? 'Completed' :
+                                b.status === 'planned'   ? 'Plan to Read' : 'In Library';
             return `
             <a class="continue-card ${hasCover ? '' : BG(i)}" href="${bookUrl(b)}" style="text-decoration:none;color:inherit;">
                 <div class="continue-thumb ${hasCover ? '' : BG(i)}" style="${thumbStyle}"></div>
                 <div class="continue-details">
-                    <span class="book-tag">${esc(b.sourceLabel || b.source || 'Book')} · Reading</span>
+                    <span class="book-tag">${esc(b.sourceLabel || b.source || 'Book')} · ${statusLabel}</span>
                     <h3>${esc(b.title||'Unknown')}</h3>
                     <p class="continue-title">${esc(b.author||'')}</p>
                     ${b.addedAt ? `<p class="book-meta">${relTime(b.addedAt)}</p>` : ''}
@@ -695,20 +706,31 @@
         ['section-manga','section-books','section-classics','section-romance','section-fantasy']
             .forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = skelCards(8); });
 
-        const [manga, books, classics, romance, fantasy] = await Promise.allSettled([
-            clientSearch('shounen', 'manga',    8),
-            clientSearch('bestselling fiction',     'books',    8),
-            clientSearch('classic literature',      'classics', 8),
-            clientSearch('romance', 'manga',    8),
-            clientSearch('fantasy adventure novel', 'books',    8),
-        ]);
+        // Stagger requests to avoid hammering Gemini all at once (429 rate limit).
+        // Dashboard queries have fixed sources so we use the source param directly —
+        // Gemini NLP is only needed for freeform user searches.
+        const delay = ms => new Promise(r => setTimeout(r, ms));
 
-        const val = r => r.status === 'fulfilled' ? r.value.results : [];
-        renderSection('section-manga',    val(manga));
-        renderSection('section-books',    val(books));
-        renderSection('section-classics', val(classics));
-        renderSection('section-romance',  val(romance));
-        renderSection('section-fantasy',  val(fantasy));
+        const [manga, books] = await Promise.allSettled([
+            clientSearch('shounen',              'manga',    8),
+            clientSearch('bestselling fiction',  'books',    8),
+        ]);
+        renderSection('section-manga', manga.status === 'fulfilled' ? manga.value.results : []);
+        renderSection('section-books', books.status === 'fulfilled' ? books.value.results : []);
+
+        await delay(300);
+
+        const [classics, romance] = await Promise.allSettled([
+            clientSearch('classic literature', 'classics', 8),
+            clientSearch('romance',            'manga',    8),
+        ]);
+        renderSection('section-classics', classics.status === 'fulfilled' ? classics.value.results : []);
+        renderSection('section-romance',  romance.status  === 'fulfilled' ? romance.value.results  : []);
+
+        await delay(300);
+
+        const fantasy = await clientSearch('fantasy adventure novel', 'books', 8).catch(() => ({ results: [] }));
+        renderSection('section-fantasy', fantasy.results);
     }
 
     // ── Auth ───────────────────────────────────────────────────────

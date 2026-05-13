@@ -312,9 +312,10 @@ async function searchOpenLibrary(keywords, limit = 12) {
 
 // ─── Gutenberg search ─────────────────────────────────────────────────────────
 async function searchGutenbergRest(keywords, limit = 12) {
-  const url  = `https://gutendex.com/books/?search=${encodeURIComponent(keywords)}&mime_type=image%2F`;
+  // No mime_type filter — filtering to image/* cuts results to ~3, not enough to fill a row
+  const url  = `https://gutendex.com/books/?search=${encodeURIComponent(keywords)}&page_size=${Math.min(limit + 4, 32)}`;
   const data = await fetch(url).then(r => r.json());
-  return (data.results || []).map((b, i) => ({
+  return (data.results || []).slice(0, limit).map((b, i) => ({
     id:          `gutenberg-${b.id || i}`,
     externalId:  String(b.id || i),
     source:      'gutenberg',
@@ -564,54 +565,14 @@ async function fetchJikanDetail(malId) {
     let mdxCover    = null;
 
     try {
-      // Use server-side proxy (direct MDX calls are CORS-blocked in the browser)
       const mdxSearch = await fetch(
-        `/api/manga/search?q=${encodeURIComponent(title)}&limit=10`,
+        `https://api.mangadex.org/manga?title=${encodeURIComponent(title)}&limit=5` +
+        `&contentRating[]=safe&contentRating[]=suggestive` +
+        `&includes[]=cover_art&availableTranslatedLanguage[]=en`,
         { signal: AbortSignal.timeout(6000) }
       );
       const mdxData = await mdxSearch.json();
-
-      // Score candidates — never blindly take [0], find the real title match
-      const normalize = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const targets = [
-        normalize(title),
-        normalize(m.title),
-        normalize(m.title_english),
-        normalize(m.title_japanese),
-      ].filter(Boolean);
-
-      const year = m.published?.prop?.from?.year || null;
-
-      function scoreCandidate(candidate) {
-        const attrs = candidate.attributes || {};
-        const mdxTitles = [
-          attrs.title?.en,
-          attrs.title?.ja,
-          attrs.title?.['ja-ro'],
-          ...(attrs.altTitles || []).flatMap(t => Object.values(t)),
-        ].filter(Boolean).map(normalize);
-
-        let score = 0;
-        for (const target of targets) {
-          for (const mdxTitle of mdxTitles) {
-            if (mdxTitle === target)                              { score = Math.max(score, 100); }
-            else if (mdxTitle.startsWith(target) ||
-                     target.startsWith(mdxTitle))                { score = Math.max(score, 50);  }
-            else if (mdxTitle.includes(target) ||
-                     target.includes(mdxTitle))                  { score = Math.max(score, 20);  }
-          }
-        }
-        // Year match bonus
-        if (year && attrs.year && Number(attrs.year) === Number(year)) score += 10;
-        return score;
-      }
-
-      const scored = (mdxData.data || [])
-        .map(c => ({ c, s: scoreCandidate(c) }))
-        .filter(x => x.s > 0)
-        .sort((a, b) => b.s - a.s);
-
-      const match = scored[0]?.c || null;
+      const match   = (mdxData.data || [])[0];
 
       if (match) {
         mangadexId = match.id;
@@ -619,10 +580,14 @@ async function fetchJikanDetail(malId) {
         const coverFile = coverRel?.attributes?.fileName;
         if (coverFile) mdxCover = `https://uploads.mangadex.org/covers/${match.id}/${coverFile}.512.jpg`;
 
-        // Use server-side proxy for chapters too
-        const chRes  = await fetch(`/api/manga/chapters?id=${match.id}`, { signal: AbortSignal.timeout(6000) });
+        const chRes = await fetch(
+          `https://api.mangadex.org/manga/${match.id}/feed` +
+          `?translatedLanguage[]=en&limit=20&order[chapter]=asc` +
+          `&contentRating[]=safe&contentRating[]=suggestive`,
+          { signal: AbortSignal.timeout(6000) }
+        );
         const chData = await chRes.json();
-        chapterList  = (chData.data || []).map(ch => ({
+        chapterList = (chData.data || []).map(ch => ({
           id:      ch.id,
           chapter: ch.attributes?.chapter || '?',
           title:   ch.attributes?.title   || `Chapter ${ch.attributes?.chapter || '?'}`,
