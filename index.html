@@ -471,37 +471,96 @@
         /* ── Stats ───────────────────────────────────────────────── */
         .stats-section { background: var(--bg); }
 
+        .stats-header { margin-bottom: 52px; }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 1px;
-            background: var(--border);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            overflow: hidden;
+            gap: 16px;
         }
 
         .stat-item {
             background: var(--bg3);
-            padding: 36px 28px;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 36px 28px 32px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
         }
+
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.25s;
+            border-radius: 24px;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+        }
+
+        .stat-item:hover::before { opacity: 1; }
+
+        .stat-item:nth-child(1)       { border-color: rgba(59,125,243,0.25); }
+        .stat-item:nth-child(1):hover { border-color: rgba(59,125,243,0.5); box-shadow: 0 24px 60px rgba(59,125,243,0.15); }
+        .stat-item:nth-child(1)::before { background: radial-gradient(ellipse at 50% 0%, rgba(59,125,243,0.1) 0%, transparent 70%); }
+
+        .stat-item:nth-child(2)       { border-color: rgba(125,92,255,0.25); }
+        .stat-item:nth-child(2):hover { border-color: rgba(125,92,255,0.5); box-shadow: 0 24px 60px rgba(125,92,255,0.15); }
+        .stat-item:nth-child(2)::before { background: radial-gradient(ellipse at 50% 0%, rgba(125,92,255,0.1) 0%, transparent 70%); }
+
+        .stat-item:nth-child(3)       { border-color: rgba(240,80,128,0.25); }
+        .stat-item:nth-child(3):hover { border-color: rgba(240,80,128,0.5); box-shadow: 0 24px 60px rgba(240,80,128,0.15); }
+        .stat-item:nth-child(3)::before { background: radial-gradient(ellipse at 50% 0%, rgba(240,80,128,0.1) 0%, transparent 70%); }
+
+        .stat-item:nth-child(4)       { border-color: rgba(64,200,120,0.25); }
+        .stat-item:nth-child(4):hover { border-color: rgba(64,200,120,0.5); box-shadow: 0 24px 60px rgba(64,200,120,0.15); }
+        .stat-item:nth-child(4)::before { background: radial-gradient(ellipse at 50% 0%, rgba(64,200,120,0.1) 0%, transparent 70%); }
+
+        .stat-icon {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            margin: 0 auto 20px;
+        }
+
+        .stat-item:nth-child(1) .stat-icon { background: rgba(59,125,243,0.15); }
+        .stat-item:nth-child(2) .stat-icon { background: rgba(125,92,255,0.15); }
+        .stat-item:nth-child(3) .stat-icon { background: rgba(240,80,128,0.15); }
+        .stat-item:nth-child(4) .stat-icon { background: rgba(64,200,120,0.15); }
 
         .stat-number {
             font-family: 'Syne', sans-serif;
-            font-size: 40px;
+            font-size: 44px;
             font-weight: 800;
             letter-spacing: -0.04em;
-            background: linear-gradient(135deg, var(--blue), var(--purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
+            line-height: 1;
         }
+
+        .stat-item:nth-child(1) .stat-number { background: linear-gradient(135deg, #5b9fff, var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .stat-item:nth-child(2) .stat-number { background: linear-gradient(135deg, #a080ff, var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .stat-item:nth-child(3) .stat-number { background: linear-gradient(135deg, #ff7090, var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .stat-item:nth-child(4) .stat-number { background: linear-gradient(135deg, #60e898, var(--green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
         .stat-label {
             font-size: 14px;
+            font-weight: 600;
+            color: var(--dim);
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        .stat-desc {
+            font-size: 12px;
             color: var(--muted);
+            line-height: 1.55;
         }
 
         /* ── CTA ─────────────────────────────────────────────────── */
@@ -994,11 +1053,36 @@
         <section class="snap-section snap-stats">
             <span class="snap-label">04 / Stats</span>
             <div class="section-inner">
+                <div class="stats-header snap-child">
+                    <div class="section-label">By the numbers</div>
+                    <h2 class="section-title">Built on a massive library</h2>
+                    <p class="section-sub">Aggregated from the world's best open book databases — all in one place.</p>
+                </div>
                 <div class="stats-grid">
-                    <div class="stat-item snap-child"><div class="stat-number">5M+</div><div class="stat-label">Books indexed</div></div>
-                    <div class="stat-item snap-child"><div class="stat-number">70K+</div><div class="stat-label">Free classics</div></div>
-                    <div class="stat-item snap-child"><div class="stat-number">500K+</div><div class="stat-label">Manga titles</div></div>
-                    <div class="stat-item snap-child"><div class="stat-number">100%</div><div class="stat-label">Free to use</div></div>
+                    <div class="stat-item snap-child">
+                        <div class="stat-icon">📚</div>
+                        <div class="stat-number">5M+</div>
+                        <div class="stat-label">Books indexed</div>
+                        <div class="stat-desc">Sourced from Open Library and Hardcover across every genre</div>
+                    </div>
+                    <div class="stat-item snap-child">
+                        <div class="stat-icon">🏛️</div>
+                        <div class="stat-number">70K+</div>
+                        <div class="stat-label">Free classics</div>
+                        <div class="stat-desc">Public domain titles from Project Gutenberg, free to read anytime</div>
+                    </div>
+                    <div class="stat-item snap-child">
+                        <div class="stat-icon">🎌</div>
+                        <div class="stat-number">500K+</div>
+                        <div class="stat-label">Manga titles</div>
+                        <div class="stat-desc">Manga, manhwa & manhua via MangaDex with English translations</div>
+                    </div>
+                    <div class="stat-item snap-child">
+                        <div class="stat-icon">✦</div>
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">Free to use</div>
+                        <div class="stat-desc">No subscriptions, no paywalls — PageSync is completely free</div>
+                    </div>
                 </div>
             </div>
         </section>
