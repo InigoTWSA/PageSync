@@ -912,7 +912,15 @@
             const username    = p.username    || currentUser.email?.split('@')[0] || 'username';
             displayNameView.textContent = displayName;
             usernameView.textContent    = `@${username}`;
- 
+
+            // Sync to localStorage so all other pages pick up latest avatar and username
+            localStorage.setItem(`ps_username_${uid}`, username);
+            if (p.avatarDataUrl) {
+                localStorage.setItem(`ps_avatar_${uid}`, p.avatarDataUrl);
+            } else {
+                localStorage.removeItem(`ps_avatar_${uid}`);
+            }
+
             // Bio
             if (p.bio) {
                 bioView.textContent = p.bio;
